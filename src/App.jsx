@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard'
 import MassDispatch from './pages/MassDispatch'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
+import WhatsAppTest from './pages/WhatsApp'
 import { AuthProvider } from './state/AuthProvider'
 import { useAuth } from './state/useAuth'
 import { CrmProvider } from './state/CrmProvider'
@@ -120,6 +121,7 @@ export default function App() {
             <Route path="agenda" element={<Agenda />} />
             <Route path="relatorios" element={<Reports />} />
             <Route path="ajustes" element={<Settings />} />
+            <Route path="whatsapp" element={<WhatsAppTest />} />
           </Route>
           <Route path="/" element={<LoginScreen />} />
           <Route path="*" element={<Navigate to="/" replace />} />

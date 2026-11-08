@@ -1,37 +1,51 @@
+import { createClient } from 'npm:@supabase/supabase-js@2'
 import { withSupabase } from 'npm:@supabase/server@1'
-import { verifyHubSignature } from '../_shared/webhook.js'
+import { handleChannelRequest } from '../_shared/whatsapp-http.js'
 
-// verify_jwt is false. Meta does not send a Supabase user JWT.
-// sb_publishable / sb_secret keys are not the webhook credential and are not JWTs.
-// The raw body must match X-Hub-Signature-256 (HMAC-SHA256, prefix sha256=).
-// A valid signature still does not send a message or write a tenant row until a
-// provider account is mapped. That mapping is intentionally absent.
+function adminClient() {
+  const url = Deno.env.get('SUPABASE_URL') ?? ''
+  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  if (!url || !key) return null
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+}
 
 export default {
   fetch: withSupabase({ auth: 'none' }, async (request) => {
-    if (request.method !== 'POST') {
-      return Response.json({ error: 'method_not_allowed' }, { status: 405 })
-    }
-    const secret = Deno.env.get('WHATSAPP_APP_SECRET')
-    if (!secret) {
-      return Response.json(
-        { status: 'unconfigured', provider: 'whatsapp', error: 'webhook_unconfigured' },
-        { status: 503 },
-      )
-    }
-    const rawBody = await request.text()
-    const verdict = await verifyHubSignature(rawBody, request.headers.get('X-Hub-Signature-256'), secret)
-    if (!verdict.ok) {
-      console.error('webhook_signature', verdict.reason)
-      return Response.json({ error: 'bad_signature' }, { status: 401 })
-    }
-    return Response.json(
-      {
-        status: 'pending',
-        provider: 'whatsapp',
-        detail: 'Assinatura válida. Não há conta do provedor mapeada e nenhuma mensagem foi enviada.',
+    const admin = adminClient()
+    const rawBody = request.method === 'POST' ? await request.text() : ''
+    const result = await handleChannelRequest({
+      method: request.method,
+      url: request.url,
+      rawBody,
+      signature: request.headers.get('X-Hub-Signature-256'),
+      env: {
+        WHATSAPP_APP_SECRET: Deno.env.get('WHATSAPP_APP_SECRET') ?? '',
+        WHATSAPP_VERIFY_TOKEN: Deno.env.get('WHATSAPP_VERIFY_TOKEN') ?? '',
       },
-      { status: 202 },
-    )
+      ingest: admin
+        ? async (event) => {
+            await admin.rpc('ingest_whatsapp_event', {
+              p_phone_number_id: event.phoneNumberId,
+              p_provider_message_id: event.providerMessageId,
+              p_kind: event.kind,
+              p_message_type: event.type,
+              p_body: event.text,
+              p_status: event.status,
+              p_wa_id: event.waId,
+              p_error_code: event.errorCode ?? null,
+            })
+          }
+        : undefined,
+    })
+    if (request.method === 'POST' && result.status === 200 && !admin) {
+      return Response.json({ status: 'unconfigured', provider: 'whatsapp', error: 'webhook_unconfigured' }, { status: 503 })
+    }
+    if (result.text != null) {
+      return new Response(result.text, {
+        status: result.status,
+        headers: { 'Content-Type': result.contentType || 'text/plain; charset=utf-8' },
+      })
+    }
+    return Response.json(result.body ?? {}, { status: result.status })
   }),
 }

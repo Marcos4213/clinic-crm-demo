@@ -32,13 +32,13 @@ export default function Sidebar({ base = '/demo', demo = true }) {
   const items = itemsFor(base, demo)
   return (
     <nav
-      aria-label="Seções do Convertize"
+      aria-label="Seções do Automatize.app"
       className="flex h-14 shrink-0 items-center gap-1 border-b border-white/10 bg-navy-950 px-3 lg:h-auto lg:w-[72px] lg:flex-col lg:border-b-0 lg:border-r lg:px-2 lg:py-3"
     >
       <NavLink
         to={base}
         end
-        aria-label="Convertize"
+        aria-label="Automatize.app"
         className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-navy-800"
       >
         <Mark />

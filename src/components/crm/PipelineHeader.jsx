@@ -20,7 +20,7 @@ export default function PipelineHeader() {
     <header className="shrink-0 border-b border-line bg-surface px-3 py-3 sm:px-4">
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold tracking-[0.16em] text-emerald uppercase">Convertize · Pipeline comercial</p>
+          <p className="text-[10px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app · Pipeline comercial</p>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <h1 className="text-[20px] leading-none font-semibold tracking-tight text-ink">Atendimento</h1>
             <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-semibold tracking-[0.14em] text-emerald uppercase">

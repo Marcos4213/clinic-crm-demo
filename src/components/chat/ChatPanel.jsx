@@ -51,7 +51,7 @@ export default function ChatPanel({ lead, hiddenByFilter, draft, onDraft, onTogg
               {lead.aiActive ? 'Assumir Atendimento (Pausar IA)' : 'Reativar IA'}
             </button>
             <p className="mt-2 text-[11px] leading-4 text-muted">
-              Canal interno do Convertize. Não é o WhatsApp e não há envio externo.
+              Canal interno do Automatize.app. Não é o WhatsApp e não há envio externo.
             </p>
             <p className="text-[11px] leading-4 text-muted">Os tiques não confirmam entrega real.</p>
           </header>

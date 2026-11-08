@@ -24,7 +24,7 @@ export default function Reports() {
   const localDemo = crm.mode !== 'workspace'
 
   return (
-    <SectionPage icon={BarChart3} kicker={localDemo ? 'Convertize · amostra local' : 'Convertize · dados da clínica'} title="Relatórios">
+    <SectionPage icon={BarChart3} kicker={localDemo ? 'Automatize.app · amostra local' : 'Automatize.app · dados da clínica'} title="Relatórios">
       <p className="text-[14px] leading-6 text-ink">
         {localDemo
           ? 'Números calculados só com a amostra fictícia deste navegador. Sem receita e sem ROI.'
