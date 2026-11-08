@@ -37,8 +37,8 @@ Não desligar o cadastro. Se "Confirm email" estiver ligado, o cadastro fica sem
 ## Testes, sem misturar ambientes
 
 - `npm test` cobre o app e as regras puras de agenda, Grok e assinatura. Não abre o projeto `xjijlccnbrdpwctiacqa`.
-- `supabase/tests/rls_security.sql` foi executado numa instância local descartável de Postgres 16, depois de aplicar a migration nessa mesma instância. O script termina em `rollback`. Esse resultado não significa que o projeto remoto já tem o esquema.
-- O `schema_guard` remoto só vale quando a migration estiver aplicada em `xjijlccnbrdpwctiacqa`. Uma chamada anônima não cria usuário e não envia e-mail. Sem sessão, a função autenticada não prova o fluxo da clínica.
+- O arquivo corrigido `supabase/migrations/20261108170000_convertize_core.sql` foi aplicado numa instância local descartável de PostgreSQL 17.11, com `check_function_bodies` ligado. Em seguida `supabase/tests/rls_security.sql` terminou em `rollback`. Isso não ativa o projeto remoto.
+- A tentativa remota anterior fez rollback. `schema_guard` no projeto `xjijlccnbrdpwctiacqa` continuava ausente (404 `PGRST202`) antes desta correção. Nada desta correção foi aplicado lá.
 
 ## O que ainda não está conectado
 
