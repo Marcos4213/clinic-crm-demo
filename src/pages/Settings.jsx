@@ -1,16 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { WhatsappScanner } from '../components/whatsapp/WhatsappScanner'
+import { readWhatsappQr, whatsappLabel } from '../domain/whatsapp-qr'
 import { useAuth } from '../state/useAuth'
 import { useCrm } from '../state/useCrm'
 
 const COPY = {
   whatsapp: {
-    unconfigured: 'A linha da clínica ainda não foi registrada.',
-    pending: 'A linha está registrada. As conversas entram quando alguém escrever. Nada parte sozinho.',
-  },
-  grok: {
-    unconfigured: 'A equipe pede a resposta. Sem chave no servidor, a IA não inventa texto.',
-    pending: 'A equipe pede a resposta. Sem chave no servidor, a IA não inventa texto.',
+    unconfigured: 'Escaneie o QR Code do WhatsApp da clínica. O restante da conexão fica com a Automatize.',
+    pending: 'A linha já está registrada. Escaneie o QR do WhatsApp para deixar o número com a equipe. As conversas entram quando alguém escrever.',
   },
   instagram: {
     unconfigured: 'O Instagram ainda não entra no atendimento. Os contatos continuam neste CRM.',
@@ -27,23 +25,56 @@ function clock(value, fallback) {
   return text.slice(0, 5)
 }
 
-export function SettingsPanel({ clinicName, role, settings, integrations = [], notice, onSaveProfile, onBindWhatsapp }) {
+function AttendanceForm({ clinicName, settings, onSaveProfile }) {
   const [displayName, setDisplayName] = useState(settings?.display_name || clinicName || '')
   const [dayStart, setDayStart] = useState(clock(settings?.day_start, '09:00'))
   const [dayEnd, setDayEnd] = useState(clock(settings?.day_end, '18:00'))
   const [slotMinutes, setSlotMinutes] = useState(String(settings?.slot_minutes ?? 30))
-  const [faq, setFaq] = useState(settings?.business_faq ?? '')
 
-  useEffect(() => {
-    if (!settings) return
-    setDisplayName(settings.display_name || clinicName || '')
-    setDayStart(clock(settings.day_start, '09:00'))
-    setDayEnd(clock(settings.day_end, '18:00'))
-    setSlotMinutes(String(settings.slot_minutes ?? 30))
-    setFaq(settings.business_faq ?? '')
-  }, [settings, clinicName])
+  return (
+    <form
+      className="space-y-3 rounded-2xl border border-line bg-surface p-4"
+      onSubmit={(event) => {
+        event.preventDefault()
+        onSaveProfile?.({ displayName, dayStart, dayEnd, slotMinutes })
+      }}
+    >
+      <h2 className="text-[16px] font-semibold">Atendimento</h2>
+      <label className="block text-[12px] font-semibold text-muted" htmlFor="clinic-display">
+        Nome que a equipe vê
+        <input id="clinic-display" value={displayName} onChange={(event) => setDisplayName(event.target.value)} required minLength={2} className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-ink" />
+      </label>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <label className="block text-[12px] font-semibold text-muted" htmlFor="day-start">
+          Abre
+          <input id="day-start" type="time" value={dayStart} onChange={(event) => setDayStart(event.target.value)} required className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-ink" />
+        </label>
+        <label className="block text-[12px] font-semibold text-muted" htmlFor="day-end">
+          Fecha
+          <input id="day-end" type="time" value={dayEnd} onChange={(event) => setDayEnd(event.target.value)} required className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-ink" />
+        </label>
+        <label className="block text-[12px] font-semibold text-muted" htmlFor="slot">
+          Duração da consulta
+          <select id="slot" value={slotMinutes} onChange={(event) => setSlotMinutes(event.target.value)} className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-ink">
+            <option value="30">30 minutos</option>
+            <option value="60">60 minutos</option>
+          </select>
+        </label>
+      </div>
+      <button type="submit" className="h-10 rounded-lg bg-emerald px-4 text-[13px] font-semibold text-[#080F1C]">
+        Gravar atendimento
+      </button>
+    </form>
+  )
+}
+
+export function SettingsPanel({ clinicName, settings, integrations = [], notice, onSaveProfile, onSaveWhatsapp }) {
   const whatsapp = integrations.find((item) => item.provider === 'whatsapp')
-  const others = integrations.filter((item) => item.provider !== 'whatsapp')
+  const others = integrations.filter((item) => item.provider === 'instagram' || item.provider === 'google_calendar')
+  const savedLink = readWhatsappQr(settings?.public_whatsapp)?.href || ''
+  const [scanned, setScanned] = useState('')
+  const link = scanned || savedLink
+  const attendanceKey = [clinicName, settings?.display_name, settings?.day_start, settings?.day_end, settings?.slot_minutes].join('|')
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8">
@@ -52,47 +83,11 @@ export function SettingsPanel({ clinicName, role, settings, integrations = [], n
           <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app</p>
           <h1 className="mt-2 text-[28px] font-semibold tracking-tight">Ajustes da clínica</h1>
           <p className="mt-2 max-w-xl text-[14px] leading-6 text-muted">
-            O que a equipe usa no atendimento. As mudanças valem só para esta clínica.
+            Nome, horário e o QR do WhatsApp. O restante da conexão fica com a Automatize.
           </p>
         </header>
 
-        <form
-          className="space-y-3 rounded-2xl border border-line bg-surface p-4"
-          onSubmit={(event) => {
-            event.preventDefault()
-            onSaveProfile?.({ displayName, dayStart, dayEnd, slotMinutes, businessFaq: faq })
-          }}
-        >
-          <h2 className="text-[16px] font-semibold">Atendimento</h2>
-          <label className="block text-[12px] font-semibold text-muted" htmlFor="clinic-display">
-            Nome que a equipe vê
-            <input id="clinic-display" value={displayName} onChange={(event) => setDisplayName(event.target.value)} required minLength={2} className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-ink" />
-          </label>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <label className="block text-[12px] font-semibold text-muted" htmlFor="day-start">
-              Abre
-              <input id="day-start" type="time" value={dayStart} onChange={(event) => setDayStart(event.target.value)} required className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-ink" />
-            </label>
-            <label className="block text-[12px] font-semibold text-muted" htmlFor="day-end">
-              Fecha
-              <input id="day-end" type="time" value={dayEnd} onChange={(event) => setDayEnd(event.target.value)} required className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-ink" />
-            </label>
-            <label className="block text-[12px] font-semibold text-muted" htmlFor="slot">
-              Duração da consulta
-              <select id="slot" value={slotMinutes} onChange={(event) => setSlotMinutes(event.target.value)} className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-ink">
-                <option value="30">30 minutos</option>
-                <option value="60">60 minutos</option>
-              </select>
-            </label>
-          </div>
-          <label className="block text-[12px] font-semibold text-muted" htmlFor="faq">
-            O que a IA pode repetir
-            <textarea id="faq" value={faq} onChange={(event) => setFaq(event.target.value)} rows={4} maxLength={4000} className="mt-1 w-full rounded-xl border border-line bg-canvas px-3 py-2 text-[13px] text-ink" />
-          </label>
-          <button type="submit" className="h-10 rounded-lg bg-emerald px-4 text-[13px] font-semibold text-[#080F1C]">
-            Gravar atendimento
-          </button>
-        </form>
+        <AttendanceForm key={attendanceKey} clinicName={clinicName} settings={settings} onSaveProfile={onSaveProfile} />
 
         <section className="rounded-2xl border border-line bg-surface p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -104,38 +99,20 @@ export function SettingsPanel({ clinicName, role, settings, integrations = [], n
               Abrir conversas
             </Link>
           </div>
-          {role === 'owner' ? (
-            <form
-              className="mt-4 space-y-3"
-              onSubmit={(event) => {
-                event.preventDefault()
-                const data = new FormData(event.currentTarget)
-                onBindWhatsapp?.({
-                  phone: String(data.get('phone') ?? ''),
-                  waba: String(data.get('waba') ?? ''),
-                  app: String(data.get('app') ?? ''),
-                })
-              }}
-            >
-              <label className="block text-[12px] font-semibold text-muted" htmlFor="wa-phone">
-                Identificador da linha
-                <input id="wa-phone" name="phone" required pattern="[0-9]{6,32}" inputMode="numeric" autoComplete="off" className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-ink" />
-              </label>
-              <label className="block text-[12px] font-semibold text-muted" htmlFor="wa-waba">
-                Conta comercial
-                <input id="wa-waba" name="waba" required pattern="[0-9]{6,32}" inputMode="numeric" autoComplete="off" className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-ink" />
-              </label>
-              <label className="block text-[12px] font-semibold text-muted" htmlFor="wa-app">
-                Aplicativo
-                <input id="wa-app" name="app" required pattern="[0-9]{6,32}" inputMode="numeric" autoComplete="off" className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-ink" />
-              </label>
-              <button type="submit" className="h-10 rounded-lg bg-emerald px-4 text-[13px] font-semibold text-[#080F1C]">
-                Registrar linha nesta clínica
-              </button>
-            </form>
-          ) : (
-            <p className="mt-3 text-[13px] text-muted">Quem administra a clínica registra a linha.</p>
+          {link && (
+            <p className="mt-3 text-[14px] text-ink">
+              {whatsappLabel(link)}{' '}
+              <a href={link} target="_blank" rel="noreferrer" className="font-semibold text-emerald">
+                Abrir o WhatsApp
+              </a>
+            </p>
           )}
+          <WhatsappScanner
+            onScan={(href) => {
+              setScanned(href)
+              onSaveWhatsapp?.(href)
+            }}
+          />
         </section>
 
         <section className="rounded-2xl border border-line p-4">
@@ -143,7 +120,7 @@ export function SettingsPanel({ clinicName, role, settings, integrations = [], n
           <ul className="mt-3 space-y-3">
             {others.map((item) => (
               <li key={item.provider}>
-                <p className="text-[14px] font-semibold">{item.provider === 'grok' ? 'Grok' : item.provider === 'instagram' ? 'Instagram' : 'Google Calendar'}</p>
+                <p className="text-[14px] font-semibold">{item.provider === 'instagram' ? 'Instagram' : 'Google Calendar'}</p>
                 <p className="text-[13px] leading-5 text-muted">{COPY[item.provider]?.[item.state] ?? COPY[item.provider]?.unconfigured}</p>
               </li>
             ))}
@@ -159,28 +136,14 @@ export default function Settings() {
   const crm = useCrm()
   const auth = useAuth()
 
-  async function onBindWhatsapp(fields) {
-    if (!auth.client) {
-      crm.announce('A sessão não está disponível para registrar a linha.')
-      return
-    }
-    const { error } = await auth.client.rpc('bind_whatsapp_route', {
-      p_phone: fields.phone,
-      p_waba: fields.waba,
-      p_app: fields.app,
-    })
-    crm.announce(error ? 'A linha não foi registrada.' : 'Linha registrada nesta clínica. O canal ainda não tem prova de entrega.')
-  }
-
   return (
     <SettingsPanel
       clinicName={crm.clinic?.name}
-      role={crm.role}
       settings={crm.settings}
       integrations={crm.integrations}
       notice={crm.notice}
       onSaveProfile={crm.saveClinicProfile}
-      onBindWhatsapp={onBindWhatsapp}
+      onSaveWhatsapp={auth.client ? crm.saveWhatsappLink : undefined}
     />
   )
 }
