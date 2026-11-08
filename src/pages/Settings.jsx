@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../state/useAuth'
 import { useCrm } from '../state/useCrm'
 
@@ -29,6 +30,9 @@ export default function Settings() {
             </li>
           ))}
         </ul>
+        <Link to="/app/whatsapp" className="mt-4 inline-flex text-[13px] font-semibold text-emerald">
+          WhatsApp de teste
+        </Link>
         <form
           className="mt-4 space-y-2"
           onSubmit={(event) => {

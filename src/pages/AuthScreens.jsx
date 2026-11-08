@@ -6,9 +6,9 @@ import { useAuth } from '../state/useAuth'
 function Shell({ title, children }) {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-4 py-10">
-      <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald uppercase">Convertize</p>
+      <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app</p>
       <h1 className="mt-2 text-[28px] font-semibold tracking-tight text-ink">{title}</h1>
-      <p className="mt-2 text-[13px] leading-5 text-muted">O Convertize agenda. A sua equipe fecha.</p>
+      <p className="mt-2 text-[13px] leading-5 text-muted">O Automatize.app agenda. A sua equipe fecha.</p>
       <div className="mt-6 rounded-2xl border border-line bg-surface p-4">{children}</div>
     </main>
   )

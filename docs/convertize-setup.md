@@ -1,4 +1,4 @@
-# Convertize — configuração que o conector não altera
+# Automatize.app — configuração que o conector não altera
 
 O app público é `https://marcos4213.github.io/clinic-crm-demo/#/`.
 O projeto Supabase é `xjijlccnbrdpwctiacqa` em `https://xjijlccnbrdpwctiacqa.supabase.co`.

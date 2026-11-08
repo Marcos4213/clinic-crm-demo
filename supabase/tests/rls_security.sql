@@ -1,4 +1,4 @@
--- Convertize RLS and tenancy tests.
+-- Automatize.app RLS and tenancy tests. The filename and the applied core migration stay convertize.
 -- Run AFTER 20261108170000_convertize_core.sql, as a role that can insert auth.users
 -- (SQL editor / postgres). The script rolls back. It does not send email.
 -- A green local run is not evidence that project xjijlccnbrdpwctiacqa has this schema.
@@ -464,6 +464,94 @@ begin
     when insufficient_privilege then
       null;
   end;
+
+  execute 'reset role';
+  perform set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+  perform set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+  execute 'set local role authenticated';
+  perform public.bind_whatsapp_route('1468451929686754', '1337719091751370', '2217879795749408');
+  if (select count(*) from public.whatsapp_routes where phone_number_id = '1468451929686754') <> 1 then
+    raise exception 'owner route was not stored';
+  end if;
+  if (select state from public.integration_status where clinic_id = clinic_a and provider = 'whatsapp') <> 'pending' then
+    raise exception 'whatsapp integration was marked connected or left unconfigured';
+  end if;
+
+  execute 'reset role';
+  perform set_config('request.jwt.claim.sub', '33333333-3333-4333-8333-333333333333', true);
+  perform set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}', true);
+  execute 'set local role authenticated';
+  begin
+    perform public.bind_whatsapp_route('1468451929686755', '1337719091751370', '2217879795749408');
+    raise exception 'staff bound a whatsapp route';
+  exception
+    when insufficient_privilege then
+      null;
+  end;
+
+  execute 'reset role';
+  perform set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
+  perform set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated"}', true);
+  execute 'set local role authenticated';
+  begin
+    perform public.bind_whatsapp_route('1468451929686754', '1337719091751370', '2217879795749408');
+    raise exception 'second clinic claimed the same phone number';
+  exception
+    when unique_violation then
+      null;
+  end;
+
+  execute 'reset role';
+  begin
+    execute 'set local role anon';
+    insert into public.whatsapp_routes (clinic_id, phone_number_id, waba_id, meta_app_id, created_by)
+    values (clinic_a, '1468451929686999', '1337719091751370', '2217879795749408', '11111111-1111-4111-8111-111111111111');
+    raise exception 'anon inserted a whatsapp route';
+  exception
+    when insufficient_privilege then
+      null;
+  end;
+  execute 'reset role';
+
+  begin
+    execute 'set local role authenticated';
+    perform public.ingest_whatsapp_event('1468451929686754', 'wamid.inbound', 'message', 'text', 'Oi', 'received', '5500000000001', null);
+    raise exception 'authenticated ingested a webhook';
+  exception
+    when insufficient_privilege then
+      null;
+  end;
+  execute 'reset role';
+
+  execute 'set local role service_role';
+  perform public.ingest_whatsapp_event('1468451929686754', 'wamid.inbound', 'message', 'text', 'Oi', 'received', '5500000000001', null);
+  perform public.ingest_whatsapp_event('1468451929686754', 'wamid.inbound', 'message', 'text', 'Oi', 'received', '5500000000001', null);
+  perform public.ingest_whatsapp_event('0000000000000000', 'wamid.unknown', 'message', 'text', 'segredo', 'received', '5500000000002', null);
+  perform public.ingest_whatsapp_event('1468451929686754', 'wamid.out', 'status', 'status', null, 'delivered', '5500000000001', null);
+  perform public.ingest_whatsapp_event('1468451929686754', 'wamid.out', 'status', 'status', null, 'sent', '5500000000001', null);
+  execute 'reset role';
+  if (select count(*) from public.whatsapp_messages where provider_message_id = 'wamid.inbound') <> 1 then
+    raise exception 'inbound message was duplicated';
+  end if;
+  if (select ai_active from public.leads where phone = '5500000000001' and clinic_id = clinic_a) is distinct from false then
+    raise exception 'whatsapp lead was created with AI enabled';
+  end if;
+  if exists (select 1 from public.whatsapp_messages where provider_message_id = 'wamid.unknown') then
+    raise exception 'unknown phone number was stored';
+  end if;
+  if (select status from public.whatsapp_messages where provider_message_id = 'wamid.out') is distinct from 'delivered' then
+    raise exception 'whatsapp status regressed';
+  end if;
+
+  begin
+    execute 'set local role authenticated';
+    perform public.record_whatsapp_outbound('1468451929686754', 'k1', '5500000000001', 'oi', 'wamid.forged', 'accepted', null);
+    raise exception 'authenticated recorded an outbound whatsapp message';
+  exception
+    when insufficient_privilege then
+      null;
+  end;
+  execute 'reset role';
 
   failed := false;
   if failed then

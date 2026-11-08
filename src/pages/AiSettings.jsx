@@ -3,7 +3,7 @@ import SectionPage from './SectionPage'
 
 export default function AiSettings() {
   return (
-    <SectionPage icon={Bot} kicker="Convertize · sem provedor nesta amostra" title="Configurações de IA">
+    <SectionPage icon={Bot} kicker="Automatize.app · sem provedor nesta amostra" title="Configurações de IA">
       <p className="text-[14px] leading-6 text-ink">
         Nenhum provedor de modelo está conectado. Estas opções não são salvas e não alteram uma IA externa.
       </p>

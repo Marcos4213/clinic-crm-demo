@@ -6,7 +6,7 @@
 
 ## Decisão
 
-O Convertize recebe e envia WhatsApp só no número de teste já confirmado pelo usuário, por uma clínica por `phone_number_id`. O webhook prova a posse do endpoint com o desafio GET e só grava o POST se a assinatura HMAC do corpo cru for válida. O envio é manual, no clique explícito de um membro da clínica, feito no servidor com o token que o usuário gravar no painel do Supabase. A chegada ao Graph não é entrega. A IA não responde ao webhook.
+O Automatize.app recebe e envia WhatsApp só no número de teste já confirmado pelo usuário, por uma clínica por `phone_number_id`. O webhook prova a posse do endpoint com o desafio GET e só grava o POST se a assinatura HMAC do corpo cru for válida. O envio é manual, no clique explícito de um membro da clínica, feito no servidor com o token que o usuário gravar no painel do Supabase. A chegada ao Graph não é entrega. A IA não responde ao webhook.
 
 O painel da Meta em que o usuário enviou `hello_world` e recebeu `Oi` não prova que este app recebeu esses eventos. A prova passa a ser uma linha gravada por este webhook.
 

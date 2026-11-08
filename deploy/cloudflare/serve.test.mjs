@@ -63,7 +63,7 @@ test("real dist is served with hash routing, cache policy, and non-HTML 404s", a
   assert.equal(scriptResponse.headers.get("cache-control"), "public, max-age=31536000, immutable")
   assert.match(scriptResponse.headers.get("etag"), /^"[a-f0-9]{64}"$/)
   const code = await scriptResponse.text()
-  assert.match(code, /Convertize/)
+  assert.match(code, /Automatize\.app/)
   assert.doesNotMatch(code, /^<!doctype/i)
 
   const head = await fetch(new Request(`${origin}/`, { method: "HEAD" }))
