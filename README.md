@@ -1,49 +1,29 @@
-# Clinic CRM
+# Convertize
 
 Demonstração frontend de CRM para clínicas — React e Tailwind. Apenas dados fictícios.
 
-Projeto novo, separado do repositório de método [superpowers](https://github.com/Marcos4213/superpowers). Aquele repositório ensina o processo (especificação, plano, teste antes do código). Este repositório é o produto.
+O Convertize agenda. A sua equipe fecha.
 
-Demonstração estática, só de frontend, de um CRM comercial para clínicas brasileiras. O funil, a conversa e os relatórios usam leads fictícios carregados no navegador. Nenhuma mensagem é enviada, nenhuma campanha é criada e não há WhatsApp, Supabase ou outro serviço conectado.
+App de clínicas no mesmo repositório. `#/` entra com e-mail e senha. `#/demo` é a amostra local e não grava no Supabase. `#/app` é a clínica autenticada depois que o esquema com RLS está aplicado.
 
-O nome **Clinic CRM** é temporário.
-
-## Requisitos
-
-- Node.js 22
-- npm 10
+Não há página de marketing. Não há WhatsApp, Instagram ou Google Calendar conectados. A agenda interna usa `America/Sao_Paulo`. Sem a chave `XAI_API_KEY` no servidor, a IA responde `grok_unconfigured` e não simula uma resposta. A simulação existe só na demonstração local, identificada como amostra.
 
 ## Local
 
 ```bash
 npm install
-npm run dev
-```
-
-Abra o endereço que o Vite imprimir. A aplicação usa rotas com hash (`#/`, `#/disparos`, `#/ia`, `#/relatorios`), então o mesmo `index.html` atende todos os caminhos.
-
-```bash
 npm test
 npm run lint
 npm run build
-npm run preview
+npm run dev
 ```
 
-O build sai em `dist/` com `base` relativo (`./`). Para forçar um subcaminho:
+A build pública usa `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`. Essa chave é publicável, não é JWT e não é `service_role`. O modelo é `./.env.example`.
 
-```bash
-VITE_BASE_PATH=/nome-do-repositorio/ npm run build
-```
+## Supabase e Pages
 
-Use `/` só em um site de usuário ou organização (`https://usuario.github.io/`). Em um project site (`https://usuario.github.io/nome-do-repositorio/`), use `/nome-do-repositorio/` ou mantenha o padrão `./`.
+O esquema, os testes de RLS e as Edge Functions estão em `supabase/`. Os passos manuais de Site URL e secrets estão em `docs/convertize-setup.md`.
 
-## GitHub Pages
+Site URL a configurar: `https://marcos4213.github.io/clinic-crm-demo/`.
 
-Este repositório público, [Marcos4213/clinic-crm-demo](https://github.com/Marcos4213/clinic-crm-demo), é o endereço exclusivo do produto. O arquivo `.github/workflows/pages.yml` publica o site no push da branch `main`: instala, testa, gera `dist/` e envia o artefato com `actions/deploy-pages`.
-
-A primeira publicação depende de duas opções que só um administrador do repositório pode gravar:
-
-1. **Settings → Pages → Build and deployment → Source:** GitHub Actions.
-2. **Settings → Actions → General:** permitir Actions neste repositório.
-
-Quando esse workflow termina com sucesso, o site fica em `https://marcos4213.github.io/clinic-crm-demo/#/`. As rotas continuam no hash (`#/disparos`, `#/ia`, `#/relatorios`) e os assets usam `base` relativo (`./`).
+O workflow `.github/workflows/pages.yml` publica `main` em `https://marcos4213.github.io/clinic-crm-demo/#/`.

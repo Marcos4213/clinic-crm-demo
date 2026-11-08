@@ -5,7 +5,7 @@ const SAMPLE = 'Olá. Este texto é só um exemplo de lembrete de avaliação de
 
 export default function MassDispatch() {
   return (
-    <SectionPage icon={Send} kicker="Clinic CRM · sem integração" title="Disparos em Massa">
+    <SectionPage icon={Send} kicker="Convertize · sem integração" title="Disparos em Massa">
       <p className="text-[14px] leading-6 text-ink">
         O disparo em massa não está conectado. Nenhuma campanha é criada e nenhum contato é alcançado.
       </p>

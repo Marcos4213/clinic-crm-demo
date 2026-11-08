@@ -1,12 +1,22 @@
-import { BarChart3, Bot, Kanban, Send } from 'lucide-react'
+import { BarChart3, Bot, CalendarDays, Kanban, Send, Settings } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '../../state/AuthProvider'
 
-const ITEMS = [
-  { to: '/', end: true, label: 'CRM', icon: Kanban },
-  { to: '/disparos', label: 'Disparos em Massa', icon: Send },
-  { to: '/ia', label: 'Configurações de IA', icon: Bot },
-  { to: '/relatorios', label: 'Relatórios', icon: BarChart3 },
-]
+function itemsFor(base, demo) {
+  const items = [
+    { to: base, end: true, label: 'CRM', icon: Kanban },
+    { to: `${base}/agenda`, label: 'Agenda', icon: CalendarDays },
+  ]
+  if (demo) {
+    items.push(
+      { to: `${base}/disparos`, label: 'Disparos em Massa', icon: Send },
+      { to: `${base}/ia`, label: 'Configurações de IA', icon: Bot },
+    )
+  }
+  items.push({ to: `${base}/relatorios`, label: 'Relatórios', icon: BarChart3 })
+  if (!demo) items.push({ to: `${base}/ajustes`, label: 'Ajustes', icon: Settings })
+  return items
+}
 
 function Mark() {
   return (
@@ -17,22 +27,24 @@ function Mark() {
   )
 }
 
-export default function Sidebar() {
+export default function Sidebar({ base = '/demo', demo = true }) {
+  const auth = useAuth()
+  const items = itemsFor(base, demo)
   return (
     <nav
-      aria-label="Seções do Clinic CRM"
+      aria-label="Seções do Convertize"
       className="flex h-14 shrink-0 items-center gap-1 border-b border-white/10 bg-navy-950 px-3 lg:h-auto lg:w-[72px] lg:flex-col lg:border-b-0 lg:border-r lg:px-2 lg:py-3"
     >
       <NavLink
-        to="/"
+        to={base}
         end
-        aria-label="Clinic CRM"
+        aria-label="Convertize"
         className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-navy-800"
       >
         <Mark />
       </NavLink>
       <ul className="flex flex-1 items-center justify-end gap-1 lg:mt-4 lg:w-full lg:flex-col lg:justify-start">
-        {ITEMS.map((item) => {
+        {items.map((item) => {
           const Icon = item.icon
           return (
             <li key={item.to} className="lg:w-full">
@@ -60,7 +72,13 @@ export default function Sidebar() {
           )
         })}
       </ul>
-      <p className="mt-auto hidden text-[10px] font-semibold tracking-[0.16em] text-[#9FB0C3] uppercase lg:block">Demo</p>
+      {demo ? (
+        <p className="mt-auto hidden text-[10px] font-semibold tracking-[0.16em] text-muted uppercase lg:block">Demo</p>
+      ) : (
+        <button type="button" onClick={() => auth.signOut()} className="mt-auto hidden text-[10px] font-semibold tracking-[0.16em] text-muted uppercase lg:block">
+          Sair
+        </button>
+      )}
     </nav>
   )
 }

@@ -1,27 +1,39 @@
 import { BarChart3 } from 'lucide-react'
-import { countByColumn, temperatureLabel } from '../domain/crm'
+import { reportFromWorkspace } from '../../supabase/functions/_shared/schedule.js'
+import { temperatureLabel } from '../domain/crm'
 import { useCrm } from '../state/useCrm'
 import SectionPage from './SectionPage'
 
 export default function Reports() {
-  const { leads } = useCrm()
-  const counts = countByColumn(leads)
+  const crm = useCrm()
+  const { leads } = crm
+  const report = reportFromWorkspace({
+    leads: leads.map((lead) => ({ ...lead, stage: lead.stage ?? lead.column })),
+    appointments: crm.appointments ?? [],
+    stageEvents: crm.stageEvents ?? [],
+  })
+  const counts = report.stageCounts
   const temperatures = ['quente', 'morno', 'frio'].map((id) => ({
     id,
     label: temperatureLabel(id),
-    count: leads.filter((lead) => lead.temperature === id).length,
+    count: report.temperatureCounts[id],
   }))
   const procedures = [...leads.reduce((map, lead) => map.set(lead.procedure, (map.get(lead.procedure) ?? 0) + 1), new Map())].sort(
     (a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'pt-BR'),
   )
+  const localDemo = crm.mode !== 'workspace'
 
   return (
-    <SectionPage icon={BarChart3} kicker="Clinic CRM · amostra local" title="Relatórios">
-      <p className="text-[14px] leading-6 text-ink">Números calculados só com a amostra fictícia carregada neste navegador.</p>
+    <SectionPage icon={BarChart3} kicker={localDemo ? 'Convertize · amostra local' : 'Convertize · dados da clínica'} title="Relatórios">
+      <p className="text-[14px] leading-6 text-ink">
+        {localDemo
+          ? 'Números calculados só com a amostra fictícia deste navegador. Sem receita e sem ROI.'
+          : 'Números calculados com os registros desta clínica. Sem receita inventada e sem ROI.'}
+      </p>
       <dl className="mt-4 grid gap-2 sm:grid-cols-2">
         <div className="rounded-xl bg-canvas px-3 py-2.5">
           <dt className="text-[11px] font-semibold tracking-[0.12em] text-muted uppercase">Leads na amostra</dt>
-          <dd className="mt-1 text-[20px] font-semibold tabular-nums">{leads.length}</dd>
+          <dd className="mt-1 text-[20px] font-semibold tabular-nums">{report.leadCount}</dd>
         </div>
         {[
           ['em-atendimento', 'Em Atendimento (IA)'],

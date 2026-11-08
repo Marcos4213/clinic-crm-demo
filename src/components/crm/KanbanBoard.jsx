@@ -33,7 +33,7 @@ export default function KanbanBoard({ leads, selectedId, onSelect, onMove }) {
                 const leadId = event.dataTransfer.getData('text/plain')
                 if (leadId) onMove(leadId, column.id)
               }}
-              className={`flex h-full min-w-0 flex-[1_0_248px] flex-col rounded-2xl bg-[#E7EDF2] p-2 ${
+              className={`flex h-full min-w-0 flex-[1_0_248px] flex-col rounded-2xl bg-chat p-2 ${
                 over ? 'outline outline-2 outline-offset-[-2px] outline-teal-700' : ''
               }`}
             >
@@ -43,7 +43,7 @@ export default function KanbanBoard({ leads, selectedId, onSelect, onMove }) {
                     <span className={`mt-1 h-3.5 w-0.5 shrink-0 rounded-full ${RAILS[column.id]}`} aria-hidden="true" />
                     {column.label}
                   </h3>
-                  <span className="rounded-full bg-white px-1.5 py-0.5 text-[11px] font-semibold text-ink tabular-nums">{items.length}</span>
+                  <span className="rounded-full bg-surface px-1.5 py-0.5 text-[11px] font-semibold text-ink tabular-nums">{items.length}</span>
                 </div>
                 <p className="sr-only">{stageCountLabel(items.length)}</p>
               </header>

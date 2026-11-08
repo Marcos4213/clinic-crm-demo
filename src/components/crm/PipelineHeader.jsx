@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Search, X } from 'lucide-react'
 import { TEMPERATURES } from '../../domain/crm'
 import { useCrm } from '../../state/useCrm'
@@ -10,20 +11,27 @@ const SAMPLE_STAGES = [
 ]
 
 export default function PipelineHeader() {
-  const { leads, sampleCounts, query, setQuery, temperature, setTemperature } = useCrm()
+  const crm = useCrm()
+  const { leads, sampleCounts, query, setQuery, temperature, setTemperature } = crm
+  const [leadName, setLeadName] = useState('')
+  const [leadPhone, setLeadPhone] = useState('')
 
   return (
-    <header className="shrink-0 border-b border-line bg-white px-3 py-3 sm:px-4">
+    <header className="shrink-0 border-b border-line bg-surface px-3 py-3 sm:px-4">
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold tracking-[0.16em] text-teal-700 uppercase">Clínica · Pipeline comercial</p>
+          <p className="text-[10px] font-semibold tracking-[0.16em] text-emerald uppercase">Convertize · Pipeline comercial</p>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <h1 className="text-[20px] leading-none font-semibold tracking-tight text-ink">Atendimento</h1>
-            <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-semibold tracking-[0.14em] text-teal-700 uppercase">
-              Demonstração
+            <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-semibold tracking-[0.14em] text-emerald uppercase">
+              {crm.mode === 'workspace' ? 'Clínica' : 'Demonstração local'}
             </span>
           </div>
-          <p className="mt-1.5 text-[12px] text-muted">Dados fictícios. Nenhuma mensagem sai deste navegador.</p>
+          <p className="mt-1.5 text-[12px] text-muted">
+            {crm.mode === 'workspace'
+              ? 'Registros desta clínica. Mensagens internas, sem envio externo.'
+              : 'Dados fictícios só neste navegador. Nada é gravado na clínica.'}
+          </p>
         </div>
         <dl aria-label="Contagens da amostra" className="flex flex-wrap gap-1.5">
           <div className="rounded-lg bg-canvas px-2.5 py-1.5">
@@ -33,7 +41,7 @@ export default function PipelineHeader() {
           {SAMPLE_STAGES.map(([id, label]) => (
             <div key={id} className="rounded-lg bg-canvas px-2.5 py-1.5">
               <dt className="sr-only">{label}</dt>
-              <dd className="text-[12px] text-[#24384C] tabular-nums">
+              <dd className="text-[12px] text-muted tabular-nums">
                 <span className="font-semibold text-ink">{sampleCounts[id]}</span> {label}
               </dd>
             </div>
@@ -72,7 +80,7 @@ export default function PipelineHeader() {
                 role="radio"
                 aria-checked={checked}
                 onClick={() => setTemperature(item.id)}
-                className={`h-8 rounded-md px-2.5 text-[12px] font-semibold ${checked ? 'bg-white text-ink shadow-sm' : 'text-muted'}`}
+                className={`h-8 rounded-md px-2.5 text-[12px] font-semibold ${checked ? 'bg-emerald text-[#080F1C]' : 'text-muted'}`}
               >
                 {item.label}
               </button>
@@ -80,6 +88,28 @@ export default function PipelineHeader() {
           })}
         </div>
       </div>
+      {crm.mode !== 'workspace' && (
+        <button type="button" onClick={crm.resetDemo} className="mt-3 h-8 rounded-lg border border-line px-2.5 text-[12px] font-semibold text-ink">
+          Restaurar amostra
+        </button>
+      )}
+      {crm.createLead && (
+        <form
+          className="mt-3 flex flex-wrap gap-2"
+          onSubmit={(event) => {
+            event.preventDefault()
+            crm.createLead({ name: leadName, phone: leadPhone, procedure: 'Avaliação' })
+            setLeadName('')
+            setLeadPhone('')
+          }}
+        >
+          <input aria-label="Nome do lead" required minLength={2} value={leadName} onChange={(event) => setLeadName(event.target.value)} placeholder="Nome" className="h-9 rounded-lg border border-line bg-canvas px-3 text-[13px] text-ink" />
+          <input aria-label="Telefone do lead" required minLength={8} value={leadPhone} onChange={(event) => setLeadPhone(event.target.value)} placeholder="Telefone" className="h-9 rounded-lg border border-line bg-canvas px-3 text-[13px] text-ink" />
+          <button type="submit" className="h-9 rounded-lg bg-emerald px-3 text-[12px] font-semibold text-[#080F1C]">
+            Novo lead
+          </button>
+        </form>
+      )}
     </header>
   )
 }
