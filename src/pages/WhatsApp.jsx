@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { ClinicQr } from '../components/whatsapp/ClinicQr'
-import { requestClinicQr } from '../data/clinic-qr'
+import { WhatsAppConnect } from '../components/whatsapp/WhatsAppConnect'
+import { useWhatsappSignup } from '../data/meta-signup'
 import { useAuth } from '../state/useAuth'
 import { useCrm } from '../state/useCrm'
 
@@ -16,7 +16,7 @@ const STATUS_LABEL = {
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-export function WhatsAppPanel({ route, messages = [], canSend = false, notice, onSend, onLoadQr }) {
+export function WhatsAppPanel({ route, messages = [], canSend = false, notice, onSend, signup, signupNotice, signupPending, onConnect }) {
   const [confirm, setConfirm] = useState(false)
   const [text, setText] = useState('')
   const [waId, setWaId] = useState('')
@@ -28,10 +28,11 @@ export function WhatsAppPanel({ route, messages = [], canSend = false, notice, o
         <h1 className="mt-2 text-[24px] font-semibold">WhatsApp</h1>
         <p className="mt-2 text-[13px] leading-5 text-muted">
           {route
-            ? 'A linha já está com a Automatize. O QR aparece aqui no computador. Nada parte sozinho.'
-            : 'O QR aparece aqui no computador. O restante da conexão fica com a Automatize.'}
+            ? 'Os identificadores desta clínica já foram registrados. Ainda não há prova de entrega e nada parte sozinho.'
+            : 'A linha entra pela janela oficial da Meta. Nada é marcado como conectado sem uma mensagem recebida.'}
         </p>
-        <ClinicQr onLoad={onLoadQr} />
+        <WhatsAppConnect config={signup} pending={signupPending} onConnect={onConnect} />
+        {signupNotice && <p className="mt-3 text-[13px] text-muted">{signupNotice}</p>}
         <ul className="mt-4 divide-y divide-line rounded-2xl border border-line" aria-label="Mensagens do WhatsApp">
           {messages.length === 0 && <li className="px-3 py-3 text-[13px] text-muted">Nenhuma mensagem deste número.</li>}
           {messages.map((message) => (
@@ -81,6 +82,7 @@ export default function WhatsAppTest() {
   const [notice, setNotice] = useState('')
   const client = auth.client
   const clinicId = crm.clinic?.id
+  const signup = useWhatsappSignup(client, clinicId)
 
   useEffect(() => {
     if (!client || !clinicId) return undefined
@@ -101,7 +103,7 @@ export default function WhatsAppTest() {
     return () => {
       cancel = true
     }
-  }, [client, clinicId])
+  }, [client, clinicId, signup.revision])
 
   async function onSend(payload) {
     const { data, error } = await client.functions.invoke('whatsapp-send', { body: { ...payload, clinicId } })
@@ -127,7 +129,10 @@ export default function WhatsAppTest() {
       canSend={canSend}
       notice={notice}
       onSend={onSend}
-      onLoadQr={client ? () => requestClinicQr(client, clinicId) : undefined}
+      signup={signup.config}
+      signupNotice={signup.signupNotice}
+      signupPending={signup.pending}
+      onConnect={signup.onConnect}
     />
   )
 }

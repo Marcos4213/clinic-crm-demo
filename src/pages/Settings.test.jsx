@@ -10,46 +10,42 @@ const integrations = [
   { provider: 'instagram', state: 'unconfigured', detail: 'raw' },
   { provider: 'google_calendar', state: 'unconfigured', detail: 'raw' },
 ]
-const png = 'data:image/png;base64,iVBORw0KGgo='
 
 describe('clinic settings', () => {
-  it('edits the clinic hours and shows the WhatsApp QR on the computer', async () => {
+  it('edits the clinic hours and does not present a QR as the WhatsApp login', async () => {
     const user = userEvent.setup()
     const onSaveProfile = vi.fn()
-    const onLoadQr = vi.fn(async () => ({ image: png }))
+    const onConnect = vi.fn()
     render(
       <MemoryRouter>
         <SettingsPanel
           clinicName="Clínica Aurora"
-          settings={{ display_name: 'Clínica Aurora', day_start: '09:00:00', day_end: '18:00:00', slot_minutes: 30, business_faq: 'Avaliação presencial.' }}
+          settings={{ display_name: 'Clínica Aurora', day_start: '09:00:00', day_end: '18:00:00', slot_minutes: 30 }}
           integrations={integrations}
           onSaveProfile={onSaveProfile}
-          onLoadQr={onLoadQr}
+          signup={{ configured: true, connected: false, configId: '900000000000001' }}
+          onConnect={onConnect}
         />
       </MemoryRouter>,
     )
-    expect(screen.getByRole('heading', { name: 'Ajustes da clínica' })).toBeInTheDocument()
     expect(screen.getByLabelText('Nome que a equipe vê')).toHaveValue('Clínica Aurora')
-    expect(screen.queryByText('pending')).not.toBeInTheDocument()
     expect(screen.queryByText('Grok')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText(/o que a ia/i)).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Identificador da linha')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /conectar instagram/i })).not.toBeInTheDocument()
-    expect(screen.getByText(/O Instagram ainda não entra no atendimento/)).toBeInTheDocument()
-    expect(await screen.findByRole('img', { name: 'QR Code do WhatsApp da clínica' })).toHaveAttribute('src', png)
+    expect(screen.queryByRole('img', { name: /qr code/i })).not.toBeInTheDocument()
+    expect(screen.queryByText(/conectado ao vivo/i)).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Continuar na Meta' }))
+    expect(onConnect).toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: 'Gravar atendimento' }))
-    expect(onSaveProfile).toHaveBeenCalledWith({ displayName: 'Clínica Aurora', dayStart: '09:00', dayEnd: '18:00', slotMinutes: '30' })
+    expect(onSaveProfile).toHaveBeenCalledWith(expect.objectContaining({ displayName: 'Clínica Aurora', slotMinutes: '30' }))
   })
 
-  it('hides the technical line form when the QR cannot open', async () => {
+  it('names the missing Meta configuration instead of showing a QR', () => {
     render(
       <MemoryRouter>
-        <SettingsPanel clinicName="Clínica Aurora" role="staff" integrations={integrations} onLoadQr={async () => null} />
+        <SettingsPanel clinicName="Clínica Aurora" integrations={integrations} signup={{ configured: false, connected: false }} />
       </MemoryRouter>,
     )
-    expect(screen.queryByLabelText('Identificador da linha')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Registrar linha nesta clínica' })).not.toBeInTheDocument()
-    expect(await screen.findByText('O QR não abriu. Tente de novo.')).toBeInTheDocument()
-    expect(screen.queryByRole('img', { name: 'QR Code do WhatsApp da clínica' })).not.toBeInTheDocument()
+    expect(screen.getByText(/EMBEDDED_SIGNUP_CONFIG_ID/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Mostrar QR do WhatsApp' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Continuar na Meta' })).not.toBeInTheDocument()
   })
 })
