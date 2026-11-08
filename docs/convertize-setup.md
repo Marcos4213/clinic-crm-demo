@@ -34,6 +34,12 @@ O app usa PKCE (`flowType: 'pkce'`). O retorno chega como `?code=` na URL acima,
 
 Não desligar o cadastro. Se "Confirm email" estiver ligado, o cadastro fica sem sessão até a pessoa abrir o próprio e-mail. O app não dispara outro e-mail.
 
+## Testes, sem misturar ambientes
+
+- `npm test` cobre o app e as regras puras de agenda, Grok e assinatura. Não abre o projeto `xjijlccnbrdpwctiacqa`.
+- O arquivo corrigido `supabase/migrations/20261108170000_convertize_core.sql` foi aplicado numa instância local descartável de PostgreSQL 17.11, com `check_function_bodies` ligado. Em seguida `supabase/tests/rls_security.sql` terminou em `rollback`. Isso não ativa o projeto remoto.
+- A tentativa remota anterior fez rollback. `schema_guard` no projeto `xjijlccnbrdpwctiacqa` continuava ausente (404 `PGRST202`) antes desta correção. Nada desta correção foi aplicado lá.
+
 ## O que ainda não está conectado
 
 - Grok, até `XAI_API_KEY` existir no servidor.

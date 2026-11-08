@@ -1,3 +1,4 @@
+// Checked against https://docs.x.ai/docs/models on 2026-11-08. That page lists grok-4.7 for chat.
 export const GROK_MODEL = 'grok-4.7'
 export const GROK_RESPONSES_URL = 'https://api.x.ai/v1/responses'
 export const MAX_CUSTOMER_CHARS = 2000

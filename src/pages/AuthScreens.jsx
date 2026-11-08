@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { authRedirectUrl } from '../config'
-import { useAuth } from '../state/AuthProvider'
+import { useAuth } from '../state/useAuth'
 
 function Shell({ title, children }) {
   return (

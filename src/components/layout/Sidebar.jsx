@@ -1,6 +1,6 @@
 import { BarChart3, Bot, CalendarDays, Kanban, Send, Settings } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
-import { useAuth } from '../../state/AuthProvider'
+import { useAuth } from '../../state/useAuth'
 
 function itemsFor(base, demo) {
   const items = [

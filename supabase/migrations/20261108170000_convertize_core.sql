@@ -1,7 +1,13 @@
 -- Convertize core schema for project xjijlccnbrdpwctiacqa (Postgres 17).
 -- Apply as one transaction. Do not run a partial copy.
--- Authorization uses clinic_memberships. Never use user_metadata or app_metadata for access.
+-- The previous attempt failed with 42P01 because language sql helpers named
+-- public.clinic_memberships before that table existed. Those helpers are created
+-- only after slot_offers_lead_idx. check_function_bodies stays at its default ON.
+-- Privileged bodies live in schema private, which is not an exposed API schema.
+-- Public wrappers are SECURITY INVOKER and do not accept a user id.
+-- Authorization uses clinic_memberships. Never use user_metadata or app_metadata.
 -- No patient seed. A persisted demo exists only when an authenticated user calls create_demo_workspace().
+-- This script does not claim the remote project already has these objects.
 
 begin;
 
@@ -39,41 +45,6 @@ create table public.clinic_memberships (
 );
 
 create index clinic_memberships_user_idx on public.clinic_memberships (user_id);
-
--- Helpers return a boolean or role for auth.uid() only. They do not return other tenants' rows.
-create or replace function private.is_member(target_clinic uuid)
-returns boolean
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select exists (
-    select 1
-    from public.clinic_memberships as membership
-    where membership.clinic_id = target_clinic
-      and membership.user_id = (select auth.uid())
-  );
-$$;
-
-create or replace function private.member_role(target_clinic uuid)
-returns text
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select membership.role
-  from public.clinic_memberships as membership
-  where membership.clinic_id = target_clinic
-    and membership.user_id = (select auth.uid())
-  limit 1;
-$$;
-
-revoke all on function private.is_member(uuid) from public, anon;
-revoke all on function private.member_role(uuid) from public, anon;
-grant execute on function private.is_member(uuid) to authenticated;
-grant execute on function private.member_role(uuid) to authenticated;
 
 create table public.clinic_settings (
   clinic_id uuid primary key references public.clinics (id) on delete cascade,
@@ -153,10 +124,29 @@ create table public.messages (
 
 create index messages_lead_idx on public.messages (clinic_id, lead_id, created_at);
 
+-- Capacity is exactly 1. A second practitioner is a second resource, not a second
+-- simultaneous booking on this row. Clients cannot insert resources.
+create table public.clinic_resources (
+  id uuid primary key default gen_random_uuid(),
+  clinic_id uuid not null references public.clinics (id) on delete cascade,
+  name text not null,
+  capacity integer not null default 1,
+  created_at timestamptz not null default now(),
+  constraint clinic_resources_capacity_one check (capacity = 1),
+  constraint clinic_resources_name_len check (char_length(btrim(name)) between 2 and 80),
+  constraint clinic_resources_clinic_id_key unique (clinic_id, id)
+);
+
+comment on table public.clinic_resources is
+  'Each resource accepts one scheduled appointment at a time. Overlapping bookings on the same resource are rejected. Adding a practitioner means adding a resource.';
+
+create index clinic_resources_clinic_idx on public.clinic_resources (clinic_id);
+
 create table public.appointments (
   id uuid primary key default gen_random_uuid(),
   clinic_id uuid not null references public.clinics (id) on delete cascade,
   lead_id uuid not null,
+  resource_id uuid,
   starts_at timestamptz not null,
   ends_at timestamptz not null,
   status text not null,
@@ -165,16 +155,22 @@ create table public.appointments (
   created_at timestamptz not null default now(),
   constraint appointments_lead_fk
     foreign key (clinic_id, lead_id) references public.leads (clinic_id, id) on delete restrict,
+  constraint appointments_resource_fk
+    foreign key (clinic_id, resource_id) references public.clinic_resources (clinic_id, id),
   constraint appointments_status check (status in ('scheduled', 'attended', 'no_show', 'canceled')),
   constraint appointments_range check (ends_at > starts_at and ends_at <= starts_at + interval '8 hours'),
   constraint appointments_notes_len check (char_length(notes) <= 1000),
-  constraint appointments_no_scheduled_overlap
+  constraint appointments_scheduled_has_resource check (status <> 'scheduled' or resource_id is not null),
+  constraint appointments_one_resource_at_a_time
     exclude using gist (
-      clinic_id with =,
+      resource_id with =,
       tstzrange(starts_at, ends_at, '[)') with &&
     )
     where (status = 'scheduled')
 );
+
+comment on constraint appointments_one_resource_at_a_time on public.appointments is
+  'Capacity 1 per resource. This constraint does not allow two practitioners to share one resource at the same time.';
 
 create index appointments_clinic_start_idx on public.appointments (clinic_id, starts_at);
 
@@ -182,6 +178,7 @@ create table public.slot_offers (
   id uuid primary key default gen_random_uuid(),
   clinic_id uuid not null,
   lead_id uuid not null,
+  resource_id uuid not null,
   starts_at timestamptz not null,
   ends_at timestamptz not null,
   expires_at timestamptz not null,
@@ -189,10 +186,47 @@ create table public.slot_offers (
   created_at timestamptz not null default now(),
   constraint slot_offers_lead_fk
     foreign key (clinic_id, lead_id) references public.leads (clinic_id, id) on delete cascade,
-  constraint slot_offers_range check (ends_at > starts_at)
+  constraint slot_offers_resource_fk
+    foreign key (clinic_id, resource_id) references public.clinic_resources (clinic_id, id),
+  constraint slot_offers_range check (ends_at > starts_at and ends_at <= starts_at + interval '8 hours')
 );
 
 create index slot_offers_lead_idx on public.slot_offers (clinic_id, lead_id, expires_at);
+
+-- language sql helpers. clinic_memberships already exists above, so check_function_bodies can stay on.
+create or replace function private.is_member(target_clinic uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.clinic_memberships as membership
+    where membership.clinic_id = target_clinic
+      and membership.user_id = (select auth.uid())
+  );
+$$;
+
+create or replace function private.member_role(target_clinic uuid)
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select membership.role
+  from public.clinic_memberships as membership
+  where membership.clinic_id = target_clinic
+    and membership.user_id = (select auth.uid())
+  limit 1;
+$$;
+
+revoke all on function private.is_member(uuid) from public, anon;
+revoke all on function private.member_role(uuid) from public, anon;
+grant execute on function private.is_member(uuid) to authenticated;
+grant execute on function private.member_role(uuid) to authenticated;
 
 create table private.ai_quota (
   clinic_id uuid not null,
@@ -246,23 +280,131 @@ create trigger leads_freeze_clinic
   before update on public.leads
   for each row execute function private.freeze_lead_clinic();
 
-create or replace function private.freeze_appointment_clinic()
-returns trigger
+create or replace function private.assert_bookable(
+  target_clinic uuid,
+  target_resource uuid,
+  p_starts timestamptz,
+  p_ends timestamptz,
+  require_future boolean,
+  ignore_appointment uuid
+)
+returns void
 language plpgsql
-security invoker
+security definer
 set search_path = ''
 as $$
+declare
+  day_start time;
+  day_end time;
+  local_start timestamp;
+  local_end timestamp;
 begin
-  if new.clinic_id is distinct from old.clinic_id or new.lead_id is distinct from old.lead_id then
-    raise exception 'appointment tenant reference is immutable' using errcode = '42501';
+  if require_future and p_starts <= pg_catalog.now() then
+    raise exception 'appointment must be in the future' using errcode = '22023';
+  end if;
+
+  select settings.day_start, settings.day_end
+    into day_start, day_end
+  from public.clinic_settings as settings
+  where settings.clinic_id = target_clinic;
+
+  if day_start is null then
+    raise exception 'clinic settings missing' using errcode = 'P0002';
+  end if;
+
+  local_start := pg_catalog.timezone('America/Sao_Paulo', p_starts);
+  local_end := pg_catalog.timezone('America/Sao_Paulo', p_ends);
+  if local_start::date <> local_end::date
+     or local_start::time < day_start
+     or local_end::time > day_end then
+    raise exception 'outside business hours' using errcode = '22023';
+  end if;
+
+  if exists (
+    select 1
+    from public.appointments as booked
+    where booked.resource_id = target_resource
+      and booked.status = 'scheduled'
+      and (ignore_appointment is null or booked.id <> ignore_appointment)
+      and tstzrange(booked.starts_at, booked.ends_at, '[)') && tstzrange(p_starts, p_ends, '[)')
+  ) then
+    raise exception 'slot is not free' using errcode = '22023';
+  end if;
+end;
+$$;
+create or replace function private.guard_appointment()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  resource_count integer;
+  sole_resource uuid;
+  time_changed boolean;
+begin
+  if tg_op = 'UPDATE' then
+    if new.clinic_id is distinct from old.clinic_id
+       or new.lead_id is distinct from old.lead_id
+       or new.resource_id is distinct from old.resource_id then
+      raise exception 'appointment tenant reference is immutable' using errcode = '42501';
+    end if;
+    if new.created_by is distinct from old.created_by then
+      raise exception 'created_by is immutable' using errcode = '42501';
+    end if;
+  else
+    if new.created_by is not null and new.created_by is distinct from auth.uid() then
+      raise exception 'created_by must be the current user' using errcode = '42501';
+    end if;
+    new.created_by := auth.uid();
+  end if;
+
+  if new.resource_id is null then
+    select count(*)::integer
+      into resource_count
+    from public.clinic_resources as resource
+    where resource.clinic_id = new.clinic_id;
+    if resource_count <> 1 then
+      raise exception 'resource required' using errcode = '22023';
+    end if;
+    select resource.id
+      into sole_resource
+    from public.clinic_resources as resource
+    where resource.clinic_id = new.clinic_id;
+    new.resource_id := sole_resource;
+  elsif not exists (
+    select 1
+    from public.clinic_resources as resource
+    where resource.id = new.resource_id
+      and resource.clinic_id = new.clinic_id
+  ) then
+    raise exception 'resource is not in this clinic' using errcode = '42501';
+  end if;
+
+  if tg_op = 'INSERT' then
+    time_changed := true;
+  else
+    time_changed := new.starts_at is distinct from old.starts_at
+      or new.ends_at is distinct from old.ends_at;
+  end if;
+  if new.status = 'scheduled'
+     and (tg_op = 'INSERT' or time_changed or old.status is distinct from 'scheduled') then
+    perform private.assert_bookable(
+      new.clinic_id,
+      new.resource_id,
+      new.starts_at,
+      new.ends_at,
+      time_changed,
+      case when tg_op = 'UPDATE' then new.id else null end
+    );
   end if;
   return new;
 end;
 $$;
 
-create trigger appointments_freeze_refs
-  before update on public.appointments
-  for each row execute function private.freeze_appointment_clinic();
+create trigger appointments_guard
+  before insert or update on public.appointments
+  for each row execute function private.guard_appointment();
 
 create or replace function private.record_stage_event()
 returns trigger
@@ -290,7 +432,8 @@ create trigger leads_stage_event
 
 revoke all on function private.touch_updated_at() from public, anon, authenticated;
 revoke all on function private.freeze_lead_clinic() from public, anon, authenticated;
-revoke all on function private.freeze_appointment_clinic() from public, anon, authenticated;
+revoke all on function private.assert_bookable(uuid, uuid, timestamptz, timestamptz, boolean, uuid) from public, anon, authenticated;
+revoke all on function private.guard_appointment() from public, anon, authenticated;
 revoke all on function private.record_stage_event() from public, anon, authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -347,6 +490,9 @@ begin
     (new_id, 'instagram', 'unconfigured', 'Provedor oficial não configurado'),
     (new_id, 'google_calendar', 'unconfigured', 'Google Calendar não está conectado');
 
+  insert into public.clinic_resources (clinic_id, name)
+  values (new_id, 'Agenda da clínica');
+
   return new_id;
 end;
 $$;
@@ -401,6 +547,9 @@ begin
     (new_id, 'whatsapp', 'unconfigured', 'Sem provedor'),
     (new_id, 'instagram', 'unconfigured', 'Sem provedor'),
     (new_id, 'google_calendar', 'unconfigured', 'Sem conexão');
+
+  insert into public.clinic_resources (clinic_id, name)
+  values (new_id, 'Agenda da clínica');
 
   insert into public.leads (clinic_id, name, phone, procedure_name, temperature, stage, ai_active)
   values (new_id, 'Maria Silva (amostra)', '+55 00 90000-0101', 'Botox', 'quente', 'em-atendimento', true)
@@ -513,6 +662,11 @@ set search_path = ''
 as $$
 declare
   lead_ok boolean;
+  sole_resource uuid;
+  item jsonb;
+  slot_start timestamptz;
+  slot_end timestamptz;
+  accepted tstzrange[] := '{}';
 begin
   if auth.uid() is null or not private.is_member(target_clinic) then
     raise exception 'forbidden' using errcode = '42501';
@@ -526,38 +680,73 @@ begin
   from public.leads as lead
   where lead.id = target_lead
     and lead.clinic_id = target_clinic;
-
   if lead_ok is not true then
     raise exception 'lead not in clinic' using errcode = '42501';
   end if;
+
+  select resource.id
+    into strict sole_resource
+  from public.clinic_resources as resource
+  where resource.clinic_id = target_clinic;
+
+  for item in select value from jsonb_array_elements(slots)
+  loop
+    slot_start := (item->>'starts_at')::timestamptz;
+    slot_end := (item->>'ends_at')::timestamptz;
+    if slot_end <= slot_start or slot_end > slot_start + interval '8 hours' then
+      raise exception 'invalid slot range' using errcode = '22023';
+    end if;
+    if exists (select 1 from unnest(accepted) as taken where taken && tstzrange(slot_start, slot_end, '[)')) then
+      raise exception 'slot is not free' using errcode = '22023';
+    end if;
+    if exists (
+      select 1
+      from public.slot_offers as offer
+      where offer.resource_id = sole_resource
+        and offer.lead_id <> target_lead
+        and offer.consumed_at is null
+        and offer.expires_at > pg_catalog.now()
+        and tstzrange(offer.starts_at, offer.ends_at, '[)') && tstzrange(slot_start, slot_end, '[)')
+    ) then
+      raise exception 'slot is not free' using errcode = '22023';
+    end if;
+    perform private.assert_bookable(target_clinic, sole_resource, slot_start, slot_end, true, null);
+    accepted := accepted || tstzrange(slot_start, slot_end, '[)');
+  end loop;
 
   delete from public.slot_offers as offer
   where offer.clinic_id = target_clinic
     and offer.lead_id = target_lead
     and offer.consumed_at is null;
 
-  insert into public.slot_offers (clinic_id, lead_id, starts_at, ends_at, expires_at)
+  insert into public.slot_offers (clinic_id, lead_id, resource_id, starts_at, ends_at, expires_at)
   select
     target_clinic,
     target_lead,
-    (item->>'starts_at')::timestamptz,
-    (item->>'ends_at')::timestamptz,
-    now() + interval '30 minutes'
-  from jsonb_array_elements(slots) as item
-  where (item->>'ends_at')::timestamptz > (item->>'starts_at')::timestamptz;
+    sole_resource,
+    (slot.value->>'starts_at')::timestamptz,
+    (slot.value->>'ends_at')::timestamptz,
+    pg_catalog.now() + interval '30 minutes'
+  from jsonb_array_elements(slots) as slot(value);
 
   return (
     select coalesce(jsonb_agg(jsonb_build_object(
       'id', offer.id,
       'starts_at', offer.starts_at,
-      'ends_at', offer.ends_at
+      'ends_at', offer.ends_at,
+      'resource_id', offer.resource_id
     ) order by offer.starts_at), '[]'::jsonb)
     from public.slot_offers as offer
     where offer.clinic_id = target_clinic
       and offer.lead_id = target_lead
       and offer.consumed_at is null
-      and offer.expires_at > now()
+      and offer.expires_at > pg_catalog.now()
   );
+exception
+  when too_many_rows then
+    raise exception 'resource required' using errcode = '22023';
+  when no_data_found then
+    raise exception 'clinic has no resource' using errcode = 'P0002';
 end;
 $$;
 
@@ -590,18 +779,19 @@ begin
   if offer.consumed_at is not null then
     raise exception 'offer consumed' using errcode = 'P0001';
   end if;
-  if offer.expires_at <= now() then
+  if offer.expires_at <= pg_catalog.now() then
     raise exception 'offer expired' using errcode = 'P0001';
   end if;
 
-  perform pg_advisory_xact_lock(hashtextextended(offer.clinic_id::text, 0));
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(offer.resource_id::text, 0));
+  perform private.assert_bookable(offer.clinic_id, offer.resource_id, offer.starts_at, offer.ends_at, true, null);
 
-  insert into public.appointments (clinic_id, lead_id, starts_at, ends_at, status, created_by)
-  values (offer.clinic_id, offer.lead_id, offer.starts_at, offer.ends_at, 'scheduled', auth.uid())
+  insert into public.appointments (clinic_id, lead_id, resource_id, starts_at, ends_at, status, created_by)
+  values (offer.clinic_id, offer.lead_id, offer.resource_id, offer.starts_at, offer.ends_at, 'scheduled', auth.uid())
   returning id into new_id;
 
   update public.slot_offers
-  set consumed_at = now()
+  set consumed_at = pg_catalog.now()
   where id = offer.id;
 
   return new_id;
@@ -611,113 +801,107 @@ exception
 end;
 $$;
 
-revoke all on function private.bootstrap_workspace(text) from public, anon, authenticated;
-revoke all on function private.create_demo_workspace() from public, anon, authenticated;
-revoke all on function private.consume_ai_quota(uuid) from public, anon, authenticated;
-revoke all on function private.assert_ai_active(uuid, uuid) from public, anon, authenticated;
-revoke all on function private.append_ai_message(uuid, uuid, text) from public, anon, authenticated;
-revoke all on function private.replace_slot_offers(uuid, uuid, jsonb) from public, anon, authenticated;
-revoke all on function private.create_appointment_from_offer(uuid) from public, anon, authenticated;
+revoke all on function private.bootstrap_workspace(text) from public, anon;
+revoke all on function private.create_demo_workspace() from public, anon;
+revoke all on function private.consume_ai_quota(uuid) from public, anon;
+revoke all on function private.assert_ai_active(uuid, uuid) from public, anon;
+revoke all on function private.append_ai_message(uuid, uuid, text) from public, anon;
+revoke all on function private.replace_slot_offers(uuid, uuid, jsonb) from public, anon;
+revoke all on function private.create_appointment_from_offer(uuid) from public, anon;
 
--- Public wrappers are SECURITY DEFINER only so the API can reach private
--- without exposing the private schema. Each one re-checks auth.uid().
--- Execute is granted to authenticated, never anon.
+-- Invoker wrappers need execute on the private body. private is not an exposed API schema.
+-- The private bodies still reject a caller who is not a member and never take a user id.
+grant execute on function private.bootstrap_workspace(text) to authenticated;
+grant execute on function private.create_demo_workspace() to authenticated;
+grant execute on function private.consume_ai_quota(uuid) to authenticated;
+grant execute on function private.assert_ai_active(uuid, uuid) to authenticated;
+grant execute on function private.append_ai_message(uuid, uuid, text) to authenticated;
+grant execute on function private.replace_slot_offers(uuid, uuid, jsonb) to authenticated;
+grant execute on function private.create_appointment_from_offer(uuid) to authenticated;
 
+-- Public entry points are SECURITY INVOKER. They do not run as the owner.
 create or replace function public.bootstrap_workspace(clinic_name text)
 returns uuid
-language plpgsql
-security definer
+language sql
+volatile
+security invoker
 set search_path = ''
 as $$
-begin
-  if auth.uid() is null then
-    raise exception 'not authenticated' using errcode = '28000';
-  end if;
-  return private.bootstrap_workspace(clinic_name);
-end;
+  select private.bootstrap_workspace(clinic_name);
 $$;
 
 create or replace function public.create_demo_workspace()
 returns uuid
-language plpgsql
-security definer
+language sql
+volatile
+security invoker
 set search_path = ''
 as $$
-begin
-  if auth.uid() is null then
-    raise exception 'not authenticated' using errcode = '28000';
-  end if;
-  return private.create_demo_workspace();
-end;
+  select private.create_demo_workspace();
 $$;
 
 create or replace function public.consume_ai_quota(target_clinic uuid)
 returns integer
-language plpgsql
-security definer
+language sql
+volatile
+security invoker
 set search_path = ''
 as $$
-begin
-  return private.consume_ai_quota(target_clinic);
-end;
+  select private.consume_ai_quota(target_clinic);
 $$;
 
 create or replace function public.assert_ai_active(target_clinic uuid, target_lead uuid)
 returns boolean
-language plpgsql
-security definer
+language sql
+volatile
+security invoker
 set search_path = ''
 as $$
-begin
-  return private.assert_ai_active(target_clinic, target_lead);
-end;
+  select private.assert_ai_active(target_clinic, target_lead);
 $$;
 
 create or replace function public.append_ai_message(target_clinic uuid, target_lead uuid, message_body text)
 returns uuid
-language plpgsql
-security definer
+language sql
+volatile
+security invoker
 set search_path = ''
 as $$
-begin
-  return private.append_ai_message(target_clinic, target_lead, message_body);
-end;
+  select private.append_ai_message(target_clinic, target_lead, message_body);
 $$;
 
 create or replace function public.replace_slot_offers(target_clinic uuid, target_lead uuid, slots jsonb)
 returns jsonb
-language plpgsql
-security definer
+language sql
+volatile
+security invoker
 set search_path = ''
 as $$
-begin
-  return private.replace_slot_offers(target_clinic, target_lead, slots);
-end;
+  select private.replace_slot_offers(target_clinic, target_lead, slots);
 $$;
 
 create or replace function public.create_appointment_from_offer(target_offer uuid)
 returns uuid
-language plpgsql
-security definer
+language sql
+volatile
+security invoker
 set search_path = ''
 as $$
-begin
-  return private.create_appointment_from_offer(target_offer);
-end;
+  select private.create_appointment_from_offer(target_offer);
 $$;
 
 create or replace function public.schema_guard()
 returns jsonb
 language sql
 stable
-security definer
+security invoker
 set search_path = ''
 as $$
-  select jsonb_build_object(
+  select pg_catalog.jsonb_build_object(
     'ok', coalesce((
-      select bool_and(relation.relrowsecurity and relation.relforcerowsecurity)
-      from pg_class as relation
-      join pg_namespace as namespace on namespace.oid = relation.relnamespace
+      select pg_catalog.bool_and(relation.relrowsecurity and relation.relforcerowsecurity)
+      from pg_catalog.pg_class as relation
+      join pg_catalog.pg_namespace as namespace on namespace.oid = relation.relnamespace
       where namespace.nspname = 'public'
         and relation.relkind = 'r'
         and relation.relname in (
@@ -728,11 +912,31 @@ as $$
           'leads',
           'lead_stage_events',
           'messages',
+          'clinic_resources',
           'appointments',
           'slot_offers'
         )
-    ), false),
-    'version', 1
+    ), false)
+    and (
+      select count(*) = 10
+      from pg_catalog.pg_class as relation
+      join pg_catalog.pg_namespace as namespace on namespace.oid = relation.relnamespace
+      where namespace.nspname = 'public'
+        and relation.relkind = 'r'
+        and relation.relname in (
+          'clinics',
+          'clinic_memberships',
+          'clinic_settings',
+          'integration_status',
+          'leads',
+          'lead_stage_events',
+          'messages',
+          'clinic_resources',
+          'appointments',
+          'slot_offers'
+        )
+    ),
+    'version', 2
   );
 $$;
 
@@ -765,6 +969,7 @@ alter table public.integration_status enable row level security;
 alter table public.leads enable row level security;
 alter table public.lead_stage_events enable row level security;
 alter table public.messages enable row level security;
+alter table public.clinic_resources enable row level security;
 alter table public.appointments enable row level security;
 alter table public.slot_offers enable row level security;
 
@@ -775,6 +980,7 @@ alter table public.integration_status force row level security;
 alter table public.leads force row level security;
 alter table public.lead_stage_events force row level security;
 alter table public.messages force row level security;
+alter table public.clinic_resources force row level security;
 alter table public.appointments force row level security;
 alter table public.slot_offers force row level security;
 
@@ -833,6 +1039,10 @@ create policy messages_insert on public.messages
     and delivery = 'local'
   );
 
+create policy resources_select on public.clinic_resources
+  for select to authenticated
+  using ((select private.is_member(clinic_id)));
+
 create policy appointments_select on public.appointments
   for select to authenticated
   using ((select private.is_member(clinic_id)));
@@ -868,6 +1078,7 @@ revoke all on table public.integration_status from anon, authenticated;
 revoke all on table public.leads from anon, authenticated;
 revoke all on table public.lead_stage_events from anon, authenticated;
 revoke all on table public.messages from anon, authenticated;
+revoke all on table public.clinic_resources from anon, authenticated;
 revoke all on table public.appointments from anon, authenticated;
 revoke all on table public.slot_offers from anon, authenticated;
 
@@ -878,12 +1089,13 @@ grant select on table public.integration_status to authenticated;
 grant select, insert, update, delete on table public.leads to authenticated;
 grant select on table public.lead_stage_events to authenticated;
 grant select, insert on table public.messages to authenticated;
+grant select on table public.clinic_resources to authenticated;
 grant select, insert, update, delete on table public.appointments to authenticated;
 grant select on table public.slot_offers to authenticated;
 
 create view public.appointment_schedule
 with (security_invoker = true) as
-select id, clinic_id, lead_id, starts_at, ends_at, status
+select id, clinic_id, resource_id, lead_id, starts_at, ends_at, status
 from public.appointments;
 
 revoke all on table public.appointment_schedule from anon, authenticated;

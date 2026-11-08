@@ -1,8 +1,7 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getSupabase } from '../auth/client'
 import { hasPublicConfig } from '../config'
-
-const AuthContext = createContext(null)
+import { AuthContext } from './auth-context'
 
 export function AuthProvider({ children, client = getSupabase() }) {
   const [session, setSession] = useState(null)
@@ -50,10 +49,4 @@ export function AuthProvider({ children, client = getSupabase() }) {
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth() {
-  const value = useContext(AuthContext)
-  if (!value) throw new Error('AuthProvider ausente')
-  return value
 }
