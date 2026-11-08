@@ -41,8 +41,14 @@ Não desligar o cadastro. Se "Confirm email" estiver ligado, o cadastro fica sem
 ## Testes, sem misturar ambientes
 
 - `npm test` cobre o app e as regras puras de agenda, Grok e assinatura. Não abre o projeto `xjijlccnbrdpwctiacqa`.
-- O arquivo corrigido `supabase/migrations/20261108170000_convertize_core.sql` foi aplicado numa instância local descartável de PostgreSQL 17.11, com `check_function_bodies` ligado. Em seguida `supabase/tests/rls_security.sql` terminou em `rollback`. Isso não ativa o projeto remoto.
-- A tentativa remota anterior fez rollback. `schema_guard` no projeto `xjijlccnbrdpwctiacqa` continuava ausente (404 `PGRST202`) antes desta correção. Nada desta correção foi aplicado lá.
+- O arquivo `supabase/migrations/20261108170000_convertize_core.sql` também foi exercitado numa instância local descartável de PostgreSQL 17.11. O `rollback` local não é o projeto remoto.
+- O conector aplicou depois a migration `20261108173252` `convertize_core` em `xjijlccnbrdpwctiacqa`, com `schema_guard` `{ok:true, version:2}`. Este repositório não repetiu essa aplicação.
+
+## Cloudflare Worker
+
+O build relativo também pode ser servido em `https://convertize.devbrasil.online/` por módulos do Worker, sem Workers Assets e sem publicar daqui. Depois de `npm run build`, `node scripts/build-cloudflare-upload.mjs` grava o `upload.json`. O envio é `PUT /accounts/{account_id}/workers/scripts/convertize` em `multipart/form-data`: a parte `metadata` é o objeto `metadata`, e cada item de `modules` é uma parte com o nome `modules[].name`. Texto entra como `text/plain`; binário entra como `application/octet-stream` depois de decodificar o base64. O MIME visto pelo navegador está no mapa do `worker.mjs`, não no MIME de upload.
+
+A documentação de limites dos Workers, atualizada em 29 out 2026, marca 64 MiB sem compressão, 128 MB de memória, 1 s de startup e 10 ms de CPU por request no plano gratuito. O mesmo plano tem 100.000 requests por dia na conta. Cada arquivo pedido passa pelo Worker e consome essa cota. O domínio, se for anexado depois, usa `PUT /accounts/{account_id}/workers/domains` com `hostname` `convertize.devbrasil.online` e `service` `convertize`.
 
 ## O que ainda não está conectado
 
