@@ -7,7 +7,8 @@ describe('whatsapp test screen', () => {
   it('shows the section name and stays disconnected without a route', () => {
     render(<WhatsAppPanel role="owner" messages={[]} />)
     expect(screen.getByRole('heading', { level: 1, name: 'WhatsApp' })).toBeInTheDocument()
-    expect(screen.getByText('Não conectado')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Escanear QR do WhatsApp' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Identificador da linha')).not.toBeInTheDocument()
     expect(screen.queryByText(/conectado ao vivo/i)).not.toBeInTheDocument()
   })
 
@@ -25,13 +26,14 @@ describe('whatsapp test screen', () => {
     expect(screen.getByRole('button', { name: 'Enviar mensagem de teste' })).toBeDisabled()
   })
 
-  it('lets only the owner bind a number and sends only after confirmation', async () => {
+  it('hides the technical line form and sends only after confirmation', async () => {
     const user = userEvent.setup()
     const onSend = vi.fn()
-    const { rerender } = render(<WhatsAppPanel role="staff" route={{ id: 'route-1' }} canSend onSend={onSend} />)
+    render(<WhatsAppPanel route={{ id: 'route-1' }} canSend onSend={onSend} />)
+    expect(screen.queryByLabelText('Identificador da linha')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Conta comercial')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Registrar a linha' })).not.toBeInTheDocument()
-    rerender(<WhatsAppPanel role="owner" route={{ id: 'route-1' }} canSend onSend={onSend} />)
-    expect(screen.getByLabelText('Identificador da linha')).toHaveValue('')
+    expect(screen.getByRole('button', { name: 'Escanear QR do WhatsApp' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Enviar mensagem de teste' }))
     expect(onSend).not.toHaveBeenCalled()
     await user.click(screen.getByLabelText('Confirmo o envio manual'))

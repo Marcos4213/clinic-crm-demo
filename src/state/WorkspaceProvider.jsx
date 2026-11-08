@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { columnLabel, countByColumn, filterLeads, moveLead, sendHumanMessage, setAiActive } from '../domain/crm'
 import { hasScheduledConflict, zonedLocalToUtc } from '../../supabase/functions/_shared/schedule.js'
+import { readWhatsappQr } from '../domain/whatsapp-qr'
 import { mapAppointment, mapLead, readSchemaGuard } from '../data/workspace-api'
 import { CrmContext } from './crm-context'
 
@@ -234,7 +235,7 @@ export function WorkspaceProvider({ client, children }) {
     setNotice(message)
   }
 
-  async function saveClinicProfile({ displayName, dayStart, dayEnd, slotMinutes, businessFaq }) {
+  async function saveClinicProfile({ displayName, dayStart, dayEnd, slotMinutes }) {
     const { error } = await client
       .from('clinic_settings')
       .update({
@@ -242,7 +243,6 @@ export function WorkspaceProvider({ client, children }) {
         day_start: dayStart,
         day_end: dayEnd,
         slot_minutes: Number(slotMinutes),
-        business_faq: businessFaq,
       })
       .eq('clinic_id', clinic.id)
     if (error) setNotice('Os ajustes da clínica não foram gravados.')
@@ -253,10 +253,24 @@ export function WorkspaceProvider({ client, children }) {
         day_start: dayStart,
         day_end: dayEnd,
         slot_minutes: Number(slotMinutes),
-        business_faq: businessFaq,
       }))
       setNotice('Ajustes gravados nesta clínica.')
     }
+  }
+
+  async function saveWhatsappLink(href) {
+    const parsed = readWhatsappQr(href)
+    if (!clinic?.id || !parsed) {
+      setNotice('Esse QR não é do WhatsApp.')
+      return
+    }
+    const { error } = await client.from('clinic_settings').update({ public_whatsapp: parsed.href }).eq('clinic_id', clinic.id)
+    if (error) {
+      setNotice('O QR foi lido, mas o número ainda não ficou gravado.')
+      return
+    }
+    setSettings((current) => ({ ...(current ?? {}), public_whatsapp: parsed.href }))
+    setNotice('QR do WhatsApp gravado nesta clínica.')
   }
 
   async function askAi() {
@@ -274,7 +288,7 @@ export function WorkspaceProvider({ client, children }) {
       body: { clinicId: clinic.id, leadId: selected.id, message },
     })
     if (error || data?.status === 'unconfigured' || data?.error === 'grok_unconfigured') {
-      setAiNotice('Grok não está configurado no servidor. Nenhuma resposta foi simulada.')
+      setAiNotice('A resposta interna não está disponível. Nenhum texto foi inventado.')
       return
     }
     if (data?.status === 'human_takeover') {
@@ -302,6 +316,7 @@ export function WorkspaceProvider({ client, children }) {
     createDemoWorkspace,
     saveFaq: saveClinicProfile,
     saveClinicProfile,
+    saveWhatsappLink,
     announce,
     leads,
     visibleLeads,

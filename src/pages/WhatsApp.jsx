@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { WhatsappScanner } from '../components/whatsapp/WhatsappScanner'
+import { readWhatsappQr, whatsappLabel } from '../domain/whatsapp-qr'
 import { useAuth } from '../state/useAuth'
 import { useCrm } from '../state/useCrm'
 
@@ -14,10 +16,12 @@ const STATUS_LABEL = {
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-export function WhatsAppPanel({ route, messages = [], role, canSend = false, notice, onBind, onSend }) {
+export function WhatsAppPanel({ route, messages = [], canSend = false, notice, onSend, savedLink = '', onScan }) {
   const [confirm, setConfirm] = useState(false)
   const [text, setText] = useState('')
   const [waId, setWaId] = useState('')
+  const [scanned, setScanned] = useState('')
+  const link = scanned || readWhatsappQr(savedLink)?.href || ''
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8">
@@ -25,39 +29,24 @@ export function WhatsAppPanel({ route, messages = [], role, canSend = false, not
         <p className="text-[10px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app</p>
         <h1 className="mt-2 text-[24px] font-semibold">WhatsApp</h1>
         <p className="mt-2 text-[13px] leading-5 text-muted">
-          {route ? 'IDs salvos. Sem prova de entrega e sem envio automático.' : 'Não conectado'}
+          {route
+            ? 'A linha já está com a Automatize. Escaneie o QR do WhatsApp da clínica. Nada parte sozinho.'
+            : 'Escaneie o QR Code do WhatsApp da clínica. O restante da conexão fica com a Automatize.'}
         </p>
-        {role === 'owner' && (
-          <form
-            className="mt-4 space-y-2"
-            onSubmit={(event) => {
-              event.preventDefault()
-              const data = new FormData(event.currentTarget)
-              onBind?.({
-                phone: String(data.get('phone') ?? ''),
-                waba: String(data.get('waba') ?? ''),
-                app: String(data.get('app') ?? ''),
-              })
-            }}
-          >
-            <h2 className="text-[16px] font-semibold">Registrar a linha</h2>
-            <label className="block text-[12px] font-semibold text-muted" htmlFor="wa-phone">
-                Identificador da linha
-              <input id="wa-phone" name="phone" required pattern="[0-9]{6,32}" autoComplete="off" className="mt-1 h-10 w-full rounded-lg border border-line bg-surface px-3 text-ink" />
-            </label>
-            <label className="block text-[12px] font-semibold text-muted" htmlFor="wa-waba">
-                Conta comercial
-              <input id="wa-waba" name="waba" required pattern="[0-9]{6,32}" autoComplete="off" className="mt-1 h-10 w-full rounded-lg border border-line bg-surface px-3 text-ink" />
-            </label>
-            <label className="block text-[12px] font-semibold text-muted" htmlFor="wa-app">
-                Aplicativo
-              <input id="wa-app" name="app" required pattern="[0-9]{6,32}" autoComplete="off" className="mt-1 h-10 w-full rounded-lg border border-line bg-surface px-3 text-ink" />
-            </label>
-            <button type="submit" className="h-9 rounded-lg bg-emerald px-3 text-[12.5px] font-semibold text-[#080F1C]">
-              Registrar linha nesta clínica
-            </button>
-          </form>
+        {link && (
+          <p className="mt-3 text-[14px] text-ink">
+            {whatsappLabel(link)}{' '}
+            <a href={link} target="_blank" rel="noreferrer" className="font-semibold text-emerald">
+              Abrir o WhatsApp
+            </a>
+          </p>
         )}
+        <WhatsappScanner
+          onScan={(href) => {
+            setScanned(href)
+            onScan?.(href)
+          }}
+        />
         <ul className="mt-4 divide-y divide-line rounded-2xl border border-line" aria-label="Mensagens do WhatsApp">
           {messages.length === 0 && <li className="px-3 py-3 text-[13px] text-muted">Nenhuma mensagem deste número.</li>}
           {messages.map((message) => (
@@ -102,28 +91,24 @@ export default function WhatsAppTest() {
   const crm = useCrm()
   const [route, setRoute] = useState(null)
   const [messages, setMessages] = useState([])
-  const [role, setRole] = useState('')
   const [tokenConfigured, setTokenConfigured] = useState(false)
   const [loadedAt, setLoadedAt] = useState(null)
   const [notice, setNotice] = useState('')
   const client = auth.client
-  const userId = auth.session?.user?.id
   const clinicId = crm.clinic?.id
 
   useEffect(() => {
-    if (!client || !clinicId || !userId) return undefined
+    if (!client || !clinicId) return undefined
     let cancel = false
     async function load() {
-      const [routes, rows, membership, status] = await Promise.all([
+      const [routes, rows, status] = await Promise.all([
         client.from('whatsapp_routes').select('id, phone_number_id').eq('clinic_id', clinicId).maybeSingle(),
         client.from('whatsapp_messages').select('id, body, status, direction, received_at, wa_id').eq('clinic_id', clinicId).order('received_at', { ascending: false }).limit(50),
-        client.from('clinic_memberships').select('role').eq('clinic_id', clinicId).eq('user_id', userId).maybeSingle(),
         client.functions.invoke('whatsapp-send', { method: 'GET', headers: { 'x-clinic-id': clinicId } }),
       ])
       if (cancel) return
       setRoute(routes.data ?? null)
       setMessages(rows.data ?? [])
-      setRole(membership.data?.role ?? '')
       setTokenConfigured(status.data?.tokenConfigured === true)
       setLoadedAt(Date.now())
     }
@@ -131,20 +116,7 @@ export default function WhatsAppTest() {
     return () => {
       cancel = true
     }
-  }, [client, clinicId, userId])
-
-  async function onBind(fields) {
-    const { error } = await client.rpc('bind_whatsapp_route', {
-      p_phone: fields.phone,
-      p_waba: fields.waba,
-      p_app: fields.app,
-    })
-    setNotice(error ? 'O número não foi vinculado.' : 'IDs salvos nesta clínica. O canal não está conectado.')
-    if (!error) {
-      const { data } = await client.from('whatsapp_routes').select('id, phone_number_id').eq('clinic_id', clinicId).maybeSingle()
-      setRoute(data ?? null)
-    }
-  }
+  }, [client, clinicId])
 
   async function onSend(payload) {
     const { data, error } = await client.functions.invoke('whatsapp-send', { body: { ...payload, clinicId } })
@@ -163,5 +135,15 @@ export default function WhatsAppTest() {
   const withinWindow = Boolean(loadedAt && lastInbound && loadedAt - Date.parse(lastInbound.received_at) <= DAY_MS)
   const canSend = Boolean(route && tokenConfigured && withinWindow)
 
-  return <WhatsAppPanel route={route} messages={messages} role={role} canSend={canSend} notice={notice} onBind={onBind} onSend={onSend} />
+  return (
+    <WhatsAppPanel
+      route={route}
+      messages={messages}
+      canSend={canSend}
+      notice={notice}
+      onSend={onSend}
+      savedLink={crm.settings?.public_whatsapp || ''}
+      onScan={auth.client ? crm.saveWhatsappLink : undefined}
+    />
+  )
 }
