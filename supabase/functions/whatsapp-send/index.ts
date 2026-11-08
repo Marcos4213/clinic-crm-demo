@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { withSupabase } from 'npm:@supabase/server@1'
 import { rpcPersisted } from '../_shared/whatsapp-http.js'
-import { beginClinicQr, beginManualSend, encodeQrImage, handleStatus, readClinicQr, routeQueryResult } from './send-handler.js'
+import { beginManualSend, handleStatus, routeQueryResult } from './send-handler.js'
 
 const ALLOWED_ORIGINS = new Set([
   'https://marcos4213.github.io',
@@ -29,51 +29,6 @@ function withCors(request: Request, response: Response) {
   return new Response(response.body, { status: response.status, headers })
 }
 
-async function graphJson(url: string, init: RequestInit) {
-  const response = await fetch(url, init)
-  const payload = await response.json().catch(() => ({}))
-  if (!response.ok) {
-    const error = new Error('graph') as Error & { code?: string }
-    error.code = payload?.error?.code === 190 ? 'token_expired' : 'upstream'
-    throw error
-  }
-  return payload
-}
-
-async function loadClinicQr(token: string, phoneNumberId: string) {
-  const version = Deno.env.get('WHATSAPP_GRAPH_VERSION') || 'v27.0'
-  const endpoint = `https://graph.facebook.com/${version}/${phoneNumberId}/message_qrdls`
-  const headers = { Authorization: `Bearer ${token}` }
-  const listed = await graphJson(endpoint, { headers })
-  let row = readClinicQr(listed)
-  if (!row) {
-    const created = await graphJson(endpoint, {
-      method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prefilled_message: 'Oi', generate_qr_image: 'PNG' }),
-    })
-    row = readClinicQr(created)
-  }
-  if (!row) {
-    const error = new Error('graph') as Error & { code?: string }
-    error.code = 'upstream'
-    throw error
-  }
-  const imageResponse = await fetch(row.imageUrl)
-  if (!imageResponse.ok) {
-    const error = new Error('graph') as Error & { code?: string }
-    error.code = 'upstream'
-    throw error
-  }
-  const image = encodeQrImage(new Uint8Array(await imageResponse.arrayBuffer()), imageResponse.headers.get('content-type') ?? '')
-  if (!image) {
-    const error = new Error('graph') as Error & { code?: string }
-    error.code = 'upstream'
-    throw error
-  }
-  return { deepLink: row.deepLink, image }
-}
-
 function serviceClient() {
   const url = Deno.env.get('SUPABASE_URL') ?? ''
   const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -85,11 +40,10 @@ export default {
   fetch: withSupabase({ auth: 'user' }, async (request, ctx) => {
     if (request.method === 'OPTIONS') return withCors(request, new Response(null, { status: 204 }))
     const supabase = ctx.supabase
-    const token = Deno.env.get('WHATSAPP_BUSINESS_ACCESS_TOKEN') ?? ''
     const { data: routeRows, error: routeError } = await supabase.from('whatsapp_routes').select('clinic_id, phone_number_id')
     const headerClinic = request.headers.get('x-clinic-id') ?? ''
     let bodyClinic = ''
-    let body: { confirm?: boolean; idempotencyKey?: string; waId?: string; text?: string; clinicId?: string; intent?: string } = {}
+    let body: { confirm?: boolean; idempotencyKey?: string; waId?: string; text?: string; clinicId?: string } = {}
     if (request.method === 'POST') {
       try {
         body = await request.json()
@@ -111,6 +65,15 @@ export default {
     )
     if (!selection.ok) return withCors(request, json({ error: selection.error, connected: false, canSend: false }, selection.status))
     const route = selection.route
+    const envToken = Deno.env.get('WHATSAPP_BUSINESS_ACCESS_TOKEN') ?? ''
+    let token = envToken
+    const tokenAdmin = serviceClient()
+    if (tokenAdmin) {
+      const stored = await tokenAdmin.rpc('whatsapp_clinic_token', { p_clinic: route.clinicId })
+      if (!stored.error && typeof stored.data === 'string' && stored.data.length >= 20 && stored.data.length <= 4096) {
+        token = stored.data
+      }
+    }
 
     if (request.method === 'GET') {
       const { data: inbound } = await supabase
@@ -140,16 +103,6 @@ export default {
     }
 
     if (request.method !== 'POST') return withCors(request, json({ error: 'method_not_allowed', connected: false }, 405))
-
-    if (body.intent === 'qr') {
-      const result = await beginClinicQr({
-        routes: [route],
-        clinicId: route.clinicId,
-        token,
-        qrTransport: ({ phoneNumberId }) => loadClinicQr(token, phoneNumberId),
-      })
-      return withCors(request, json(result.body, result.status))
-    }
 
     const idempotencyKey = String(body.idempotencyKey ?? '')
     const waId = String(body.waId ?? '')

@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ClinicQr } from '../components/whatsapp/ClinicQr'
-import { requestClinicQr } from '../data/clinic-qr'
+import { WhatsAppConnect } from '../components/whatsapp/WhatsAppConnect'
+import { useWhatsappSignup } from '../data/meta-signup'
 import { useAuth } from '../state/useAuth'
 import { useCrm } from '../state/useCrm'
 
 const COPY = {
   whatsapp: {
-    unconfigured: 'O QR aparece aqui no computador. No celular, abra o WhatsApp e aponte a câmera.',
-    pending: 'O QR aparece aqui no computador. No celular, abra o WhatsApp e aponte a câmera. As conversas entram quando alguém escrever.',
+    unconfigured: 'A linha entra pela janela oficial da Meta. Este painel não marca o canal como conectado.',
+    pending: 'Os identificadores já foram registrados. Ainda não há prova de entrega.',
   },
   instagram: {
     unconfigured: 'O Instagram ainda não entra no atendimento. Os contatos continuam neste CRM.',
@@ -68,7 +68,7 @@ function AttendanceForm({ clinicName, settings, onSaveProfile }) {
   )
 }
 
-export function SettingsPanel({ clinicName, settings, integrations = [], notice, onSaveProfile, onLoadQr }) {
+export function SettingsPanel({ clinicName, settings, integrations = [], notice, onSaveProfile, signup, signupNotice, signupPending, onConnect }) {
   const whatsapp = integrations.find((item) => item.provider === 'whatsapp')
   const others = integrations.filter((item) => item.provider === 'instagram' || item.provider === 'google_calendar')
   const attendanceKey = [clinicName, settings?.display_name, settings?.day_start, settings?.day_end, settings?.slot_minutes].join('|')
@@ -80,7 +80,7 @@ export function SettingsPanel({ clinicName, settings, integrations = [], notice,
           <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app</p>
           <h1 className="mt-2 text-[28px] font-semibold tracking-tight">Ajustes da clínica</h1>
           <p className="mt-2 max-w-xl text-[14px] leading-6 text-muted">
-            Nome, horário e o QR do WhatsApp. O restante da conexão fica com a Automatize.
+            Nome, horário e a entrada oficial do WhatsApp. O token fica no servidor.
           </p>
         </header>
 
@@ -96,7 +96,8 @@ export function SettingsPanel({ clinicName, settings, integrations = [], notice,
               Abrir conversas
             </Link>
           </div>
-          <ClinicQr onLoad={onLoadQr} />
+          <WhatsAppConnect config={signup} pending={signupPending} onConnect={onConnect} />
+          {signupNotice && <p className="mt-3 text-[13px] text-muted">{signupNotice}</p>}
         </section>
 
         <section className="rounded-2xl border border-line p-4">
@@ -119,6 +120,7 @@ export function SettingsPanel({ clinicName, settings, integrations = [], notice,
 export default function Settings() {
   const crm = useCrm()
   const auth = useAuth()
+  const signup = useWhatsappSignup(auth.client, crm.clinic?.id)
 
   return (
     <SettingsPanel
@@ -127,7 +129,10 @@ export default function Settings() {
       integrations={crm.integrations}
       notice={crm.notice}
       onSaveProfile={crm.saveClinicProfile}
-      onLoadQr={auth.client ? () => requestClinicQr(auth.client, crm.clinic?.id) : undefined}
+      signup={signup.config}
+      signupNotice={signup.signupNotice}
+      signupPending={signup.pending}
+      onConnect={signup.onConnect}
     />
   )
 }

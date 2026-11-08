@@ -465,6 +465,37 @@ begin
       null;
   end;
 
+  begin
+    perform 1 from private.whatsapp_credentials;
+    raise exception 'authenticated read private.whatsapp_credentials';
+  exception
+    when insufficient_privilege then
+      null;
+  end;
+
+  begin
+    perform public.store_whatsapp_signup(
+      clinic_a,
+      '11111111-1111-4111-8111-111111111111',
+      '8100000000000001',
+      '8200000000000001',
+      '8300000000000001',
+      'token-token-token-token-token'
+    );
+    raise exception 'authenticated stored a whatsapp token';
+  exception
+    when insufficient_privilege then
+      null;
+  end;
+
+  begin
+    perform public.whatsapp_clinic_token(clinic_a);
+    raise exception 'authenticated read a whatsapp token';
+  exception
+    when insufficient_privilege then
+      null;
+  end;
+
   execute 'reset role';
   perform set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
   perform set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
