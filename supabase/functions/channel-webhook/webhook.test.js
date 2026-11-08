@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 const secret = 'test-app-secret'
 const token = 'test-verify-token'
-const phone = '1468451929686754'
+const phone = '8100000000000001'
 
 function payload(messageId = 'wamid.1') {
   return JSON.stringify({
@@ -113,5 +113,34 @@ describe('channel webhook', () => {
     expect(huge.status).toBe(413)
     expect(missing.status).toBe(503)
     expect(missing.body.error).toBe('webhook_unconfigured')
+  })
+
+  it('does not acknowledge a message when the database persist call fails', async () => {
+    const raw = payload()
+    const thrown = await handleChannelRequest({
+      method: 'POST',
+      url: 'https://example.test/hook',
+      rawBody: raw,
+      signature: await signed(raw),
+      env: { WHATSAPP_APP_SECRET: secret, WHATSAPP_VERIFY_TOKEN: token },
+      ingest: async () => {
+        throw new Error(`db down ${phone} Oi`)
+      },
+      knownPhoneIds: new Set([phone]),
+    })
+    const reported = await handleChannelRequest({
+      method: 'POST',
+      url: 'https://example.test/hook',
+      rawBody: raw,
+      signature: await signed(raw),
+      env: { WHATSAPP_APP_SECRET: secret, WHATSAPP_VERIFY_TOKEN: token },
+      ingest: async () => ({ ok: false }),
+      knownPhoneIds: new Set([phone]),
+    })
+    expect(thrown.status).toBe(503)
+    expect(reported.status).toBe(503)
+    expect(JSON.stringify(thrown)).not.toContain(phone)
+    expect(JSON.stringify(thrown)).not.toContain('Oi')
+    expect(thrown.body.error).toBe('persist_failed')
   })
 })
