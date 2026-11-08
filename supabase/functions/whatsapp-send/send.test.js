@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { handleSend, handleStatus } from './send-handler.js'
+import { beginManualSend, handleSend, handleStatus } from './send-handler.js'
+
+const clinicA = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1'
+const clinicB = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2'
+const phoneA = '8100000000000001'
+const phoneB = '8100000000000002'
 
 describe('manual whatsapp send', () => {
   it('does not call transport without confirm or outside the 24 hour window', async () => {
@@ -11,7 +16,7 @@ describe('manual whatsapp send', () => {
     const now = Date.parse('2026-11-08T18:00:00Z')
     const common = {
       member: true,
-      route: { phoneNumberId: '1468451929686754' },
+      route: { phoneNumberId: phoneA },
       token: 'present',
       transport,
       now,
@@ -36,7 +41,7 @@ describe('manual whatsapp send', () => {
       lastInboundAt: '2026-11-08T17:00:00Z',
       now,
       member: true,
-      route: { phoneNumberId: '1468451929686754' },
+      route: { phoneNumberId: phoneA },
       token: '',
       transport,
     })
@@ -47,7 +52,7 @@ describe('manual whatsapp send', () => {
       lastInboundAt: '2026-11-08T17:00:00Z',
       now,
       member: true,
-      route: { phoneNumberId: '1468451929686754' },
+      route: { phoneNumberId: phoneA },
       token: 'present',
       transport,
     })
@@ -59,5 +64,36 @@ describe('manual whatsapp send', () => {
 
   it('never reports the simulated status as a live connection', () => {
     expect(handleStatus({ route: { phoneNumberId: '1' }, token: 'present', lastInboundAt: '2026-11-08T17:00:00Z', now: Date.parse('2026-11-08T18:00:00Z') }).connected).toBe(false)
+  })
+
+  it('fails closed when the route query fails or more than one clinic is visible', async () => {
+    const calls = []
+    const transport = async ({ phoneNumberId }) => {
+      calls.push(phoneNumberId)
+      return { id: 'wamid.new' }
+    }
+    const send = {
+      confirm: true,
+      idempotencyKey: 'k1',
+      existing: null,
+      lastInboundAt: '2026-11-08T17:00:00Z',
+      now: Date.parse('2026-11-08T18:00:00Z'),
+      token: 'present',
+      transport,
+    }
+    const routes = [
+      { clinicId: clinicA, phoneNumberId: phoneA },
+      { clinicId: clinicB, phoneNumberId: phoneB },
+    ]
+    const rpcDown = await beginManualSend({ ...send, routes: null, routeError: { message: 'connection reset' }, clinicId: clinicA })
+    const ambiguous = await beginManualSend({ ...send, routes, clinicId: '' })
+    const foreignClinic = await beginManualSend({ ...send, routes, clinicId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb9' })
+    const chosen = await beginManualSend({ ...send, routes, clinicId: clinicB })
+    expect(rpcDown.status).toBe(503)
+    expect(rpcDown.body.error).toBe('persist_failed')
+    expect(ambiguous.status).toBe(409)
+    expect(foreignClinic.status).toBe(403)
+    expect(chosen.status).toBe(200)
+    expect(calls).toEqual([phoneB])
   })
 })

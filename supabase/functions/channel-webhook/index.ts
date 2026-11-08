@@ -1,6 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { withSupabase } from 'npm:@supabase/server@1'
-import { handleChannelRequest } from '../_shared/whatsapp-http.js'
+import { handleChannelRequest, rpcPersisted } from '../_shared/whatsapp-http.js'
 
 function adminClient() {
   const url = Deno.env.get('SUPABASE_URL') ?? ''
@@ -24,16 +24,18 @@ export default {
       },
       ingest: admin
         ? async (event) => {
-            await admin.rpc('ingest_whatsapp_event', {
-              p_phone_number_id: event.phoneNumberId,
-              p_provider_message_id: event.providerMessageId,
-              p_kind: event.kind,
-              p_message_type: event.type,
-              p_body: event.text,
-              p_status: event.status,
-              p_wa_id: event.waId,
-              p_error_code: event.errorCode ?? null,
-            })
+            return rpcPersisted(
+              await admin.rpc('ingest_whatsapp_event', {
+                p_phone_number_id: event.phoneNumberId,
+                p_provider_message_id: event.providerMessageId,
+                p_kind: event.kind,
+                p_message_type: event.type,
+                p_body: event.text,
+                p_status: event.status,
+                p_wa_id: event.waId,
+                p_error_code: event.errorCode ?? null,
+              }),
+            )
           }
         : undefined,
     })

@@ -25,7 +25,7 @@ export async function handleChannelRequest({ method, url, rawBody = '', signatur
   const seen = new Set()
   for (const event of parseWebhook(rawBody)) {
     if (event.kind === 'status') {
-      await ingest?.(event)
+      if (!(await persist(ingest, event))) return persistFailed()
       continue
     }
     if (seen.has(event.providerMessageId)) continue
@@ -36,12 +36,30 @@ export async function handleChannelRequest({ method, url, rawBody = '', signatur
         knownPhoneIds,
       )
       if (decision.action !== 'store') continue
-      await ingest?.({ ...event, status: decision.status, text: decision.text })
+      if (!(await persist(ingest, { ...event, status: decision.status, text: decision.text }))) return persistFailed()
       continue
     }
-    await ingest?.(event)
+    if (!(await persist(ingest, event))) return persistFailed()
   }
   return { status: 200, body: { status: 'ok' } }
+}
+
+export function rpcPersisted(result) {
+  if (!result || result.error) return { ok: false }
+  return { ok: true }
+}
+
+async function persist(ingest, event) {
+  try {
+    const outcome = await ingest?.(event)
+    return outcome?.ok !== false
+  } catch {
+    return false
+  }
+}
+
+function persistFailed() {
+  return { status: 503, body: { status: 'retry', error: 'persist_failed' } }
 }
 
 function byteLength(value) {

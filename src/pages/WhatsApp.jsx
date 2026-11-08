@@ -118,7 +118,7 @@ export default function WhatsAppTest() {
         client.from('whatsapp_routes').select('id, phone_number_id').eq('clinic_id', clinicId).maybeSingle(),
         client.from('whatsapp_messages').select('id, body, status, direction, received_at, wa_id').eq('clinic_id', clinicId).order('received_at', { ascending: false }).limit(50),
         client.from('clinic_memberships').select('role').eq('clinic_id', clinicId).eq('user_id', userId).maybeSingle(),
-        client.functions.invoke('whatsapp-send', { method: 'GET' }),
+        client.functions.invoke('whatsapp-send', { method: 'GET', headers: { 'x-clinic-id': clinicId } }),
       ])
       if (cancel) return
       setRoute(routes.data ?? null)
@@ -147,7 +147,7 @@ export default function WhatsAppTest() {
   }
 
   async function onSend(payload) {
-    const { data, error } = await client.functions.invoke('whatsapp-send', { body: payload })
+    const { data, error } = await client.functions.invoke('whatsapp-send', { body: { ...payload, clinicId } })
     if (error || data?.error) {
       setNotice(
         data?.error === 'template_required'

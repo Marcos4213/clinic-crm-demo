@@ -12,10 +12,10 @@ describe('whatsapp policy', () => {
   })
 
   it('routes by phone_number_id and keeps unsupported messages empty', () => {
-    const payload = { phoneNumberId: '1468451929686754', providerMessageId: 'wamid.1', type: 'text', text: 'Oi' }
-    expect(decideInbound(payload, new Set(['1468451929686754']))).toMatchObject({ action: 'store', clinicKey: '1468451929686754' })
-    expect(decideInbound({ ...payload, phoneNumberId: 'desconhecido' }, new Set(['1468451929686754']))).toEqual({ action: 'ignore' })
-    expect(decideInbound({ ...payload, type: 'image' }, new Set(['1468451929686754']))).toMatchObject({
+    const payload = { phoneNumberId: '8100000000000001', providerMessageId: 'wamid.1', type: 'text', text: 'Oi' }
+    expect(decideInbound(payload, new Set(['8100000000000001']))).toMatchObject({ action: 'store', clinicKey: '8100000000000001' })
+    expect(decideInbound({ ...payload, phoneNumberId: 'desconhecido' }, new Set(['8100000000000001']))).toEqual({ action: 'ignore' })
+    expect(decideInbound({ ...payload, type: 'image' }, new Set(['8100000000000001']))).toMatchObject({
       action: 'store',
       status: 'unsupported',
       text: null,
