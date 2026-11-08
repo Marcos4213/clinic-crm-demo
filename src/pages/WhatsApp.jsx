@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { WhatsappScanner } from '../components/whatsapp/WhatsappScanner'
-import { readWhatsappQr, whatsappLabel } from '../domain/whatsapp-qr'
+import { ClinicQr } from '../components/whatsapp/ClinicQr'
+import { requestClinicQr } from '../data/clinic-qr'
 import { useAuth } from '../state/useAuth'
 import { useCrm } from '../state/useCrm'
 
@@ -16,12 +16,10 @@ const STATUS_LABEL = {
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-export function WhatsAppPanel({ route, messages = [], canSend = false, notice, onSend, savedLink = '', onScan }) {
+export function WhatsAppPanel({ route, messages = [], canSend = false, notice, onSend, onLoadQr }) {
   const [confirm, setConfirm] = useState(false)
   const [text, setText] = useState('')
   const [waId, setWaId] = useState('')
-  const [scanned, setScanned] = useState('')
-  const link = scanned || readWhatsappQr(savedLink)?.href || ''
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8">
@@ -30,23 +28,10 @@ export function WhatsAppPanel({ route, messages = [], canSend = false, notice, o
         <h1 className="mt-2 text-[24px] font-semibold">WhatsApp</h1>
         <p className="mt-2 text-[13px] leading-5 text-muted">
           {route
-            ? 'A linha já está com a Automatize. Escaneie o QR do WhatsApp da clínica. Nada parte sozinho.'
-            : 'Escaneie o QR Code do WhatsApp da clínica. O restante da conexão fica com a Automatize.'}
+            ? 'A linha já está com a Automatize. O QR aparece aqui no computador. Nada parte sozinho.'
+            : 'O QR aparece aqui no computador. O restante da conexão fica com a Automatize.'}
         </p>
-        {link && (
-          <p className="mt-3 text-[14px] text-ink">
-            {whatsappLabel(link)}{' '}
-            <a href={link} target="_blank" rel="noreferrer" className="font-semibold text-emerald">
-              Abrir o WhatsApp
-            </a>
-          </p>
-        )}
-        <WhatsappScanner
-          onScan={(href) => {
-            setScanned(href)
-            onScan?.(href)
-          }}
-        />
+        <ClinicQr onLoad={onLoadQr} />
         <ul className="mt-4 divide-y divide-line rounded-2xl border border-line" aria-label="Mensagens do WhatsApp">
           {messages.length === 0 && <li className="px-3 py-3 text-[13px] text-muted">Nenhuma mensagem deste número.</li>}
           {messages.map((message) => (
@@ -142,8 +127,7 @@ export default function WhatsAppTest() {
       canSend={canSend}
       notice={notice}
       onSend={onSend}
-      savedLink={crm.settings?.public_whatsapp || ''}
-      onScan={auth.client ? crm.saveWhatsappLink : undefined}
+      onLoadQr={client ? () => requestClinicQr(client, clinicId) : undefined}
     />
   )
 }

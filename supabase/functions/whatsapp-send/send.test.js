@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { beginManualSend, handleSend, handleStatus } from './send-handler.js'
+import { beginClinicQr, beginManualSend, encodeQrImage, handleSend, handleStatus, readClinicQr } from './send-handler.js'
 
 const clinicA = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1'
 const clinicB = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2'
@@ -95,5 +95,42 @@ describe('manual whatsapp send', () => {
     expect(foreignClinic.status).toBe(403)
     expect(chosen.status).toBe(200)
     expect(calls).toEqual([phoneB])
+  })
+
+  it('returns the clinic QR image and does not send a message', async () => {
+    const calls = []
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+    const image = encodeQrImage(png, 'image/png')
+    const qrTransport = async ({ phoneNumberId }) => {
+      calls.push(phoneNumberId)
+      return { deepLink: 'https://wa.me/message/CLINICAQR01', image }
+    }
+    const shown = await beginClinicQr({
+      routes: [{ clinicId: clinicA, phoneNumberId: phoneA }],
+      clinicId: clinicA,
+      token: 'present',
+      qrTransport,
+    })
+    const missingToken = await beginClinicQr({
+      routes: [{ clinicId: clinicA, phoneNumberId: phoneA }],
+      clinicId: clinicA,
+      token: '',
+      qrTransport,
+    })
+    const foreign = await beginClinicQr({
+      routes: [{ clinicId: clinicA, phoneNumberId: phoneA }],
+      clinicId: clinicB,
+      token: 'present',
+      qrTransport,
+    })
+    expect(shown.status).toBe(200)
+    expect(shown.body.connected).toBe(false)
+    expect(shown.body.image).toMatch(/^data:image\/png;base64,/)
+    expect(shown.body.deepLink).toBe('https://wa.me/message/CLINICAQR01')
+    expect(missingToken.status).toBe(503)
+    expect(foreign.status).toBe(403)
+    expect(calls).toEqual([phoneA])
+    expect(readClinicQr({ data: [{ deep_link_url: 'https://evil.example/qr', qr_image_url: 'https://cdn.example/qr.png' }] })).toBeNull()
+    expect(encodeQrImage(new Uint8Array([1, 2, 3]), 'image/png')).toBeNull()
   })
 })

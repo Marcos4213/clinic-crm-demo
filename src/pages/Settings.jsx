@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { WhatsappScanner } from '../components/whatsapp/WhatsappScanner'
-import { readWhatsappQr, whatsappLabel } from '../domain/whatsapp-qr'
+import { ClinicQr } from '../components/whatsapp/ClinicQr'
+import { requestClinicQr } from '../data/clinic-qr'
 import { useAuth } from '../state/useAuth'
 import { useCrm } from '../state/useCrm'
 
 const COPY = {
   whatsapp: {
-    unconfigured: 'Escaneie o QR Code do WhatsApp da clínica. O restante da conexão fica com a Automatize.',
-    pending: 'A linha já está registrada. Escaneie o QR do WhatsApp para deixar o número com a equipe. As conversas entram quando alguém escrever.',
+    unconfigured: 'O QR aparece aqui no computador. No celular, abra o WhatsApp e aponte a câmera.',
+    pending: 'O QR aparece aqui no computador. No celular, abra o WhatsApp e aponte a câmera. As conversas entram quando alguém escrever.',
   },
   instagram: {
     unconfigured: 'O Instagram ainda não entra no atendimento. Os contatos continuam neste CRM.',
@@ -68,12 +68,9 @@ function AttendanceForm({ clinicName, settings, onSaveProfile }) {
   )
 }
 
-export function SettingsPanel({ clinicName, settings, integrations = [], notice, onSaveProfile, onSaveWhatsapp }) {
+export function SettingsPanel({ clinicName, settings, integrations = [], notice, onSaveProfile, onLoadQr }) {
   const whatsapp = integrations.find((item) => item.provider === 'whatsapp')
   const others = integrations.filter((item) => item.provider === 'instagram' || item.provider === 'google_calendar')
-  const savedLink = readWhatsappQr(settings?.public_whatsapp)?.href || ''
-  const [scanned, setScanned] = useState('')
-  const link = scanned || savedLink
   const attendanceKey = [clinicName, settings?.display_name, settings?.day_start, settings?.day_end, settings?.slot_minutes].join('|')
 
   return (
@@ -99,20 +96,7 @@ export function SettingsPanel({ clinicName, settings, integrations = [], notice,
               Abrir conversas
             </Link>
           </div>
-          {link && (
-            <p className="mt-3 text-[14px] text-ink">
-              {whatsappLabel(link)}{' '}
-              <a href={link} target="_blank" rel="noreferrer" className="font-semibold text-emerald">
-                Abrir o WhatsApp
-              </a>
-            </p>
-          )}
-          <WhatsappScanner
-            onScan={(href) => {
-              setScanned(href)
-              onSaveWhatsapp?.(href)
-            }}
-          />
+          <ClinicQr onLoad={onLoadQr} />
         </section>
 
         <section className="rounded-2xl border border-line p-4">
@@ -143,7 +127,7 @@ export default function Settings() {
       integrations={crm.integrations}
       notice={crm.notice}
       onSaveProfile={crm.saveClinicProfile}
-      onSaveWhatsapp={auth.client ? crm.saveWhatsappLink : undefined}
+      onLoadQr={auth.client ? () => requestClinicQr(auth.client, crm.clinic?.id) : undefined}
     />
   )
 }

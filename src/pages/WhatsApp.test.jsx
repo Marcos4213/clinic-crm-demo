@@ -7,7 +7,7 @@ describe('whatsapp test screen', () => {
   it('shows the section name and stays disconnected without a route', () => {
     render(<WhatsAppPanel role="owner" messages={[]} />)
     expect(screen.getByRole('heading', { level: 1, name: 'WhatsApp' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Escanear QR do WhatsApp' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Mostrar QR do WhatsApp' })).toBeInTheDocument()
     expect(screen.queryByLabelText('Identificador da linha')).not.toBeInTheDocument()
     expect(screen.queryByText(/conectado ao vivo/i)).not.toBeInTheDocument()
   })
@@ -33,7 +33,7 @@ describe('whatsapp test screen', () => {
     expect(screen.queryByLabelText('Identificador da linha')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Conta comercial')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Registrar a linha' })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Escanear QR do WhatsApp' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Mostrar QR do WhatsApp' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Enviar mensagem de teste' }))
     expect(onSend).not.toHaveBeenCalled()
     await user.click(screen.getByLabelText('Confirmo o envio manual'))
