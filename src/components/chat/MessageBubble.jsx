@@ -18,7 +18,7 @@ export default function MessageBubble({ message }) {
   const outgoing = message.role !== 'cliente'
   const bubble =
     message.role === 'cliente'
-      ? 'border border-line bg-white rounded-bl-md'
+      ? 'border border-line bg-canvas rounded-bl-md'
       : message.role === 'humano'
         ? 'border border-[#D5E2F2] bg-human rounded-br-md'
         : 'bg-client rounded-br-md'
@@ -32,7 +32,7 @@ export default function MessageBubble({ message }) {
         </div>
         <div className={`rounded-2xl px-3 py-2 text-[13px] leading-5 text-ink ${bubble}`}>
           <p className="whitespace-pre-wrap">{message.text}</p>
-          <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-[#5C7388]">
+          <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-muted">
             <time dateTime={message.at}>{formatStamp(message.at)}</time>
             {message.receipt && <Receipt receipt={message.receipt} />}
           </div>

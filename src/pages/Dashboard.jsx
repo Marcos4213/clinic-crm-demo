@@ -21,12 +21,12 @@ export default function Dashboard() {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       {compact && (
-        <div className="flex shrink-0 gap-1 border-b border-line bg-white p-2">
+        <div className="flex shrink-0 gap-1 border-b border-line bg-surface p-2">
           <button
             type="button"
             aria-pressed={pane === 'board'}
             onClick={() => setPane('board')}
-            className={`h-8 flex-1 rounded-lg text-[12px] font-semibold ${pane === 'board' ? 'bg-navy-900 text-white' : 'text-muted'}`}
+            className={`h-8 flex-1 rounded-lg text-[12px] font-semibold ${pane === 'board' ? 'bg-emerald text-[#080F1C]' : 'text-muted'}`}
           >
             Mostrar funil
           </button>
@@ -34,7 +34,7 @@ export default function Dashboard() {
             type="button"
             aria-pressed={pane === 'chat'}
             onClick={() => setPane('chat')}
-            className={`h-8 flex-1 rounded-lg text-[12px] font-semibold ${pane === 'chat' ? 'bg-navy-900 text-white' : 'text-muted'}`}
+            className={`h-8 flex-1 rounded-lg text-[12px] font-semibold ${pane === 'chat' ? 'bg-emerald text-[#080F1C]' : 'text-muted'}`}
           >
             Mostrar conversa
           </button>
@@ -47,9 +47,11 @@ export default function Dashboard() {
             <KanbanBoard leads={crm.visibleLeads} selectedId={crm.selectedId} onSelect={selectLead} onMove={crm.moveLeadTo} />
           </div>
         )}
-        {showChat && (
+        {showChat && crm.selected && (
           <ChatPanel
             lead={crm.selected}
+            onAskAi={crm.askAi}
+            aiNotice={crm.aiNotice}
             hiddenByFilter={hiddenByFilter}
             draft={crm.draft}
             onDraft={crm.setDraft}

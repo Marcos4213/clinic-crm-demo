@@ -63,8 +63,8 @@ export default function LeadCard({ lead, selected, onSelect, onMove }) {
         event.dataTransfer.setData('text/plain', lead.id)
         event.dataTransfer.effectAllowed = 'move'
       }}
-      className={`rounded-xl border bg-white shadow-[0_1px_1px_rgba(16,32,51,0.04),0_8px_20px_rgba(16,32,51,0.05)] ${
-        selected ? 'border-teal-700/50 bg-teal-100/50 ring-1 ring-teal-700/25' : 'border-white'
+      className={`rounded-xl border bg-surface ${
+        selected ? 'border-emerald/50 bg-teal-100/50 ring-1 ring-emerald/25' : 'border-line'
       }`}
     >
       <button
@@ -106,7 +106,7 @@ export default function LeadCard({ lead, selected, onSelect, onMove }) {
             role="menu"
             aria-label={`Mover ${lead.name}`}
             style={{ top: coords.top, left: coords.left }}
-            className="fixed z-50 w-[212px] rounded-xl border border-line bg-white p-1 shadow-[0_12px_40px_rgba(16,32,51,0.16)]"
+            className="fixed z-50 w-[212px] rounded-xl border border-line bg-surface p-1 shadow-[0_12px_40px_rgba(8,15,28,0.45)]"
           >
             {COLUMNS.map((column) => (
               <button

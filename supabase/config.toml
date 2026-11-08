@@ -1,0 +1,7 @@
+project_id = "xjijlccnbrdpwctiacqa"
+
+[functions.grok-reply]
+verify_jwt = true
+
+[functions.channel-webhook]
+verify_jwt = false

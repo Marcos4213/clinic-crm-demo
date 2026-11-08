@@ -34,7 +34,7 @@ function compactMedia() {
 }
 
 beforeEach(() => {
-  window.location.hash = '#/'
+  window.location.hash = '#/demo'
   desktopMedia()
 })
 

@@ -11,13 +11,13 @@ export default function SectionPage({ icon: Icon, kicker, title, children }) {
             Demonstração
           </span>
         </div>
-        <div className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-[0_1px_1px_rgba(16,32,51,0.04),0_10px_28px_rgba(16,32,51,0.05)]">
+        <div className="mt-6 rounded-2xl border border-line bg-surface p-5">
           <div className="mb-4 grid h-10 w-10 place-items-center rounded-xl bg-canvas text-blue-700">
             <Icon size={18} strokeWidth={1.75} aria-hidden="true" />
           </div>
           {children}
         </div>
-        <Link to="/" className="mt-4 inline-flex text-[13px] font-semibold text-blue-700">
+        <Link to="/demo" className="mt-4 inline-flex text-[13px] font-semibold text-info">
           Voltar ao pipeline
         </Link>
       </div>
