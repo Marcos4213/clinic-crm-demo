@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { columnLabel, countByColumn, filterLeads, moveLead, sendHumanMessage, setAiActive } from '../domain/crm'
 import { hasScheduledConflict, zonedLocalToUtc } from '../../supabase/functions/_shared/schedule.js'
 import { mapAppointment, mapLead, readSchemaGuard } from '../data/workspace-api'
@@ -33,7 +33,7 @@ export function WorkspaceProvider({ client, children }) {
   const [announcement, setAnnouncement] = useState('')
   const [aiNotice, setAiNotice] = useState('')
 
-  async function refresh(clinicId) {
+  const refresh = useCallback(async (clinicId) => {
     const [leadResult, messageResult, appointmentResult, eventResult, integrationResult, settingsResult] = await Promise.all([
       client.from('leads').select('*').eq('clinic_id', clinicId),
       client.from('messages').select('*').eq('clinic_id', clinicId),
@@ -60,7 +60,7 @@ export function WorkspaceProvider({ client, children }) {
     setIntegrations(integrationResult.data ?? [])
     setSettings(settingsResult.data ?? null)
     setSelectedId((current) => current ?? nextLeads[0]?.id ?? null)
-  }
+  }, [client])
 
   useEffect(() => {
     let active = true
@@ -78,7 +78,7 @@ export function WorkspaceProvider({ client, children }) {
     return () => {
       active = false
     }
-  }, [client])
+  }, [client, refresh])
 
   const visibleLeads = useMemo(() => filterLeads(leads, { query, temperature }), [leads, query, temperature])
   const counts = useMemo(() => countByColumn(visibleLeads), [visibleLeads])

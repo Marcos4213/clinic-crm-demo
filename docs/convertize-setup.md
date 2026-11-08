@@ -34,6 +34,12 @@ O app usa PKCE (`flowType: 'pkce'`). O retorno chega como `?code=` na URL acima,
 
 Não desligar o cadastro. Se "Confirm email" estiver ligado, o cadastro fica sem sessão até a pessoa abrir o próprio e-mail. O app não dispara outro e-mail.
 
+## Testes, sem misturar ambientes
+
+- `npm test` cobre o app e as regras puras de agenda, Grok e assinatura. Não abre o projeto `xjijlccnbrdpwctiacqa`.
+- `supabase/tests/rls_security.sql` foi executado numa instância local descartável de Postgres 16, depois de aplicar a migration nessa mesma instância. O script termina em `rollback`. Esse resultado não significa que o projeto remoto já tem o esquema.
+- O `schema_guard` remoto só vale quando a migration estiver aplicada em `xjijlccnbrdpwctiacqa`. Uma chamada anônima não cria usuário e não envia e-mail. Sem sessão, a função autenticada não prova o fluxo da clínica.
+
 ## O que ainda não está conectado
 
 - Grok, até `XAI_API_KEY` existir no servidor.

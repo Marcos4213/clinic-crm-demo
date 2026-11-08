@@ -1,6 +1,7 @@
 -- Convertize RLS and tenancy tests.
 -- Run AFTER 20261108170000_convertize_core.sql, as a role that can insert auth.users
 -- (SQL editor / postgres). The script rolls back. It does not send email.
+-- A green local run is not evidence that project xjijlccnbrdpwctiacqa has this schema.
 --
 -- Local stub: create auth.users with the columns used below and auth.uid() reading
 -- request.jwt.claim.sub before applying the migration. Hosted Supabase already has both.

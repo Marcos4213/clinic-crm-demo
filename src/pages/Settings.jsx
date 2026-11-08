@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAuth } from '../state/AuthProvider'
+import { useAuth } from '../state/useAuth'
 import { useCrm } from '../state/useCrm'
 
 const PROVIDER_LABEL = {
