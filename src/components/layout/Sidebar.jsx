@@ -33,7 +33,7 @@ export default function Sidebar({ base = '/demo', demo = true }) {
   return (
     <nav
       aria-label="Seções do Automatize.app"
-      className="flex h-14 shrink-0 items-center gap-1 border-b border-white/10 bg-navy-950 px-3 lg:h-auto lg:w-[72px] lg:flex-col lg:border-b-0 lg:border-r lg:px-2 lg:py-3"
+      className="flex h-14 shrink-0 items-center gap-1 overflow-x-auto border-b border-white/10 bg-navy-950 px-3 lg:h-auto lg:w-56 lg:flex-col lg:overflow-visible lg:border-b-0 lg:border-r lg:px-3 lg:py-4"
     >
       <NavLink
         to={base}
@@ -53,7 +53,7 @@ export default function Sidebar({ base = '/demo', demo = true }) {
                 end={item.end}
                 aria-label={item.label}
                 className={({ isActive }) =>
-                  `group relative grid h-10 w-10 place-items-center rounded-xl text-[#D5E0EC] transition-colors duration-150 lg:w-full ${
+                  `group relative flex h-10 items-center gap-2 rounded-xl px-2 text-[#D5E0EC] transition-colors duration-150 ${
                     isActive
                       ? 'bg-navy-800 text-white shadow-[inset_0_-2px_0_#7DCEC8] lg:shadow-[inset_2px_0_0_#7DCEC8]'
                       : 'hover:bg-white/10'
@@ -61,12 +61,7 @@ export default function Sidebar({ base = '/demo', demo = true }) {
                 }
               >
                 <Icon size={18} strokeWidth={1.75} aria-hidden="true" />
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute top-full left-1/2 z-30 mt-2 -translate-x-1/2 rounded-md bg-navy-900 px-2 py-1 text-[11px] font-medium whitespace-nowrap text-white opacity-0 shadow-lg ring-1 ring-white/10 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 lg:top-1/2 lg:left-full lg:mt-0 lg:ml-2 lg:-translate-y-1/2 lg:translate-x-0"
-                >
-                  {item.label}
-                </span>
+                <span className="text-[12px] font-medium whitespace-nowrap">{item.label}</span>
               </NavLink>
             </li>
           )

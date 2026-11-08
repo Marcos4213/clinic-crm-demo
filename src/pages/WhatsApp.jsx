@@ -40,21 +40,21 @@ export function WhatsAppPanel({ route, messages = [], role, canSend = false, not
               })
             }}
           >
-            <h2 className="text-[16px] font-semibold">Vincular número</h2>
+            <h2 className="text-[16px] font-semibold">Registrar a linha</h2>
             <label className="block text-[12px] font-semibold text-muted" htmlFor="wa-phone">
-              Phone number ID
+                Identificador da linha
               <input id="wa-phone" name="phone" required pattern="[0-9]{6,32}" autoComplete="off" className="mt-1 h-10 w-full rounded-lg border border-line bg-surface px-3 text-ink" />
             </label>
             <label className="block text-[12px] font-semibold text-muted" htmlFor="wa-waba">
-              WABA ID
+                Conta comercial
               <input id="wa-waba" name="waba" required pattern="[0-9]{6,32}" autoComplete="off" className="mt-1 h-10 w-full rounded-lg border border-line bg-surface px-3 text-ink" />
             </label>
             <label className="block text-[12px] font-semibold text-muted" htmlFor="wa-app">
-              App ID
+                Aplicativo
               <input id="wa-app" name="app" required pattern="[0-9]{6,32}" autoComplete="off" className="mt-1 h-10 w-full rounded-lg border border-line bg-surface px-3 text-ink" />
             </label>
             <button type="submit" className="h-9 rounded-lg bg-emerald px-3 text-[12.5px] font-semibold text-[#080F1C]">
-              Salvar IDs nesta clínica
+              Registrar linha nesta clínica
             </button>
           </form>
         )}

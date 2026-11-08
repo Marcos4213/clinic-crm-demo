@@ -20,6 +20,7 @@ async function loadClinic(client) {
 export function WorkspaceProvider({ client, children }) {
   const [phase, setPhase] = useState('loading')
   const [clinic, setClinic] = useState(null)
+  const [role, setRole] = useState('')
   const [notice, setNotice] = useState('')
   const [leads, setLeads] = useState([])
   const [appointments, setAppointments] = useState([])
@@ -68,6 +69,7 @@ export function WorkspaceProvider({ client, children }) {
       if (!active) return
       if (result.status === 'ready') {
         setClinic(result.clinic)
+        setRole(result.role ?? '')
         setPhase('ready')
         refresh(result.clinic.id)
       } else {
@@ -96,6 +98,7 @@ export function WorkspaceProvider({ client, children }) {
     const loaded = await loadClinic(client)
     if (loaded.status === 'ready') {
       setClinic(loaded.clinic)
+      setRole(loaded.role ?? '')
       setPhase('ready')
       await refresh(loaded.clinic.id)
     } else if (data) {
@@ -227,12 +230,32 @@ export function WorkspaceProvider({ client, children }) {
     }
   }
 
-  async function saveFaq(businessFaq) {
-    const { error } = await client.from('clinic_settings').update({ business_faq: businessFaq }).eq('clinic_id', clinic.id)
-    if (error) setNotice(error.message || 'O FAQ não foi gravado.')
+  function announce(message) {
+    setNotice(message)
+  }
+
+  async function saveClinicProfile({ displayName, dayStart, dayEnd, slotMinutes, businessFaq }) {
+    const { error } = await client
+      .from('clinic_settings')
+      .update({
+        display_name: displayName,
+        day_start: dayStart,
+        day_end: dayEnd,
+        slot_minutes: Number(slotMinutes),
+        business_faq: businessFaq,
+      })
+      .eq('clinic_id', clinic.id)
+    if (error) setNotice('Os ajustes da clínica não foram gravados.')
     else {
-      setSettings((current) => ({ ...current, business_faq: businessFaq }))
-      setNotice('FAQ gravado nesta clínica.')
+      setSettings((current) => ({
+        ...current,
+        display_name: displayName,
+        day_start: dayStart,
+        day_end: dayEnd,
+        slot_minutes: Number(slotMinutes),
+        business_faq: businessFaq,
+      }))
+      setNotice('Ajustes gravados nesta clínica.')
     }
   }
 
@@ -271,12 +294,15 @@ export function WorkspaceProvider({ client, children }) {
     mode: 'workspace',
     phase,
     clinic,
+    role,
     notice,
     integrations,
     settings,
     bootstrap,
     createDemoWorkspace,
-    saveFaq,
+    saveFaq: saveClinicProfile,
+    saveClinicProfile,
+    announce,
     leads,
     visibleLeads,
     counts,
