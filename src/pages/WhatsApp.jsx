@@ -16,7 +16,7 @@ const STATUS_LABEL = {
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-export function WhatsAppPanel({ route, messages = [], canSend = false, notice, onSend, signup, signupNotice, signupPending, onConnect }) {
+export function WhatsAppPanel({ route, messages = [], canSend = false, sendHint = '', notice, onSend, signup, signupNotice, signupPending, onConnect }) {
   const [confirm, setConfirm] = useState(false)
   const [text, setText] = useState('')
   const [waId, setWaId] = useState('')
@@ -65,6 +65,7 @@ export function WhatsAppPanel({ route, messages = [], canSend = false, notice, o
           <button type="submit" disabled={!canSend || !confirm} className="h-9 rounded-lg bg-emerald px-3 text-[12.5px] font-semibold text-[#080F1C] disabled:opacity-50">
             Enviar mensagem de teste
           </button>
+          {sendHint && <p className="text-[13px] leading-5 text-muted">{sendHint}</p>}
         </form>
         {notice && <p className="mt-3 text-[13px] text-muted">{notice}</p>}
       </div>
@@ -121,12 +122,18 @@ export default function WhatsAppTest() {
   const lastInbound = messages.find((item) => item.direction === 'inbound' && item.status === 'received')
   const withinWindow = Boolean(loadedAt && lastInbound && loadedAt - Date.parse(lastInbound.received_at) <= DAY_MS)
   const canSend = Boolean(route && tokenConfigured && withinWindow)
+  const sendHint = !route || !tokenConfigured
+    ? 'O envio libera depois que a Meta devolver o número e o acesso ficar no servidor.'
+    : !withinWindow
+      ? 'Para testar, mande um oi do seu celular para o WhatsApp da clínica. A resposta manual fica liberada por 24 horas.'
+      : ''
 
   return (
     <WhatsAppPanel
       route={route}
       messages={messages}
       canSend={canSend}
+      sendHint={sendHint}
       notice={notice}
       onSend={onSend}
       signup={signup.config}

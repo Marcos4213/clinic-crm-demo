@@ -8,7 +8,7 @@ import { useCrm } from '../state/useCrm'
 const COPY = {
   whatsapp: {
     unconfigured: 'A linha entra pela janela oficial da Meta. Este painel não marca o canal como conectado.',
-    pending: 'Os identificadores já foram registrados. Ainda não há prova de entrega.',
+    pending: 'O número ainda não está autorizado para envio. Conclua a janela da Meta até o QR do celular.',
   },
   instagram: {
     unconfigured: 'O Instagram ainda não entra no atendimento. Os contatos continuam neste CRM.',

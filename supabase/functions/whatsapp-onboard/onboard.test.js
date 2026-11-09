@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { beginSignup, publicSignupConfig, readTokenExchange } from './onboard.js'
+import { beginSignup, publicSignupConfig, readTokenExchange, selectDiscoveredNumber } from './onboard.js'
 
 const code = 'AQExampleCodeValue'
 const phone = '8100000000000001'
@@ -27,6 +27,28 @@ describe('embedded signup', () => {
     expect(beginSignup({ role: 'owner', code: 'https://wa.me/5511999999999', phoneNumberId: phone, wabaId: waba, event: 'FINISH' }).ok).toBe(false)
     expect(beginSignup({ role: 'owner', code, phoneNumberId: phone, wabaId: waba, event: 'FINISH' }).ok).toBe(true)
     expect(beginSignup({ role: 'owner', code, phoneNumberId: phone, wabaId: waba, event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING' }).ok).toBe(true)
+    expect(beginSignup({ role: 'owner', code, phoneNumberId: '', wabaId: waba, event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING' }).needsDiscovery).toBe(true)
+    expect(beginSignup({ role: 'owner', code, phoneNumberId: '', wabaId: '', event: 'CODE_ONLY' }).needsDiscovery).toBe(true)
+    expect(beginSignup({ role: 'owner', code, phoneNumberId: '', wabaId: '', event: 'FINISH' }).needsDiscovery).toBe(true)
+  })
+
+  it('finds the single phone returned by Meta when the popup omits it', () => {
+    const debug = {
+      data: {
+        granular_scopes: [
+          { scope: 'whatsapp_business_management', target_ids: [waba] },
+          { scope: 'whatsapp_business_messaging', target_ids: [waba] },
+        ],
+      },
+    }
+    expect(selectDiscoveredNumber({ debug, phonesByWaba: { [waba]: [{ id: phone }] } })).toEqual({
+      ok: true,
+      wabaId: waba,
+      phoneNumberId: phone,
+    })
+    expect(selectDiscoveredNumber({ debug, phonesByWaba: { [waba]: [{ id: phone }, { id: '8300000000000001' }] } }).error).toBe('multiple_numbers')
+    expect(selectDiscoveredNumber({ debug, phonesByWaba: {} }).error).toBe('number_not_returned')
+    expect(JSON.stringify(selectDiscoveredNumber({ debug, phonesByWaba: { [waba]: [{ id: phone }] } }))).not.toMatch(/EAA|secret/)
   })
 
   it('accepts only an access token and never echoes it into a success flag', () => {
