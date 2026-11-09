@@ -4,7 +4,7 @@ import { beginSignup, publicSignupConfig, readTokenExchange } from './onboard.js
 
 const ALLOWED_ORIGINS = new Set([
   'https://marcos4213.github.io',
-  'https://convertize.devbrasil.online',
+  'https://automatize.devbrasil.online',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
 ])
