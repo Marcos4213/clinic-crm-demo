@@ -80,7 +80,7 @@ export function SettingsPanel({ clinicName, settings, integrations = [], notice,
           <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app</p>
           <h1 className="mt-2 text-[28px] font-semibold tracking-tight">Ajustes da clínica</h1>
           <p className="mt-2 max-w-xl text-[14px] leading-6 text-muted">
-            Nome, horário e a entrada oficial do WhatsApp. O token fica no servidor.
+            Nome, horário e o WhatsApp da clínica.
           </p>
         </header>
 

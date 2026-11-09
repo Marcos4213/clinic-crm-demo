@@ -44,7 +44,7 @@ describe('clinic settings', () => {
         <SettingsPanel clinicName="Clínica Aurora" integrations={integrations} signup={{ configured: false, connected: false }} />
       </MemoryRouter>,
     )
-    expect(screen.getByText(/EMBEDDED_SIGNUP_CONFIG_ID/)).toBeInTheDocument()
+    expect(screen.getByText(/ainda não está liberada/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Mostrar QR do WhatsApp' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Conectar WhatsApp' })).not.toBeInTheDocument()
   })

@@ -7,7 +7,7 @@ describe('whatsapp test screen', () => {
   it('shows the section name and stays disconnected without a route', () => {
     render(<WhatsAppPanel role="owner" messages={[]} />)
     expect(screen.getByRole('heading', { level: 1, name: 'WhatsApp' })).toBeInTheDocument()
-    expect(screen.getByText(/EMBEDDED_SIGNUP_CONFIG_ID/)).toBeInTheDocument()
+    expect(screen.getByText(/ainda não está liberada/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Mostrar QR do WhatsApp' })).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Identificador da linha')).not.toBeInTheDocument()
     expect(screen.queryByText(/conectado ao vivo/i)).not.toBeInTheDocument()
