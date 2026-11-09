@@ -20,7 +20,7 @@ function loadFacebookSdk(appId) {
 }
 
 export function useWhatsappSignup(client, clinicId) {
-  const [config, setConfig] = useState({ configured: false, connected: false })
+  const [config, setConfig] = useState({ configured: false, connected: false, ready: false })
   const [pending, setPending] = useState(false)
   const [signupNotice, setSignupNotice] = useState('')
   const [revision, setRevision] = useState(0)
@@ -37,8 +37,15 @@ export function useWhatsappSignup(client, clinicId) {
   useEffect(() => {
     if (!client) return undefined
     let cancel = false
-    client.functions.invoke('whatsapp-onboard', { method: 'GET' }).then(({ data }) => {
-      if (!cancel && data && typeof data.configured === 'boolean') setConfig({ ...data, connected: false })
+    client.functions.invoke('whatsapp-onboard', { method: 'GET' }).then(({ data, error }) => {
+      if (cancel) return
+      if (error || !data) {
+        setConfig({ configured: false, connected: false, ready: true })
+        return
+      }
+      setConfig({ ...data, configured: data.configured === true, connected: false, ready: true })
+    }).catch(() => {
+      if (!cancel) setConfig({ configured: false, connected: false, ready: true })
     })
     return () => {
       cancel = true
