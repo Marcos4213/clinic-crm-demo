@@ -16,7 +16,7 @@ const STATUS_LABEL = {
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-export function WhatsAppPanel({ route, messages = [], canSend = false, sendHint = '', notice, onSend, signup, signupNotice, signupPending, onConnect }) {
+export function WhatsAppPanel({ route, messages = [], canSend = false, sendHint = '', notice, onSend, signup, signupNotice, signupPending, onConnect, embedded = false }) {
   const [confirm, setConfirm] = useState(false)
   const [text, setText] = useState('')
   const [waId, setWaId] = useState('')
@@ -24,11 +24,15 @@ export function WhatsAppPanel({ route, messages = [], canSend = false, sendHint 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8">
       <div className="mx-auto max-w-3xl">
-        <p className="text-[10px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app</p>
-        <h1 className="mt-2 text-[24px] font-semibold">WhatsApp</h1>
-        <p className="mt-2 text-[13px] leading-5 text-muted">
+        {!embedded && (
+          <>
+            <p className="text-[10px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app</p>
+            <h1 className="mt-2 text-[24px] font-semibold">WhatsApp</h1>
+          </>
+        )}
+        <p className={`${embedded ? '' : 'mt-2'} text-[13px] leading-5 text-muted`}>
           {route
-            ? 'Os identificadores desta clínica já foram registrados. Ainda não há prova de entrega e nada parte sozinho.'
+            ? 'O número desta clínica já foi registrado. Ainda não há prova de entrega e nada parte sozinho.'
             : 'A linha entra pela janela oficial da Meta. Nada é marcado como conectado sem uma mensagem recebida.'}
         </p>
         <WhatsAppConnect config={signup} pending={signupPending} onConnect={onConnect} />
@@ -51,7 +55,7 @@ export function WhatsAppPanel({ route, messages = [], canSend = false, sendHint 
           }}
         >
           <label className="block text-[12px] font-semibold text-muted" htmlFor="wa-to">
-            WhatsApp ID do contato
+            Número de quem vai receber
             <input id="wa-to" value={waId} onChange={(event) => setWaId(event.target.value)} className="mt-1 h-10 w-full rounded-lg border border-line bg-surface px-3 text-ink" />
           </label>
           <label className="block text-[12px] font-semibold text-muted" htmlFor="wa-text">
@@ -130,6 +134,7 @@ export default function WhatsAppTest() {
 
   return (
     <WhatsAppPanel
+      embedded
       route={route}
       messages={messages}
       canSend={canSend}

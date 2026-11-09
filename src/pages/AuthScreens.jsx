@@ -5,11 +5,21 @@ import { useAuth } from '../state/useAuth'
 
 function Shell({ title, children }) {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-4 py-10">
-      <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app</p>
-      <h1 className="mt-2 text-[28px] font-semibold tracking-tight text-ink">{title}</h1>
-      <p className="mt-2 text-[13px] leading-5 text-muted">O Automatize.app agenda. A sua equipe fecha.</p>
-      <div className="mt-6 rounded-2xl border border-line bg-surface p-4">{children}</div>
+    <main className="grid min-h-dvh lg:grid-cols-[minmax(0,460px)_1fr]">
+      <section className="mx-auto flex w-full max-w-md flex-col justify-center px-4 py-10">
+        <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app</p>
+        <h1 className="mt-2 text-[32px] font-semibold tracking-tight text-ink">{title}</h1>
+        <p className="mt-2 text-[13px] leading-5 text-muted">O Automatize.app agenda. A sua equipe fecha.</p>
+        <div className="mt-6 rounded-2xl border border-line bg-surface p-4 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">{children}</div>
+      </section>
+      <aside className="hidden flex-col justify-between border-l border-line bg-surface/50 p-10 lg:flex">
+        <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald uppercase">Painel da clínica</p>
+        <div>
+          <p className="max-w-sm text-[36px] leading-tight font-semibold tracking-tight">Um lugar calmo para a recepção conduzir o dia.</p>
+          <p className="mt-4 max-w-sm text-[14px] leading-6 text-muted">WhatsApp, Instagram, agenda e avaliações no mesmo painel. A demonstração local não envia mensagem nenhuma.</p>
+        </div>
+        <p className="text-[12px] text-muted">A conexão de verdade acontece na conta da clínica, pela janela oficial.</p>
+      </aside>
     </main>
   )
 }

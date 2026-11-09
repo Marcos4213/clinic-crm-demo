@@ -29,7 +29,7 @@ describe('local agenda', () => {
     await user.click(screen.getByRole('button', { name: 'Agendar' }))
     expect(screen.getByRole('alert')).toHaveTextContent('Esse horário já está ocupado.')
 
-    await user.click(screen.getByRole('link', { name: 'CRM' }))
+    await user.click(screen.getByRole('link', { name: 'Pipeline' }))
     await user.click(screen.getByRole('button', { name: 'Restaurar amostra' }))
     expect(screen.getByRole('status')).toHaveTextContent('Amostra local restaurada')
   })

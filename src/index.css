@@ -33,7 +33,9 @@ html {
 
 body {
   margin: 0;
-  background: var(--color-canvas);
+  background:
+    radial-gradient(900px 420px at 0% -10%, rgba(52, 211, 153, 0.08), transparent 58%),
+    var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 14px;
@@ -74,4 +76,31 @@ input[type='search']::-webkit-search-cancel-button {
 
 nav :focus-visible {
   outline-color: #60a5fa;
+}
+
+.surface-card {
+  border: 1px solid var(--color-line);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  border-radius: 16px;
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+
+.surface-card:hover {
+  border-color: color-mix(in srgb, var(--color-emerald) 42%, var(--color-line));
+}
+
+@media print {
+  nav,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+    color: #142033;
+  }
+
+  main {
+    padding-bottom: 0 !important;
+  }
 }

@@ -2,9 +2,30 @@ import { useMemo, useState } from 'react'
 import { sampleLeads } from '../data/sampleLeads'
 import { columnLabel, countByColumn, filterLeads, moveLead, sendHumanMessage, setAiActive } from '../domain/crm'
 import { hasScheduledConflict, zonedLocalToUtc } from '../../supabase/functions/_shared/schedule.js'
+import { clinicDateKey } from '../domain/insights'
 import { CrmContext } from './crm-context'
 
 const cloneLeads = () => sampleLeads.map((lead) => ({ ...lead, messages: lead.messages.map((message) => ({ ...message })) }))
+
+function seedAppointments() {
+  const date = clinicDateKey()
+  return [
+    ['beatriz', '11:00', 'scheduled'],
+    ['pedro', '15:00', 'attended'],
+  ].flatMap(([leadId, time, status], index) => {
+    const start = zonedLocalToUtc(date, time)
+    if (!start) return []
+    return [
+      {
+        id: `seed-${index + 1}`,
+        lead_id: leadId,
+        starts_at: start.toISOString(),
+        ends_at: new Date(start.getTime() + 30 * 60 * 1000).toISOString(),
+        status,
+      },
+    ]
+  })
+}
 
 export function CrmProvider({ children }) {
   const [leads, setLeads] = useState(cloneLeads)
@@ -13,8 +34,15 @@ export function CrmProvider({ children }) {
   const [temperature, setTemperature] = useState('todos')
   const [drafts, setDrafts] = useState({})
   const [announcement, setAnnouncement] = useState('')
-  const [appointments, setAppointments] = useState([])
+  const [appointments, setAppointments] = useState(seedAppointments)
   const [stageEvents, setStageEvents] = useState([])
+  const [reviewAsks, setReviewAsks] = useState([])
+  const [profile, setProfile] = useState({
+    display_name: 'Clínica Aurora',
+    day_start: '09:00',
+    day_end: '18:00',
+    slot_minutes: 30,
+  })
 
   const visibleLeads = useMemo(() => filterLeads(leads, { query, temperature }), [leads, query, temperature])
   const counts = useMemo(() => countByColumn(visibleLeads), [visibleLeads])
@@ -82,14 +110,45 @@ export function CrmProvider({ children }) {
     setAppointments((current) => current.map((item) => (item.id === id ? { ...item, status } : item)))
   }
 
+  function askReview(appointmentId) {
+    const appointment = appointments.find((item) => item.id === appointmentId)
+    const lead = leads.find((item) => item.id === appointment?.lead_id)
+    const name = lead?.name ?? 'Paciente'
+    setReviewAsks((current) => {
+      if (current.some((item) => item.appointmentId === appointmentId)) return current
+      return [
+        ...current,
+        {
+          id: `ask-${appointmentId}`,
+          appointmentId,
+          name,
+          procedure: lead?.procedure ?? 'Consulta',
+          preview: `Olá, ${name}. Como foi sua consulta? Se puder, conte no Google como foi o atendimento. Esta prévia fica só na demonstração e não foi enviada.`,
+        },
+      ]
+    })
+    setAnnouncement(`Prévia de avaliação preparada para ${name}. Nenhuma mensagem saiu.`)
+  }
+
+  function saveClinicProfile({ displayName, dayStart, dayEnd, slotMinutes }) {
+    setProfile({
+      display_name: displayName,
+      day_start: dayStart,
+      day_end: dayEnd,
+      slot_minutes: Number(slotMinutes),
+    })
+    setAnnouncement('Horário gravado só nesta demonstração.')
+  }
+
   function resetDemo() {
     setLeads(cloneLeads())
     setSelectedId('maria')
     setQuery('')
     setTemperature('todos')
     setDrafts({})
-    setAppointments([])
+    setAppointments(seedAppointments())
     setStageEvents([])
+    setReviewAsks([])
     setAnnouncement('Amostra local restaurada. Nada foi gravado em uma clínica.')
   }
 
@@ -116,6 +175,13 @@ export function CrmProvider({ children }) {
     stageEvents,
     addAppointment,
     setAppointmentStatus,
+    reviewAsks,
+    askReview,
+    profile,
+    settings: profile,
+    clinic: { name: profile.display_name },
+    integrations: [],
+    saveClinicProfile,
     resetDemo,
   }
 

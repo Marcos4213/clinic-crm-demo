@@ -5,7 +5,7 @@ import PipelineHeader from '../components/crm/PipelineHeader'
 import useCompactViewport from '../hooks/useCompactViewport'
 import { useCrm } from '../state/useCrm'
 
-export default function Dashboard() {
+export default function Pipeline() {
   const crm = useCrm()
   const compact = useCompactViewport()
   const [pane, setPane] = useState('board')

@@ -68,7 +68,7 @@ function AttendanceForm({ clinicName, settings, onSaveProfile }) {
   )
 }
 
-export function SettingsPanel({ clinicName, settings, integrations = [], notice, onSaveProfile, signup, signupNotice, signupPending, onConnect }) {
+export function SettingsPanel({ clinicName, settings, integrations = [], notice, onSaveProfile, signup, signupNotice, signupPending, onConnect, whatsappTo = '/app/whatsapp' }) {
   const whatsapp = integrations.find((item) => item.provider === 'whatsapp')
   const others = integrations.filter((item) => item.provider === 'instagram' || item.provider === 'google_calendar')
   const attendanceKey = [clinicName, settings?.display_name, settings?.day_start, settings?.day_end, settings?.slot_minutes].join('|')
@@ -80,7 +80,7 @@ export function SettingsPanel({ clinicName, settings, integrations = [], notice,
           <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app</p>
           <h1 className="mt-2 text-[28px] font-semibold tracking-tight">Ajustes da clínica</h1>
           <p className="mt-2 max-w-xl text-[14px] leading-6 text-muted">
-            Nome, horário e o WhatsApp da clínica.
+            Nome, horário e o WhatsApp da clínica. A resposta automática continua desligada.
           </p>
         </header>
 
@@ -92,7 +92,7 @@ export function SettingsPanel({ clinicName, settings, integrations = [], notice,
               <h2 className="text-[16px] font-semibold">WhatsApp</h2>
               <p className="mt-1 max-w-xl text-[13px] leading-5 text-muted">{COPY.whatsapp[whatsapp?.state] ?? COPY.whatsapp.unconfigured}</p>
             </div>
-            <Link to="/app/whatsapp" className="inline-flex h-10 items-center rounded-lg border border-line px-3 text-[13px] font-semibold text-ink">
+            <Link to={whatsappTo} className="inline-flex h-10 items-center rounded-lg border border-line px-3 text-[13px] font-semibold text-ink">
               Abrir conversas
             </Link>
           </div>
@@ -114,6 +114,24 @@ export function SettingsPanel({ clinicName, settings, integrations = [], notice,
         {notice && <p className="text-[13px] text-muted">{notice}</p>}
       </div>
     </div>
+  )
+}
+
+export function DemoSettings() {
+  const crm = useCrm()
+  return (
+    <SettingsPanel
+      clinicName={crm.clinic?.name}
+      settings={crm.settings}
+      integrations={[
+        { provider: 'instagram', state: 'unconfigured' },
+        { provider: 'google_calendar', state: 'unconfigured' },
+      ]}
+      notice={crm.announcement}
+      onSaveProfile={crm.saveClinicProfile}
+      signup={{ configured: false, connected: false, ready: true }}
+      whatsappTo="/demo/whatsapp"
+    />
   )
 }
 

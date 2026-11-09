@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { formatInClinicZone } from '../../supabase/functions/_shared/schedule.js'
+import { externalCalendars } from '../data/demo-catalog'
+import { clinicDateKey } from '../domain/insights'
 import { useCrm } from '../state/useCrm'
 
 const STATUS_LABEL = {
@@ -11,7 +13,7 @@ const STATUS_LABEL = {
 
 export default function Agenda() {
   const crm = useCrm()
-  const [date, setDate] = useState('2026-12-01')
+  const [date, setDate] = useState(() => clinicDateKey())
   const [time, setTime] = useState('10:00')
   const [alert, setAlert] = useState('')
 
@@ -83,11 +85,36 @@ export default function Agenda() {
                       {STATUS_LABEL[status]}
                     </button>
                   ))}
+                  {item.status === 'attended' && crm.mode === 'workspace' && (
+                    <button type="button" disabled className="h-8 rounded-lg border border-line px-2 text-[12px] font-semibold text-muted">
+                      Pedir avaliação · Ativado na implantação
+                    </button>
+                  )}
+                  {item.status === 'attended' && crm.mode !== 'workspace' && (
+                    <button type="button" onClick={() => crm.askReview(item.id)} className="h-8 rounded-lg bg-emerald px-2 text-[12px] font-semibold text-[#080F1C]">
+                      Pedir avaliação
+                    </button>
+                  )}
                 </div>
               </li>
             )
           })}
         </ul>
+        <section className="mt-8">
+          <h2 className="text-[16px] font-semibold">Agendas que a clínica já usa</h2>
+          <p className="mt-2 text-[13px] leading-5 text-muted">
+            A recepção não precisa abandonar o sistema atual. A ligação fica para a implantação.
+          </p>
+          <ul className="mt-3 grid gap-2 sm:grid-cols-3">
+            {externalCalendars.map((tool) => (
+              <li key={tool.id} className="rounded-2xl border border-line bg-surface px-3 py-3">
+                <p className="text-[14px] font-semibold">{tool.name}</p>
+                <p className="mt-1 text-[11px] font-semibold tracking-[0.12em] text-emerald uppercase">Não conectado</p>
+                <p className="mt-2 text-[12px] leading-5 text-muted">{tool.detail}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
       </div>
     </div>
   )

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { COLUMNS, stageCountLabel } from '../../domain/crm'
+import { formatBrl } from '../../domain/insights'
 import LeadCard from './LeadCard'
 
 const RAILS = {
@@ -17,6 +18,7 @@ export default function KanbanBoard({ leads, selectedId, onSelect, onMove }) {
       <div className="flex h-full w-max min-w-full gap-3 px-3 py-3 sm:px-4">
         {COLUMNS.map((column) => {
           const items = leads.filter((lead) => lead.column === column.id)
+          const value = items.reduce((sum, lead) => sum + (typeof lead.value === 'number' ? lead.value : 0), 0)
           const over = overId === column.id
           return (
             <section
@@ -45,6 +47,7 @@ export default function KanbanBoard({ leads, selectedId, onSelect, onMove }) {
                   </h3>
                   <span className="rounded-full bg-surface px-1.5 py-0.5 text-[11px] font-semibold text-ink tabular-nums">{items.length}</span>
                 </div>
+                {value > 0 && <p className="mt-1 pl-2.5 text-[11px] font-semibold text-emerald tabular-nums">{formatBrl(value)}</p>}
                 <p className="sr-only">{stageCountLabel(items.length)}</p>
               </header>
               <div className="scroll-thin flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">

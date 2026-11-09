@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowRightLeft } from 'lucide-react'
 import { COLUMNS } from '../../domain/crm'
+import { formatBrl } from '../../domain/insights'
 import TemperatureMark from './TemperatureMark'
 
 export default function LeadCard({ lead, selected, onSelect, onMove }) {
@@ -80,8 +81,9 @@ export default function LeadCard({ lead, selected, onSelect, onMove }) {
         </span>
         <span className="mt-2 block text-[13.5px] leading-5 font-semibold text-ink">{lead.name}</span>
         <span className="mt-0.5 block text-[12.5px] text-muted">{lead.procedure}</span>
-        <span className="mt-2 block font-mono text-[11px] tracking-tight text-[#24384C] tabular-nums">{lead.phone}</span>
-        <span className="mt-0.5 block text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">número fictício</span>
+        {typeof lead.value === 'number' && <span className="mt-1 block text-[12px] font-semibold text-emerald tabular-nums">{formatBrl(lead.value)}</span>}
+        <span className="mt-2 block text-[12px] tracking-tight text-[#D5E0EC] tabular-nums">{lead.phone}</span>
+        {lead.sample && <span className="mt-0.5 block text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">número fictício</span>}
       </button>
       <div className="flex justify-end px-2 pb-2">
         <button
