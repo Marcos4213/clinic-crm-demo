@@ -1,15 +1,13 @@
 const DIGITS = /^[0-9]{6,32}$/
 
 export function embeddedSignupOptions(config) {
+  const extras = { setup: {} }
+  if (config.coexistence) extras.featureType = 'whatsapp_business_app_onboarding'
   return {
     config_id: config.configId,
     response_type: 'code',
     override_default_response_type: true,
-    extras: {
-      setup: {},
-      featureType: config.coexistence ? 'whatsapp_business_app_onboarding' : '',
-      sessionInfoVersion: '3',
-    },
+    extras,
   }
 }
 

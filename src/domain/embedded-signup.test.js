@@ -3,9 +3,10 @@ import { embeddedSignupOptions, readSignupSession } from './embedded-signup.js'
 
 describe('embedded signup session', () => {
   it('asks Meta for the business login and enables coexistence only when configured', () => {
-    expect(embeddedSignupOptions({ configId: '900000000000001', coexistence: false }).extras.featureType).toBe('')
+    const standard = embeddedSignupOptions({ configId: '900000000000001', coexistence: false })
+    expect(standard.extras).toEqual({ setup: {} })
+    expect(standard.response_type).toBe('code')
     expect(embeddedSignupOptions({ configId: '900000000000001', coexistence: true }).extras.featureType).toBe('whatsapp_business_app_onboarding')
-    expect(embeddedSignupOptions({ configId: '900000000000001' }).response_type).toBe('code')
   })
 
   it('reads the official finish event and ignores a wa.me page', () => {
