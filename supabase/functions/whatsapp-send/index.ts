@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { withSupabase } from 'npm:@supabase/server@1'
 import { rpcPersisted } from '../_shared/whatsapp-http.js'
-import { beginManualSend, handleStatus, routeQueryResult } from './send-handler.js'
+import { beginManualSend, clinicFromRequest, handleStatus, routeQueryResult } from './send-handler.js'
 
 const ALLOWED_ORIGINS = new Set([
   'https://marcos4213.github.io',
@@ -42,6 +42,7 @@ export default {
     const supabase = ctx.supabase
     const { data: routeRows, error: routeError } = await supabase.from('whatsapp_routes').select('clinic_id, phone_number_id')
     const headerClinic = request.headers.get('x-clinic-id') ?? ''
+    const queryClinic = new URL(request.url).searchParams.get('clinicId') ?? ''
     let bodyClinic = ''
     let body: { confirm?: boolean; idempotencyKey?: string; waId?: string; text?: string; clinicId?: string } = {}
     if (request.method === 'POST') {
@@ -52,10 +53,9 @@ export default {
       }
       bodyClinic = String(body.clinicId ?? '')
     }
-    if (headerClinic && bodyClinic && headerClinic.toLowerCase() !== bodyClinic.toLowerCase()) {
-      return withCors(request, json({ error: 'forbidden', connected: false }, 403))
-    }
-    const clinicId = bodyClinic || headerClinic
+    const requested = clinicFromRequest({ headerClinic, bodyClinic, queryClinic })
+    if (!requested.ok) return withCors(request, json({ error: requested.error, connected: false }, requested.status))
+    const clinicId = requested.clinicId
     const selection = routeQueryResult(
       {
         error: routeError,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { beginManualSend, handleSend, handleStatus } from './send-handler.js'
+import { beginManualSend, clinicFromRequest, handleSend, handleStatus } from './send-handler.js'
 
 const clinicA = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1'
 const clinicB = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2'
@@ -95,5 +95,11 @@ describe('manual whatsapp send', () => {
     expect(foreignClinic.status).toBe(403)
     expect(chosen.status).toBe(200)
     expect(calls).toEqual([phoneB])
+  })
+
+  it('reads the clinic from the query when the browser cannot send a custom header', () => {
+    expect(clinicFromRequest({ queryClinic: clinicA }).clinicId).toBe(clinicA)
+    expect(clinicFromRequest({ queryClinic: clinicA, bodyClinic: clinicA }).clinicId).toBe(clinicA)
+    expect(clinicFromRequest({ queryClinic: clinicA, headerClinic: clinicB }).ok).toBe(false)
   })
 })

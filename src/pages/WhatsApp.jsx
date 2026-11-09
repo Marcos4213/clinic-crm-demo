@@ -91,7 +91,7 @@ export default function WhatsAppTest() {
       const [routes, rows, status] = await Promise.all([
         client.from('whatsapp_routes').select('id, phone_number_id').eq('clinic_id', clinicId).maybeSingle(),
         client.from('whatsapp_messages').select('id, body, status, direction, received_at, wa_id').eq('clinic_id', clinicId).order('received_at', { ascending: false }).limit(50),
-        client.functions.invoke('whatsapp-send', { method: 'GET', headers: { 'x-clinic-id': clinicId } }),
+        client.functions.invoke(`whatsapp-send?clinicId=${encodeURIComponent(clinicId)}`, { method: 'GET' }),
       ])
       if (cancel) return
       setRoute(routes.data ?? null)

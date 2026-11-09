@@ -16,6 +16,13 @@ export function selectAuthorizedRoute(routes, clinicId) {
   return { ok: true, route: matches[0] }
 }
 
+export function clinicFromRequest({ headerClinic = '', bodyClinic = '', queryClinic = '' }) {
+  const ids = [headerClinic, bodyClinic, queryClinic].map((value) => String(value ?? '').trim()).filter(Boolean)
+  const unique = new Set(ids.map((id) => id.toLowerCase()))
+  if (unique.size > 1) return { ok: false, status: 403, error: 'forbidden' }
+  return { ok: true, clinicId: ids[0] ?? '' }
+}
+
 export function routeQueryResult({ error, data }, clinicId) {
   if (error) return { ok: false, status: 503, error: 'persist_failed' }
   return selectAuthorizedRoute(data, clinicId)
