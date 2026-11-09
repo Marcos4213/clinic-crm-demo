@@ -26,6 +26,7 @@ export function useWhatsappSignup(client, clinicId) {
   const [revision, setRevision] = useState(0)
   const sessionRef = useRef(null)
   const codeRef = useRef('')
+  const finishingRef = useRef(false)
   const clientRef = useRef(client)
   const clinicRef = useRef(clinicId)
 
@@ -52,30 +53,62 @@ export function useWhatsappSignup(client, clinicId) {
     }
   }, [client])
 
+  function waitForSession() {
+    const ready = sessionRef.current
+    if (ready?.done || ready?.cancelled || ready?.wabaId) return Promise.resolve(ready)
+    return new Promise((resolve) => {
+      const started = Date.now()
+      const timer = setInterval(() => {
+        const session = sessionRef.current
+        if (session?.done || session?.cancelled || session?.wabaId || Date.now() - started >= 3000) {
+          clearInterval(timer)
+          resolve(session)
+        }
+      }, 100)
+    })
+  }
+
   async function finish(session, code) {
+    if (finishingRef.current) return
     const current = clientRef.current
     const clinic = clinicRef.current
-    if (!current || !clinic) return
+    if (!current || !clinic || !code) return
+    finishingRef.current = true
     setPending(true)
     const { data, error } = await current.functions.invoke('whatsapp-onboard', {
       body: {
         clinicId: clinic,
         code,
-        phoneNumberId: session.phoneNumberId,
-        wabaId: session.wabaId,
-        event: session.event,
+        phoneNumberId: session?.phoneNumberId || '',
+        wabaId: session?.wabaId || '',
+        event: session?.event || 'CODE_ONLY',
       },
     })
+    let payload = data
+    if ((!payload || payload.error) && error?.context && typeof error.context.json === 'function') {
+      payload = await error.context.json().catch(() => payload)
+    }
     setPending(false)
-    if (data?.error === 'webhook_subscribe_failed') {
-      setSignupNotice('A Meta recebeu o cadastro, mas o webhook não foi assinado. A linha não está conectada.')
+    const failure = {
+      webhook_subscribe_failed: 'A Meta recebeu o cadastro, mas o aviso de mensagens não foi assinado. A linha não está conectada.',
+      number_not_returned: 'O Facebook entrou, mas a Meta não devolveu o WhatsApp do celular. Escolha o número que já está no aplicativo e escaneie o QR.',
+      multiple_numbers: 'A Meta mostrou mais de um número. Escolha só o WhatsApp da clínica e tente de novo.',
+      signup_incomplete: 'A Meta não concluiu o WhatsApp. Nada foi marcado como conectado.',
+      token_expired: 'O código da Meta expirou. Toque em Conectar WhatsApp de novo.',
+      upstream: 'A Meta não autorizou o número. Nada foi marcado como conectado.',
+      persist_failed: 'O cadastro não foi gravado. Nada foi marcado como conectado.',
+    }
+    if (payload?.error === 'webhook_subscribe_failed') {
+      setSignupNotice(failure.webhook_subscribe_failed)
+      setRevision((value) => value + 1)
       return
     }
-    if (error || data?.stored !== true) {
-      setSignupNotice('O cadastro não foi concluído. A linha não foi marcada como conectada.')
+    if (error || payload?.stored !== true) {
+      finishingRef.current = false
+      setSignupNotice(failure[payload?.error] || 'O cadastro não foi concluído. A linha não foi marcada como conectada.')
       return
     }
-    setSignupNotice('Cadastro recebido. A linha ainda não tem prova de entrega.')
+    setSignupNotice('Cadastro recebido. Mande um oi do celular para este WhatsApp e responda em Conversas.')
     setRevision((value) => value + 1)
   }
 
@@ -84,7 +117,7 @@ export function useWhatsappSignup(client, clinicId) {
       const session = readSignupSession(event.data, event.origin)
       if (!session) return
       sessionRef.current = session
-      if (session.done && codeRef.current) finish(session, codeRef.current)
+      if ((session.done || session.wabaId) && codeRef.current) finish(session, codeRef.current)
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
@@ -92,6 +125,9 @@ export function useWhatsappSignup(client, clinicId) {
 
   async function onConnect() {
     if (!config.configured) return
+    finishingRef.current = false
+    sessionRef.current = null
+    codeRef.current = ''
     setSignupNotice('')
     try {
       const fb = await loadFacebookSdk(config.appId)
@@ -103,11 +139,16 @@ export function useWhatsappSignup(client, clinicId) {
         fb.login((response) => resolve(response?.authResponse?.code ?? ''), embeddedSignupOptions(config))
       })
       if (!code) {
-        setSignupNotice('A janela da Meta foi fechada. Nada foi marcado como conectado.')
+        setSignupNotice('A janela da Meta foi fechada antes de ligar o WhatsApp do celular.')
         return
       }
       codeRef.current = code
-      if (sessionRef.current?.done) finish(sessionRef.current, code)
+      const session = await waitForSession()
+      if (session?.cancelled && !session?.wabaId) {
+        setSignupNotice('A Meta cancelou antes de ligar o WhatsApp do celular.')
+        return
+      }
+      finish(session, code)
     } catch {
       setSignupNotice('A janela da Meta não abriu. Nada foi marcado como conectado.')
     }

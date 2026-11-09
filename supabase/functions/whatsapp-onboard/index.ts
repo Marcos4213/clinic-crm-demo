@@ -1,6 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { withSupabase } from 'npm:@supabase/server@1'
-import { beginSignup, publicSignupConfig, readTokenExchange } from './onboard.js'
+import { beginSignup, publicSignupConfig, readTokenExchange, selectDiscoveredNumber, wabaIdsFromDebug } from './onboard.js'
 
 const ALLOWED_ORIGINS = new Set([
   'https://marcos4213.github.io',
@@ -69,6 +69,47 @@ async function exchangeCode(code: string) {
   return readTokenExchange(payload)
 }
 
+async function graphGet(path: string, accessToken: string) {
+  const version = Deno.env.get('WHATSAPP_GRAPH_VERSION') || 'v27.0'
+  const response = await fetch(`https://graph.facebook.com/${version}/${path}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  const payload = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    const error = new Error('graph') as Error & { code?: string }
+    error.code = 'upstream'
+    throw error
+  }
+  return payload
+}
+
+async function discoverNumber(accessToken: string, preferredPhone: string, preferredWaba: string) {
+  const version = Deno.env.get('WHATSAPP_GRAPH_VERSION') || 'v27.0'
+  const appId = Deno.env.get('WHATSAPP_APP_ID') ?? ''
+  const secret = Deno.env.get('WHATSAPP_APP_SECRET') ?? ''
+  const debugUrl = new URL(`https://graph.facebook.com/${version}/debug_token`)
+  debugUrl.searchParams.set('input_token', accessToken)
+  const debugResponse = await fetch(debugUrl, { headers: { Authorization: `Bearer ${appId}|${secret}` } })
+  const debug = await debugResponse.json().catch(() => ({}))
+  if (!debugResponse.ok) {
+    const error = new Error('graph') as Error & { code?: string }
+    error.code = 'upstream'
+    throw error
+  }
+  const wabaIds = wabaIdsFromDebug(debug)
+  if (preferredWaba && !wabaIds.includes(preferredWaba)) wabaIds.unshift(preferredWaba)
+  const phonesByWaba: Record<string, { id?: string }[]> = {}
+  for (const wabaId of wabaIds) {
+    try {
+      const payload = await graphGet(`${wabaId}/phone_numbers?fields=id`, accessToken)
+      phonesByWaba[wabaId] = Array.isArray(payload.data) ? payload.data : []
+    } catch {
+      phonesByWaba[wabaId] = []
+    }
+  }
+  return selectDiscoveredNumber({ debug, phonesByWaba, preferredPhone, preferredWaba })
+}
+
 async function subscribeApp(wabaId: string, accessToken: string) {
   const version = Deno.env.get('WHATSAPP_GRAPH_VERSION') || 'v27.0'
   const response = await fetch(`https://graph.facebook.com/${version}/${wabaId}/subscribed_apps`, {
@@ -134,20 +175,33 @@ export default {
     }
     if (!token) return withCors(request, json({ error: 'upstream', connected: false }, 502))
 
+    let phoneNumberId = String(body.phoneNumberId ?? '')
+    let wabaId = String(body.wabaId ?? '')
+    if (decision.needsDiscovery) {
+      try {
+        const found = await discoverNumber(token.accessToken, phoneNumberId, wabaId)
+        if (!found.ok) return withCors(request, json({ error: found.error, connected: false }, 409))
+        phoneNumberId = found.phoneNumberId
+        wabaId = found.wabaId
+      } catch {
+        return withCors(request, json({ error: 'upstream', connected: false }, 502))
+      }
+    }
+
     const admin = serviceClient()
     if (!admin) return withCors(request, json({ error: 'persist_failed', connected: false }, 503))
     const stored = await admin.rpc('store_whatsapp_signup', {
       p_clinic: clinicId,
       p_user: uid,
-      p_phone: body.phoneNumberId,
-      p_waba: body.wabaId,
+      p_phone: phoneNumberId,
+      p_waba: wabaId,
       p_app: config.appId,
       p_token: token.accessToken,
     })
     if (stored.error) return withCors(request, json({ error: 'persist_failed', connected: false }, 503))
 
     try {
-      await subscribeApp(String(body.wabaId), token.accessToken)
+      await subscribeApp(wabaId, token.accessToken)
     } catch {
       return withCors(request, json({ error: 'webhook_subscribe_failed', connected: false, stored: true }, 502))
     }

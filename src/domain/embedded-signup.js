@@ -1,13 +1,14 @@
 const DIGITS = /^[0-9]{6,32}$/
 
 export function embeddedSignupOptions(config) {
-  const extras = { setup: {} }
-  if (config.coexistence) extras.featureType = 'whatsapp_business_app_onboarding'
   return {
     config_id: config.configId,
     response_type: 'code',
     override_default_response_type: true,
-    extras,
+    extras: {
+      setup: {},
+      featureType: 'whatsapp_business_app_onboarding',
+    },
   }
 }
 
@@ -31,12 +32,16 @@ export function readSignupSession(data, origin) {
   const event = payload.event
   const phoneNumberId = String(payload.data?.phone_number_id ?? '')
   const wabaId = String(payload.data?.waba_id ?? '')
-  const done = (event === 'FINISH' || event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING') && DIGITS.test(phoneNumberId) && DIGITS.test(wabaId)
+  const phoneOk = DIGITS.test(phoneNumberId)
+  const wabaOk = DIGITS.test(wabaId)
+  const coexistence = event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'
+  const done = (event === 'FINISH' && phoneOk && wabaOk) || (coexistence && wabaOk)
   return {
     event,
     done,
-    phoneNumberId: done ? phoneNumberId : '',
-    wabaId: done ? wabaId : '',
-    coexistence: event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
+    cancelled: event === 'CANCEL' || event === 'ERROR',
+    phoneNumberId: phoneOk ? phoneNumberId : '',
+    wabaId: wabaOk ? wabaId : '',
+    coexistence,
   }
 }
