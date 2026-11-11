@@ -463,6 +463,8 @@ function wireAudio() {
   })
   loadMarcosParts().then((parts) => {
     marcosUi.splice(0, marcosUi.length, ...parts)
+    const hint = document.querySelector('.voice-hint')
+    if (hint) hint.hidden = parts.length < 2
     paintMarcos()
   })
   findAudio(MARCOS_PHOTO_FILES).then((url) => {
