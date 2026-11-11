@@ -14,19 +14,18 @@
  *   ?nicho=implantes|lentes|harmonizacao|plastica|dermatologia
  *   ?clinica=Nome da clínica
  *
- * Áudios: o Marcos grava a própria voz. Não há narração sintética.
- * Coloque o arquivo em apresentacao/audio/ (veja apresentacao/audio/LEIA-ME.md).
- *   marcos.mp3, ou marcos.m4a, ou marcos.ogg
- *   foto opcional: marcos.jpg, marcos.webp ou marcos.png
- *   paciente-implantes.mp3, paciente-lentes.mp3, paciente-harmonizacao.mp3,
- *   paciente-plastica.mp3, paciente-dermato.mp3
- * Enquanto o arquivo não existe, a página mostra "Áudio em breve" e a
- * transcrição do paciente, com o play desativado.
+ * Áudios do Marcos, na ordem, em apresentacao/audio/:
+ *   marcos-1.mp3, marcos-2.mp3, marcos-3.mp3
+ * Foto opcional: marcos.jpg, marcos.webp ou marcos.png.
+ * Áudios do paciente: paciente-implantes.mp3, paciente-lentes.mp3,
+ *   paciente-harmonizacao.mp3, paciente-plastica.mp3, paciente-dermato.mp3.
+ * Se um áudio do paciente faltar, a bolha fica com a transcrição e o play desativado.
+ * Veja apresentacao/audio/LEIA-ME.md.
  */
 
 export const WHATSAPP_E164 = ''
 
-export const MARCOS_AUDIO_FILES = ['marcos.mp3', 'marcos.m4a', 'marcos.ogg']
+export const MARCOS_PARTS = ['marcos-1.mp3', 'marcos-2.mp3', 'marcos-3.mp3']
 
 export const MARCOS_PHOTO_FILES = ['marcos.jpg', 'marcos.webp', 'marcos.png']
 

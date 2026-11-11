@@ -2,7 +2,7 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
-  MARCOS_AUDIO_FILES,
+  MARCOS_PARTS,
   NICHES,
   PATIENT_FILES,
   PATIENT_LINES,
@@ -86,8 +86,10 @@ describe('apresentação', () => {
     expect(source).toMatch(/nossa equipe/i)
     expect(source).toMatch(/demonstração ilustrativa/i)
     expect(source).toMatch(/Marcar uma conversa com o doutor/)
-    expect(source).toMatch(/Áudio em breve/)
-    expect(source).toMatch(/marcos\.mp3/)
+    expect(source).toMatch(/A próxima começa em seguida/)
+    expect(source).toMatch(/marcos-1\.mp3/)
+    expect(source).toMatch(/marcos-3\.mp3/)
+    expect(source).not.toMatch(/narração gerada/i)
     expect(source).toMatch(/paciente-implantes\.mp3/)
     expect(source).toMatch(/paciente-dermato\.mp3/)
     expect(source).toMatch(/og:title/)
@@ -157,14 +159,19 @@ describe('apresentação', () => {
     expect(buildThread('implantes', '').some((step) => step.text?.includes('implante'))).toBe(true)
   })
 
-  it('plays the patient audios and leaves the Marcos slot empty', () => {
-    expect(MARCOS_AUDIO_FILES).toEqual(['marcos.mp3', 'marcos.m4a', 'marcos.ogg'])
-    for (const name of MARCOS_AUDIO_FILES) expect(existsSync(join(root, 'audio', name))).toBe(false)
+  it('plays the patient audios and the three Marcos recordings', () => {
+    expect(MARCOS_PARTS).toEqual(['marcos-1.mp3', 'marcos-2.mp3', 'marcos-3.mp3'])
+    const marcosDurations = MARCOS_PARTS.map((name) => mp3Duration(readFileSync(join(root, 'audio', name))))
+    expect(marcosDurations[0]).toBeGreaterThan(30)
+    expect(marcosDurations[0]).toBeLessThan(36)
+    expect(marcosDurations[1]).toBeGreaterThan(29)
+    expect(marcosDurations[1]).toBeLessThan(35)
+    expect(marcosDurations[2]).toBeGreaterThan(19)
+    expect(marcosDurations[2]).toBeLessThan(25)
     expect(existsSync(join(root, 'narracao.mp3'))).toBe(false)
     const guide = readFileSync(join(root, 'audio', 'LEIA-ME.md'), 'utf8')
-    expect(guide).toMatch(/Aqui é o Marcos/)
-    expect(guide).toMatch(/nossa equipe/i)
-    expect(guide).toMatch(/marcos\.mp3/)
+    expect(guide).toMatch(/marcos-1\.mp3/)
+    expect(guide).toMatch(/Ao terminar uma, a próxima começa/)
     const names = readdirSync(join(root, 'audio'))
     for (const [niche, file] of Object.entries(PATIENT_FILES)) {
       expect(names).toContain(file)

@@ -99,7 +99,15 @@ h2 {
 
 .lead strong { color: var(--ink); font-weight: 650; }
 
-.voice { position: relative; margin-top: 22px; max-width: 420px; }
+.voice { position: relative; margin-top: 22px; max-width: 460px; }
+
+.marcos-row { display: flex; align-items: flex-start; gap: 10px; }
+
+.marcos-row .who { margin-top: 8px; }
+
+.marcos-stack { display: flex; flex: 1; flex-direction: column; gap: 8px; min-width: 0; }
+
+.marcos-stack .note { padding: 10px; }
 
 .voice-kicker {
   margin: 0 0 8px;

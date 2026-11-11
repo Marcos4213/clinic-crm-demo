@@ -1,4 +1,4 @@
-import { MARCOS_AUDIO_FILES, MARCOS_PHOTO_FILES, pageModel } from './config.js'
+import { MARCOS_PARTS, MARCOS_PHOTO_FILES, pageModel } from './config.js'
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -278,8 +278,7 @@ function renderVoice(step) {
   })
   button.addEventListener('click', () => {
     if (button.disabled || !audio.src) return
-    const marcos = document.querySelector('#marcos-audio')
-    if (marcos && !marcos.paused) marcos.pause()
+    pauseMarcos()
     patientAudios().forEach((other) => {
       if (other !== audio && !other.paused) other.pause()
     })
@@ -316,74 +315,129 @@ function paintAvatar(node, photoUrl) {
   node.append(image)
 }
 
-function wireAudio() {
+const marcosUi = []
+let marcosIndex = -1
+let marcosChain = false
+let marcosSwitching = false
+let marcosFrame = 0
+
+function pauseMarcos() {
+  marcosChain = false
   const audio = document.querySelector('#marcos-audio')
-  const button = document.querySelector('#play')
-  const clock = document.querySelector('#clock')
-  const wave = document.querySelector('#wave')
-  const player = document.querySelector('#marcos-player')
-  const soon = document.querySelector('#marcos-soon')
-  const hint = document.querySelector('#voice-hint')
-  const avatar = document.querySelector('#marcos-avatar')
-  if (!audio || !button || !wave) return
-  for (const height of [8, 14, 22, 30, 18, 36, 26, 12, 20, 34, 28, 16, 24, 38, 22, 10, 18, 32, 14, 26, 40, 18, 12, 28, 16, 34, 22, 8, 20, 30, 14, 24, 36, 18, 10, 22]) {
-    const bar = document.createElement('span')
-    bar.style.height = `${height}px`
-    wave.append(bar)
-  }
-  const bars = [...wave.children]
-  const durationOf = () => (Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0)
-  const paint = () => {
-    const duration = durationOf()
-    const ratio = !audio.paused && !audio.ended && duration ? audio.currentTime / duration : 0
-    paintBars(bars, ratio)
-    if (!audio.paused && !audio.ended) clock.textContent = formatTime(audio.currentTime)
-    else if (duration) clock.textContent = formatTime(duration)
-  }
-  const setPressed = (pressed) => {
-    button.setAttribute('aria-pressed', pressed ? 'true' : 'false')
-    button.setAttribute('aria-label', pressed ? 'Pausar a mensagem do Marcos' : 'Ouvir a mensagem do Marcos')
-  }
-  audio.playsInline = true
-  audio.addEventListener('loadedmetadata', paint)
-  audio.addEventListener('timeupdate', paint)
-  audio.addEventListener('play', () => setPressed(true))
-  audio.addEventListener('pause', () => {
-    setPressed(false)
-    paint()
-  })
-  audio.addEventListener('ended', () => {
-    setPressed(false)
-    paintBars(bars, 0)
-    if (durationOf()) clock.textContent = formatTime(durationOf())
-  })
-  audio.addEventListener('error', () => {
-    player.hidden = true
-    soon.hidden = false
-    hint.hidden = true
-  })
-  button.addEventListener('click', () => {
-    if (!audio.src) return
-    stopPatient()
-    if (!audio.paused && !audio.ended) {
-      audio.pause()
+  if (audio && !audio.paused) audio.pause()
+  paintMarcos()
+}
+
+function paintMarcos() {
+  const audio = document.querySelector('#marcos-audio')
+  const playing = audio && !audio.paused && !audio.ended
+  marcosUi.forEach((part, index) => {
+    const active = playing && index === marcosIndex
+    part.button.setAttribute('aria-pressed', active ? 'true' : 'false')
+    part.button.setAttribute('aria-label', active ? `Pausar a parte ${index + 1}` : `Ouvir a parte ${index + 1}`)
+    if (active && part.duration) {
+      part.clock.textContent = formatTime(audio.currentTime)
+      paintBars(part.bars, audio.currentTime / part.duration)
       return
     }
-    audio.play()?.catch(() => {
-      player.hidden = true
-      soon.hidden = false
-    })
+    paintBars(part.bars, 0)
+    if (part.duration) part.clock.textContent = formatTime(part.duration)
   })
-  findAudio(MARCOS_AUDIO_FILES).then((url) => {
-    if (!url) return
-    audio.src = url
-    audio.preload = 'auto'
-    player.hidden = false
-    soon.hidden = true
-    hint.hidden = false
+}
+
+function trackMarcos() {
+  paintMarcos()
+  const audio = document.querySelector('#marcos-audio')
+  if (audio && !audio.paused && !audio.ended) marcosFrame = window.requestAnimationFrame(trackMarcos)
+}
+
+function playMarcos(index) {
+  const audio = document.querySelector('#marcos-audio')
+  const part = marcosUi[index]
+  if (!audio || !part?.url) return
+  stopPatient()
+  if (marcosIndex === index && audio.dataset.src === part.url && !audio.paused && !audio.ended) {
+    marcosChain = false
+    audio.pause()
+    return
+  }
+  marcosChain = true
+  marcosIndex = index
+  if (!audio.paused) {
+    marcosSwitching = true
+    audio.pause()
+  }
+  if (audio.dataset.src !== part.url) {
+    audio.src = part.url
+    audio.dataset.src = part.url
+  }
+  window.cancelAnimationFrame(marcosFrame)
+  const pending = audio.play()
+  pending?.catch(() => {
+    marcosChain = false
+    paintMarcos()
+  })
+}
+
+function wireAudio() {
+  const audio = document.querySelector('#marcos-audio')
+  const buttons = [...document.querySelectorAll('.marcos-play')]
+  if (!audio || buttons.length === 0) return
+  audio.playsInline = true
+  const heights = [8, 14, 22, 30, 18, 36, 26, 12, 20, 34, 28, 16, 24, 38, 22, 10, 18, 32, 14, 26]
+  buttons.forEach((button, index) => {
+    const note = button.closest('.note')
+    const wave = note.querySelector('.marcos-wave')
+    const clock = note.querySelector('.clock')
+    for (const height of heights) {
+      const bar = document.createElement('span')
+      bar.style.height = `${height}px`
+      wave.append(bar)
+    }
+    const part = {
+      url: new URL(`./audio/${MARCOS_PARTS[index]}`, window.location.href).href,
+      button,
+      clock,
+      bars: [...wave.children],
+      duration: 0,
+    }
+    marcosUi[index] = part
+    const probe = document.createElement('audio')
+    probe.preload = 'metadata'
+    probe.src = part.url
+    probe.addEventListener('loadedmetadata', () => {
+      if (!Number.isFinite(probe.duration)) return
+      part.duration = probe.duration
+      paintMarcos()
+    })
+    button.addEventListener('click', () => playMarcos(index))
+  })
+  audio.addEventListener('play', () => {
+    window.cancelAnimationFrame(marcosFrame)
+    trackMarcos()
+  })
+  audio.addEventListener('pause', () => {
+    window.cancelAnimationFrame(marcosFrame)
+    if (marcosSwitching) {
+      marcosSwitching = false
+      return
+    }
+    if (!audio.ended) marcosChain = false
+    paintMarcos()
+  })
+  audio.addEventListener('ended', () => {
+    window.cancelAnimationFrame(marcosFrame)
+    const next = marcosIndex + 1
+    if (marcosChain && next < marcosUi.length) {
+      playMarcos(next)
+      return
+    }
+    marcosChain = false
+    marcosIndex = -1
+    paintMarcos()
   })
   findAudio(MARCOS_PHOTO_FILES).then((url) => {
-    if (url) paintAvatar(avatar, url)
+    if (url) paintAvatar(document.querySelector('#marcos-avatar'), url)
   })
 }
 

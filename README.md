@@ -8,7 +8,7 @@ App de clínicas no mesmo repositório. `#/` entra com e-mail e senha. `#/demo` 
 
 A apresentação de envio, para a recepção encaminhar ao doutor, fica em `/apresentacao/`. É página estática: sem login e sem Supabase. O app continua em `#/` e a amostra em `#/demo`. O botão da call usa `WHATSAPP_E164` em `apresentacao/config.js` (só dígitos, com DDI) ou o parâmetro `?whatsapp=` no link. Nichos: `?nicho=implantes`, `lentes`, `harmonizacao`, `plastica` ou `dermatologia`, com `?clinica=Nome`.
 
-Os áudios ficam em `apresentacao/audio/`. O Marcos grava `marcos.mp3` (também vale `.m4a` ou `.ogg`). Os áudios do paciente, um por nicho, entram com os nomes de `apresentacao/audio/LEIA-ME.md`. Sem o arquivo, a página mostra “Áudio em breve” e a transcrição, e não toca nada sozinha.
+Os áudios ficam em `apresentacao/audio/`. A mensagem do Marcos são três partes, `marcos-1.mp3`, `marcos-2.mp3` e `marcos-3.mp3`: ao terminar uma, a próxima começa. Os áudios do paciente, um por nicho, estão no mesmo diretório. Os nomes e a troca dos arquivos estão em `apresentacao/audio/LEIA-ME.md`. Nada toca sem um toque.
 
 O WhatsApp de teste não envia sozinho e não aparece como conectado sem evidência de entrega. Instagram e Google Calendar não estão conectados. A agenda interna usa `America/Sao_Paulo`. Sem a chave `XAI_API_KEY` no servidor, a IA responde `grok_unconfigured` e não simula uma resposta. A simulação existe só na demonstração local, identificada como amostra.
 
