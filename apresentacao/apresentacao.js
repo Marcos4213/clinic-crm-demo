@@ -1,4 +1,4 @@
-import { MARCOS_PHOTO_FILES, MODULES, pageModel } from './config.js'
+import { MARCOS_PHOTO_FILES, pageModel } from './config.js'
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -464,51 +464,45 @@ function wireAudio() {
   })
 }
 
-let moduleId = 'inicio'
-let currentModel = null
-
-function renderModules() {
+function wireModuleCards() {
   const host = document.querySelector('#modules')
-  const gains = document.querySelector('#gains')
-  if (!host || !gains) return
-  host.replaceChildren()
-  for (const item of MODULES) {
-    const button = document.createElement('button')
-    button.type = 'button'
-    button.className = 'module'
-    button.setAttribute('aria-pressed', item.id === moduleId ? 'true' : 'false')
-    const name = document.createElement('span')
-    name.textContent = item.soon ? `${item.label} · em breve` : item.label
-    button.append(name)
-    button.addEventListener('click', () => {
-      moduleId = item.id
-      renderModules()
+  const mini = document.querySelector('#mini')
+  const note = document.querySelector('#mini-note')
+  const frame = document.querySelector('#mini-frame')
+  if (!host || !mini || !note || !frame) return
+  host.addEventListener('click', (event) => {
+    const card = event.target.closest('.module-card')
+    if (!card) return
+    host.querySelectorAll('.module-card').forEach((item) => {
+      item.setAttribute('aria-pressed', item === card ? 'true' : 'false')
     })
-    host.append(button)
-  }
-  const current = MODULES.find((item) => item.id === moduleId) ?? MODULES[0]
-  gains.replaceChildren()
-  const attendant = document.createElement('span')
-  attendant.textContent = `Atendente: ${current.attendant}`
-  const doctor = document.createElement('span')
-  doctor.textContent = `Doutor: ${current.doctor}`
-  gains.append(attendant, doctor)
-  if (currentModel?.service && current.id === 'whatsapp') {
-    const service = document.createElement('span')
-    service.textContent = `Nesta demonstração, a conversa é sobre ${currentModel.service}.`
-    gains.append(service)
-  }
+    const demo = card.dataset.demo || ''
+    mini.hidden = false
+    if (demo === 'whatsapp') {
+      frame.hidden = true
+      note.textContent = 'A conversa ilustrativa, com o áudio do paciente, está logo abaixo.'
+      document.querySelector('#wa-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
+    if (demo) {
+      note.textContent = 'Tela da demonstração local, com dados fictícios.'
+      frame.hidden = false
+      if (frame.getAttribute('src') !== demo) frame.src = demo
+      return
+    }
+    frame.hidden = true
+    frame.removeAttribute('src')
+    note.textContent = card.dataset.note || 'Em breve.'
+  })
 }
 
 function apply(search) {
   const model = pageModel(search)
-  currentModel = model
   document.querySelector('#kicker').textContent = model.kicker
   document.querySelector('#place').textContent = model.heroPlace
   document.querySelector('#doutor-copy').textContent = `Acompanha o funil ${model.place} todos os dias, no consultório ou fora. Acesse pelo celular.`
   document.querySelector('#atendente-copy').textContent = `Conduz a fila, as conversas e abre a agenda no mesmo painel ${model.place}.`
   document.querySelector('#cta-help').textContent = model.ctaHelp
-  renderModules()
   document.querySelector('#phone-name').textContent = model.header
   document.querySelector('#phone-initial').textContent = model.initial
   const radio = document.querySelector(`input[name="nicho"][value="${model.niche}"]`)
@@ -534,6 +528,7 @@ function currentSearch() {
 
 export function boot() {
   wireAudio()
+  wireModuleCards()
   apply(currentSearch())
   document.querySelectorAll('input[name="nicho"]').forEach((input) => {
     input.addEventListener('change', () => {
