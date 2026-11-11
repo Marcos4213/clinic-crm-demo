@@ -517,6 +517,8 @@ function apply(search) {
   if (radio) radio.checked = true
   const cta = document.querySelector('#cta')
   const missing = document.querySelector('#cta-missing')
+  cta.target = '_self'
+  cta.rel = 'noopener'
   if (model.href) {
     cta.href = model.href
     cta.removeAttribute('aria-disabled')
