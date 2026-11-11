@@ -40,6 +40,7 @@ jobs:
           mkdir -p dist/apresentacao
           cp apresentacao/index.html apresentacao/apresentacao.css apresentacao/apresentacao.js apresentacao/config.js apresentacao/og.png apresentacao/favicon.svg dist/apresentacao/
           cp -R apresentacao/audio dist/apresentacao/audio
+          cp -R apresentacao/painel dist/apresentacao/painel
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

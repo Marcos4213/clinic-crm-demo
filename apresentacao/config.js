@@ -14,8 +14,9 @@
  *   ?nicho=implantes|lentes|harmonizacao|plastica|dermatologia
  *   ?clinica=Nome da clínica
  *
- * Áudios do Marcos, na ordem, em apresentacao/audio/:
- *   marcos-1.mp3, marcos-2.mp3, marcos-3.mp3
+ * Áudios do Marcos: a página procura marcos-1.mp3, depois marcos-2.mp3,
+ * e assim por diante, até faltar um arquivo. A duração sai do próprio MP3.
+ * Trocar a quantidade não exige mudança de código. Veja apresentacao/audio/LEIA-ME.md.
  * Foto opcional: marcos.jpg, marcos.webp ou marcos.png.
  * Áudios do paciente: paciente-implantes.mp3, paciente-lentes.mp3,
  *   paciente-harmonizacao.mp3, paciente-plastica.mp3, paciente-dermato.mp3.
@@ -36,6 +37,72 @@ export const PATIENT_FILES = {
   plastica: 'paciente-plastica.mp3',
   dermatologia: 'paciente-dermato.mp3',
 }
+
+export const SERVICE_NAME = {
+  implantes: 'implante',
+  lentes: 'lentes de contato',
+  harmonizacao: 'harmonização',
+  plastica: 'cirurgia plástica',
+  dermatologia: 'consulta de pele',
+}
+
+export const MODULES = [
+  {
+    id: 'inicio',
+    label: 'Início',
+    attendant: 'A fila, a agenda do dia e o retorno ficam no mesmo lugar.',
+    doctor: 'O doutor vê o caminho do paciente, do primeiro contato ao atendido.',
+  },
+  {
+    id: 'whatsapp',
+    label: 'WhatsApp',
+    attendant: 'Conversas, disparos, follow-up e remarketing sem carregar tudo sozinha.',
+    doctor: 'A resposta automática continua o atendimento quando a recepção não está.',
+  },
+  {
+    id: 'instagram',
+    label: 'Instagram',
+    attendant: 'Comentário, direct e DM tratados com o mesmo cuidado.',
+    doctor: 'O interesse que nasce no perfil não fica fora do atendimento.',
+  },
+  {
+    id: 'pipeline',
+    label: 'Pipeline',
+    attendant: 'Cada paciente tem um lugar, do primeiro contato ao atendido.',
+    doctor: 'Dá para ver em que etapa o interesse está.',
+  },
+  {
+    id: 'agenda',
+    label: 'Agenda',
+    attendant: 'A consulta entra na agenda que a clínica já usa, ou na agenda interna.',
+    doctor: 'Sem trocar o jeito de marcar de um dia para o outro.',
+  },
+  {
+    id: 'avaliacoes',
+    label: 'Avaliações',
+    attendant: 'O pedido de avaliação sai depois da consulta.',
+    doctor: 'O Google da clínica passa a ser pedido, não esquecido.',
+  },
+  {
+    id: 'portfolio',
+    label: 'Portfólio',
+    attendant: 'Serviços e ofertas num só lugar, com a mesma história.',
+    doctor: 'A IA aprende o que a clínica oferece, na implantação.',
+  },
+  {
+    id: 'metricas',
+    label: 'Métricas',
+    attendant: 'O que está em aberto, sem montar planilha.',
+    doctor: 'Um painel claro, com exportação.',
+  },
+  {
+    id: 'integracoes',
+    label: 'Integrações',
+    soon: true,
+    attendant: 'WhatsApp, Instagram, agenda e Pixel entram com a nossa equipe.',
+    doctor: 'O que a clínica já usa continua. A ligação fica para a implantação.',
+  },
+]
 
 export const PATIENT_LINES = {
   implantes: 'Oi, boa noite! Vi o perfil de vocês e queria saber como funciona o implante. Dá pra fazer uma avaliação essa semana?',
@@ -250,9 +317,11 @@ export function pageModel(search, configuredPhone = WHATSAPP_E164) {
       ? `Para a equipe da ${clinic} mostrar ao doutor`
       : 'Para a equipe da recepção mostrar ao doutor',
     place,
+    heroPlace: clinic ? `para a ${clinic}` : 'para a sua clínica',
     header: clinic || 'Sua clínica',
     initial: [...(clinic || 'Sua clínica')][0].toUpperCase(),
-    ctaHelp: `Uma call curta para o doutor ver o fluxo no WhatsApp ${place}.`,
+    ctaHelp: `Uma call curta para o doutor ver o sistema ${place}.`,
+    service: SERVICE_NAME[niche],
     thread: buildThread(niche, clinic),
   }
 }
