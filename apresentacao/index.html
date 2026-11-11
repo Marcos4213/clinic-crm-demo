@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#080f1c" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>Automatize.app · Mostre ao doutor</title>
+    <meta
+      name="description"
+      content="O paciente escreveu fora do horário. Uma página curta para a recepção mostrar ao doutor, com uma demonstração ilustrativa do WhatsApp da clínica."
+    />
+    <link rel="canonical" href="https://marcos4213.github.io/clinic-crm-demo/apresentacao/" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Automatize.app" />
+    <meta property="og:url" content="https://marcos4213.github.io/clinic-crm-demo/apresentacao/" />
+    <meta property="og:title" content="O paciente escreveu. A clínica só viu depois." />
+    <meta
+      property="og:description"
+      content="Para a recepção encaminhar ao doutor. Demonstração ilustrativa de como a nossa equipe trata o WhatsApp da clínica."
+    />
+    <meta property="og:image" content="https://marcos4213.github.io/clinic-crm-demo/apresentacao/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Automatize.app. O paciente escreveu. A clínica só viu depois." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="O paciente escreveu. A clínica só viu depois." />
+    <meta
+      name="twitter:description"
+      content="Para a recepção encaminhar ao doutor. Demonstração ilustrativa de como a nossa equipe trata o WhatsApp da clínica."
+    />
+    <meta name="twitter:image" content="https://marcos4213.github.io/clinic-crm-demo/apresentacao/og.png" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./apresentacao.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="brand">
+        <img src="./favicon.svg" width="28" height="28" alt="" />
+        <span>Automatize.app</span>
+      </header>
+      <main class="layout">
+        <div class="intro">
+          <p class="eyebrow" id="kicker">Para a equipe da recepção mostrar ao doutor</p>
+          <h1>O paciente escreveu.<br />A clínica só viu depois.</h1>
+          <p class="lead">
+            À noite, no almoço ou no meio de um atendimento, o paciente escreve e a clínica só vê depois. Quem já
+            queria uma avaliação não insiste. A atendente fica com a fila. O doutor não vê quem sumiu.
+          </p>
+          <p class="lead">
+            A Automatize fica no WhatsApp <span id="place">da clínica</span>. Nossa equipe deixa a conversa pronta. O
+            celular abaixo é uma demonstração ilustrativa.
+          </p>
+          <section class="voice" aria-label="Mensagens do Marcos">
+            <p class="voice-kicker">Mensagem de voz</p>
+            <div class="marcos-row">
+              <div class="who" id="marcos-avatar" aria-hidden="true">M</div>
+              <div class="marcos-stack" id="marcos-notes">
+                <div class="note">
+                  <button type="button" class="play marcos-play" id="play" data-part="0" aria-pressed="false" aria-label="Ouvir a parte 1">
+                    <svg class="icon-play" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" /></svg>
+                    <svg class="icon-pause" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5h3.5v14H7V5Zm6.5 0H17v14h-3.5V5Z" fill="currentColor" /></svg>
+                  </button>
+                  <div class="note-main">
+                    <div class="wave marcos-wave" aria-hidden="true"></div>
+                    <p class="clock" data-part="0">0:33</p>
+                  </div>
+                </div>
+                <div class="note">
+                  <button type="button" class="play marcos-play" data-part="1" aria-pressed="false" aria-label="Ouvir a parte 2">
+                    <svg class="icon-play" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" /></svg>
+                    <svg class="icon-pause" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5h3.5v14H7V5Zm6.5 0H17v14h-3.5V5Z" fill="currentColor" /></svg>
+                  </button>
+                  <div class="note-main">
+                    <div class="wave marcos-wave" aria-hidden="true"></div>
+                    <p class="clock" data-part="1">0:32</p>
+                  </div>
+                </div>
+                <div class="note">
+                  <button type="button" class="play marcos-play" data-part="2" aria-pressed="false" aria-label="Ouvir a parte 3">
+                    <svg class="icon-play" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" /></svg>
+                    <svg class="icon-pause" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5h3.5v14H7V5Zm6.5 0H17v14h-3.5V5Z" fill="currentColor" /></svg>
+                  </button>
+                  <div class="note-main">
+                    <div class="wave marcos-wave" aria-hidden="true"></div>
+                    <p class="clock" data-part="2">0:22</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p class="voice-hint">Toque numa parte. A próxima começa em seguida.</p>
+            <audio id="marcos-audio" class="sr-audio" preload="none" playsinline></audio>
+          </section>
+        </div>
+
+        <div class="phone-col">
+          <div class="niches" role="radiogroup" aria-label="Nicho da demonstração">
+            <label class="chip"><input type="radio" name="nicho" value="implantes" checked /><span>Implantes</span></label>
+            <label class="chip"><input type="radio" name="nicho" value="lentes" /><span>Lentes de contato</span></label>
+            <label class="chip"><input type="radio" name="nicho" value="harmonizacao" /><span>Harmonização</span></label>
+            <label class="chip"><input type="radio" name="nicho" value="plastica" /><span>Plástica</span></label>
+            <label class="chip"><input type="radio" name="nicho" value="dermatologia" /><span>Dermatologia</span></label>
+          </div>
+          <p class="phase" id="phase" aria-live="polite">Resposta 24h</p>
+          <div class="device">
+            <div class="screen">
+              <div class="statusbar" aria-hidden="true">21:41</div>
+              <div class="wa-head">
+                <div class="avatar" id="phone-initial" aria-hidden="true">S</div>
+                <div>
+                  <p class="wa-name" id="phone-name">Sua clínica</p>
+                  <p class="wa-sub">demonstração ilustrativa</p>
+                </div>
+              </div>
+              <div class="chat" id="chat" aria-hidden="true"></div>
+              <div class="composer" aria-hidden="true"><span>Demonstração ilustrativa</span></div>
+            </div>
+          </div>
+          <p class="caption">Demonstração ilustrativa. Não é um atendimento real.</p>
+          <audio id="patient-audio" class="sr-audio" preload="none" playsinline></audio>
+          <button type="button" class="replay" id="replay">Ver de novo</button>
+        </div>
+
+        <section class="moves-block" aria-labelledby="moves-title">
+          <h2 id="moves-title">O que a nossa equipe deixa pronto</h2>
+          <ol class="moves">
+            <li><p><b>Resposta 24h.</b> A primeira mensagem não espera o expediente.</p></li>
+            <li><p><b>Qualificação.</b> A conversa entende o que a pessoa procura antes de ocupar a agenda.</p></li>
+            <li><p><b>Agendamento.</b> Oferece horários e confirma.</p></li>
+            <li><p><b>Lembrete.</b> Avisa na véspera.</p></li>
+            <li><p><b>Recuperação.</b> Volta a falar com quem parou no meio.</p></li>
+          </ol>
+          <p class="forward">
+            Se você atende o WhatsApp, encaminhe ao doutor. A primeira resposta, a qualificação, o horário, o lembrete
+            e o retorno deixam de ficar todos em cima de você. E ele vê o problema com clareza.
+          </p>
+        </section>
+      </main>
+      <div class="cta-bar">
+        <a class="cta" id="cta" aria-disabled="true">Marcar uma conversa com o doutor</a>
+        <p class="cta-help" id="cta-help">Uma call curta para o doutor ver o fluxo no WhatsApp da clínica.</p>
+        <p class="cta-missing" id="cta-missing">O WhatsApp desta call ainda não está no link.</p>
+      </div>
+      <p class="foot">Automatize.app · demonstração ilustrativa · sem login</p>
+      <noscript>
+        <p>Ative o JavaScript para ver a demonstração no celular. A narração está no arquivo de áudio desta página.</p>
+      </noscript>
+    </div>
+    <script type="module" src="./apresentacao.js"></script>
+  </body>
+</html>
