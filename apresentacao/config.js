@@ -24,7 +24,7 @@
  * Veja apresentacao/audio/LEIA-ME.md.
  */
 
-export const WHATSAPP_E164 = ''
+export const WHATSAPP_E164 = '5511913221587'
 
 export const MARCOS_PARTS = ['marcos-1.mp3']
 
@@ -291,30 +291,35 @@ export function buildThread(nicheId, clinic) {
   return niche.steps.map((step) => (step.text ? { ...step, text: fill(step.text, clinic) } : { ...step }))
 }
 
-export function whatsappText(clinic) {
-  const place = clinic ? `da ${clinic}` : 'da clínica'
-  return `Olá. Vi a apresentação da Automatize sobre o WhatsApp ${place}. Quero marcar uma conversa com o doutor.`
+export function whatsappText({ clinic = '', nicheLabel = '' } = {}) {
+  const lines = ['Olá, Marcos! Vi a apresentação da Automatize e quero marcar uma conversa.']
+  if (clinic) lines.push(`Clínica: ${clinic}.`)
+  if (nicheLabel) lines.push(`Nicho: ${nicheLabel}.`)
+  return lines.join(' ')
 }
 
-export function whatsappHref(phone, clinic) {
+export function whatsappHref(phone, details = {}) {
   const digits = cleanPhone(phone)
   if (!digits) return ''
-  return `https://wa.me/${digits}?text=${encodeURIComponent(whatsappText(clinic))}`
+  return `https://wa.me/${digits}?text=${encodeURIComponent(whatsappText(details))}`
 }
 
 export function pageModel(search, configuredPhone = WHATSAPP_E164) {
   const params = new URLSearchParams(String(search || '').replace(/^\?/, ''))
-  const niche = resolveNiche(params.get('nicho'))
+  const nicheQuery = params.get('nicho')
+  const niche = resolveNiche(nicheQuery)
   const clinic = cleanClinic(params.get('clinica'))
+  const nicheLabel = nicheQuery ? (NICHES.find((item) => item.id === niche)?.label ?? '') : ''
   const whatsappParam = cleanPhone(params.get('whatsapp'))
   const phone = resolvePhone(whatsappParam, configuredPhone)
   const place = clinic ? `da ${clinic}` : 'da clínica'
   return {
     niche,
     clinic,
+    nicheLabel,
     whatsappParam,
     phone,
-    href: whatsappHref(phone, clinic),
+    href: whatsappHref(phone, { clinic, nicheLabel }),
     kicker: clinic
       ? `Para a equipe da ${clinic} mostrar ao doutor`
       : 'Para a equipe da recepção mostrar ao doutor',
@@ -322,7 +327,7 @@ export function pageModel(search, configuredPhone = WHATSAPP_E164) {
     heroPlace: clinic ? `para a ${clinic}` : 'para a sua clínica',
     header: clinic || 'Sua clínica',
     initial: [...(clinic || 'Sua clínica')][0].toUpperCase(),
-    ctaHelp: `Uma call curta para o doutor ver o sistema ${place}.`,
+    ctaHelp: 'Uma call curta com o Marcos.',
     service: SERVICE_NAME[niche],
     thread: buildThread(niche, clinic),
   }

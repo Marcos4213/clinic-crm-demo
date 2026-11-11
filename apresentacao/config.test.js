@@ -69,12 +69,12 @@ function mp3Duration(buffer) {
 }
 
 describe('apresentação', () => {
-  it('ships without a placeholder phone number and documents the override', () => {
-    expect(WHATSAPP_E164).toBe('')
+  it('uses Marcos number and still allows a url override', () => {
+    expect(WHATSAPP_E164).toBe('5511913221587')
     expect(source).toMatch(/WHATSAPP_E164/)
     expect(source).toMatch(/\?whatsapp=/)
     expect(source).toMatch(/DDI/)
-    expect(readFileSync(join(root, 'config.js'), 'utf8')).not.toMatch(/5511\d{8,}/)
+    expect(source).toMatch(/5511913221587/)
   })
 
   it('keeps the copy rules and stays independent of the app', () => {
@@ -85,7 +85,7 @@ describe('apresentação', () => {
     expect(source).toMatch(/paciente/)
     expect(source).toMatch(/nossa equipe/i)
     expect(source).toMatch(/demonstração ilustrativa/i)
-    expect(source).toMatch(/Marcar uma conversa com o doutor/)
+    expect(source).toMatch(/Marcar uma conversa com o Marcos/)
     expect(source).toMatch(/A próxima começa em seguida/)
     expect(source).toMatch(/Tudo num sistema só/)
     expect(source).toMatch(/CRM e Pipeline/)
@@ -139,16 +139,27 @@ describe('apresentação', () => {
     expect(model.place).toBe('da Pele Viva')
     expect(model.initial).toBe('P')
     expect(model.href).toMatch(/^https:\/\/wa\.me\/5511900000000\?text=/)
-    expect(decodeURIComponent(model.href.split('text=')[1])).toMatch(/WhatsApp da Pele Viva/)
-    expect(decodeURIComponent(model.href.split('text=')[1])).toMatch(/doutor/)
+    const overridden = decodeURIComponent(model.href.split('text=')[1])
+    expect(overridden).toMatch(/Olá, Marcos!/)
+    expect(overridden).toMatch(/Clínica: Pele Viva/)
+    expect(overridden).toMatch(/Nicho: Dermatologia/)
     expect(model.thread.some((step) => step.text?.includes('a equipe da Pele Viva'))).toBe(true)
     expect(model.thread.some((step) => step.kind === 'typing')).toBe(true)
 
     const plain = pageModel('')
-    expect(plain.href).toBe('')
+    expect(plain.phone).toBe('5511913221587')
+    expect(plain.href).toMatch(/^https:\/\/wa\.me\/5511913221587\?text=/)
+    expect(decodeURIComponent(plain.href.split('text=')[1])).toBe(
+      'Olá, Marcos! Vi a apresentação da Automatize e quero marcar uma conversa.',
+    )
+    const named = pageModel('?nicho=implantes&clinica=Aurora')
+    expect(named.href).toMatch(/^https:\/\/wa\.me\/5511913221587\?text=/)
+    expect(decodeURIComponent(named.href.split('text=')[1])).toBe(
+      'Olá, Marcos! Vi a apresentação da Automatize e quero marcar uma conversa. Clínica: Aurora. Nicho: Implantes.',
+    )
     expect(plain.header).toBe('Sua clínica')
     expect(plain.thread.some((step) => step.text?.includes('a nossa equipe'))).toBe(true)
-    expect(whatsappHref('abc', 'Aurora')).toBe('')
+    expect(whatsappHref('abc', { clinic: 'Aurora' })).toBe('')
     expect(pageModel('', '5511988887777').href).toMatch(/^https:\/\/wa\.me\/5511988887777\?text=/)
     expect(pageModel('?whatsapp=abc', '5511988887777').phone).toBe('5511988887777')
   })
