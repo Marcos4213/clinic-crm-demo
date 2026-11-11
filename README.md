@@ -6,7 +6,7 @@ O Automatize.app agenda. A sua equipe fecha.
 
 App de clínicas no mesmo repositório. `#/` entra com e-mail e senha. `#/demo` é a amostra local e não grava no Supabase. `#/app` é a clínica autenticada depois que o esquema com RLS está aplicado.
 
-A apresentação de envio, para a recepção encaminhar ao doutor, fica em `/apresentacao/`. É página estática: sem login e sem Supabase. O app continua em `#/` e a amostra em `#/demo`. O botão da call usa `WHATSAPP_E164` em `apresentacao/config.js` (só dígitos, com DDI) ou o parâmetro `?whatsapp=` no link. Nichos: `?nicho=implantes`, `lentes`, `harmonizacao`, `plastica` ou `dermatologia`, com `?clinica=Nome`.
+A apresentação de envio, para a recepção encaminhar ao doutor, fica em `/apresentacao/`. Ela mostra o sistema inteiro, não só o WhatsApp. É página estática: sem login e sem Supabase. O app continua em `#/` e a amostra em `#/demo`. O botão da call usa `WHATSAPP_E164` em `apresentacao/config.js` (só dígitos, com DDI) ou o parâmetro `?whatsapp=` no link. Nichos: `?nicho=implantes`, `lentes`, `harmonizacao`, `plastica` ou `dermatologia`, com `?clinica=Nome`.
 
 Os áudios ficam em `apresentacao/audio/`. A mensagem do Marcos são três partes, `marcos-1.mp3`, `marcos-2.mp3` e `marcos-3.mp3`: ao terminar uma, a próxima começa. Os áudios do paciente, um por nicho, estão no mesmo diretório. Os nomes e a troca dos arquivos estão em `apresentacao/audio/LEIA-ME.md`. Nada toca sem um toque.
 

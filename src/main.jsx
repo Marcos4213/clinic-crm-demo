@@ -7,6 +7,12 @@ import './index.css'
 import App from './App.jsx'
 import { prepareAuth } from './auth/client.js'
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {})
+  })
+}
+
 prepareAuth().finally(() => {
   createRoot(document.getElementById('root')).render(
     <StrictMode>

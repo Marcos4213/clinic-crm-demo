@@ -1,4 +1,4 @@
-import { MARCOS_PARTS, MARCOS_PHOTO_FILES, pageModel } from './config.js'
+import { MARCOS_PHOTO_FILES, MODULES, pageModel } from './config.js'
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -321,6 +321,17 @@ let marcosChain = false
 let marcosSwitching = false
 let marcosFrame = 0
 
+function listenLabel() {
+  return document.querySelector('#listen-label')
+}
+
+function ouçaEm(seconds) {
+  const total = Math.round(seconds)
+  if (!Number.isFinite(total) || total <= 0) return 'Ouça a mensagem'
+  if (total < 60) return `Ouça em ${total}s`
+  return `Ouça em ${formatTime(seconds)}`
+}
+
 function pauseMarcos() {
   marcosChain = false
   const audio = document.querySelector('#marcos-audio')
@@ -330,19 +341,25 @@ function pauseMarcos() {
 
 function paintMarcos() {
   const audio = document.querySelector('#marcos-audio')
-  const playing = audio && !audio.paused && !audio.ended
-  marcosUi.forEach((part, index) => {
-    const active = playing && index === marcosIndex
-    part.button.setAttribute('aria-pressed', active ? 'true' : 'false')
-    part.button.setAttribute('aria-label', active ? `Pausar a parte ${index + 1}` : `Ouvir a parte ${index + 1}`)
-    if (active && part.duration) {
-      part.clock.textContent = formatTime(audio.currentTime)
-      paintBars(part.bars, audio.currentTime / part.duration)
-      return
-    }
-    paintBars(part.bars, 0)
-    if (part.duration) part.clock.textContent = formatTime(part.duration)
-  })
+  const button = document.querySelector('#play')
+  const label = listenLabel()
+  const bars = [...document.querySelectorAll('#wave span')]
+  const playing = audio && !audio.paused && !audio.ended && marcosIndex >= 0
+  const total = marcosUi.reduce((sum, part) => sum + (part.duration || 0), 0)
+  if (button) {
+    button.disabled = marcosUi.length === 0
+    button.setAttribute('aria-pressed', playing ? 'true' : 'false')
+    button.setAttribute('aria-label', playing ? 'Pausar a mensagem' : 'Ouvir a mensagem do Marcos')
+  }
+  if (!label) return
+  if (playing) {
+    const part = marcosUi[marcosIndex]
+    label.textContent = `${formatTime(audio.currentTime)} · parte ${marcosIndex + 1} de ${marcosUi.length}`
+    paintBars(bars, part?.duration ? audio.currentTime / part.duration : 0)
+    return
+  }
+  paintBars(bars, 0)
+  label.textContent = marcosUi.length ? ouçaEm(total) : 'Áudio em breve'
 }
 
 function trackMarcos() {
@@ -379,38 +396,40 @@ function playMarcos(index) {
   })
 }
 
-function wireAudio() {
-  const audio = document.querySelector('#marcos-audio')
-  const buttons = [...document.querySelectorAll('.marcos-play')]
-  if (!audio || buttons.length === 0) return
-  audio.playsInline = true
-  const heights = [8, 14, 22, 30, 18, 36, 26, 12, 20, 34, 28, 16, 24, 38, 22, 10, 18, 32, 14, 26]
-  buttons.forEach((button, index) => {
-    const note = button.closest('.note')
-    const wave = note.querySelector('.marcos-wave')
-    const clock = note.querySelector('.clock')
-    for (const height of heights) {
-      const bar = document.createElement('span')
-      bar.style.height = `${height}px`
-      wave.append(bar)
-    }
-    const part = {
-      url: new URL(`./audio/${MARCOS_PARTS[index]}`, window.location.href).href,
-      button,
-      clock,
-      bars: [...wave.children],
-      duration: 0,
-    }
-    marcosUi[index] = part
+function measureDuration(url) {
+  return new Promise((resolve) => {
     const probe = document.createElement('audio')
     probe.preload = 'metadata'
-    probe.src = part.url
-    probe.addEventListener('loadedmetadata', () => {
-      if (!Number.isFinite(probe.duration)) return
-      part.duration = probe.duration
-      paintMarcos()
-    })
-    button.addEventListener('click', () => playMarcos(index))
+    probe.src = url
+    probe.addEventListener('loadedmetadata', () => resolve(Number.isFinite(probe.duration) ? probe.duration : 0))
+    probe.addEventListener('error', () => resolve(0))
+  })
+}
+
+async function discoverMarcosParts() {
+  const parts = []
+  for (let index = 1; index <= 8; index += 1) {
+    const url = await findAudio([`marcos-${index}.mp3`])
+    if (!url) break
+    parts.push({ url, duration: await measureDuration(url) })
+  }
+  return parts
+}
+
+function wireAudio() {
+  const audio = document.querySelector('#marcos-audio')
+  const button = document.querySelector('#play')
+  const wave = document.querySelector('#wave')
+  if (!audio || !button || !wave) return
+  audio.playsInline = true
+  for (const height of [8, 14, 22, 30, 18, 36, 26, 12, 20, 34, 28, 16, 24, 38, 22, 10, 18, 32, 14, 26]) {
+    const bar = document.createElement('span')
+    bar.style.height = `${height}px`
+    wave.append(bar)
+  }
+  button.addEventListener('click', () => {
+    if (!marcosUi.length) return
+    playMarcos(marcosIndex >= 0 ? marcosIndex : 0)
   })
   audio.addEventListener('play', () => {
     window.cancelAnimationFrame(marcosFrame)
@@ -436,16 +455,60 @@ function wireAudio() {
     marcosIndex = -1
     paintMarcos()
   })
+  discoverMarcosParts().then((parts) => {
+    marcosUi.splice(0, marcosUi.length, ...parts)
+    paintMarcos()
+  })
   findAudio(MARCOS_PHOTO_FILES).then((url) => {
     if (url) paintAvatar(document.querySelector('#marcos-avatar'), url)
   })
 }
 
+let moduleId = 'inicio'
+let currentModel = null
+
+function renderModules() {
+  const host = document.querySelector('#modules')
+  const gains = document.querySelector('#gains')
+  if (!host || !gains) return
+  host.replaceChildren()
+  for (const item of MODULES) {
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'module'
+    button.setAttribute('aria-pressed', item.id === moduleId ? 'true' : 'false')
+    const name = document.createElement('span')
+    name.textContent = item.soon ? `${item.label} · em breve` : item.label
+    button.append(name)
+    button.addEventListener('click', () => {
+      moduleId = item.id
+      renderModules()
+    })
+    host.append(button)
+  }
+  const current = MODULES.find((item) => item.id === moduleId) ?? MODULES[0]
+  gains.replaceChildren()
+  const attendant = document.createElement('span')
+  attendant.textContent = `Atendente: ${current.attendant}`
+  const doctor = document.createElement('span')
+  doctor.textContent = `Doutor: ${current.doctor}`
+  gains.append(attendant, doctor)
+  if (currentModel?.service && current.id === 'whatsapp') {
+    const service = document.createElement('span')
+    service.textContent = `Nesta demonstração, a conversa é sobre ${currentModel.service}.`
+    gains.append(service)
+  }
+}
+
 function apply(search) {
   const model = pageModel(search)
+  currentModel = model
   document.querySelector('#kicker').textContent = model.kicker
-  document.querySelector('#place').textContent = model.place
+  document.querySelector('#place').textContent = model.heroPlace
+  document.querySelector('#doutor-copy').textContent = `Acompanha o funil ${model.place} todos os dias, no consultório ou fora. Acesse pelo celular.`
+  document.querySelector('#atendente-copy').textContent = `Conduz a fila, as conversas e abre a agenda no mesmo painel ${model.place}.`
   document.querySelector('#cta-help').textContent = model.ctaHelp
+  renderModules()
   document.querySelector('#phone-name').textContent = model.header
   document.querySelector('#phone-initial').textContent = model.initial
   const radio = document.querySelector(`input[name="nicho"][value="${model.niche}"]`)
