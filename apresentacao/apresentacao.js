@@ -1,4 +1,4 @@
-import { MARCOS_PHOTO_FILES, pageModel } from './config.js'
+import { MARCOS_AUDIO_VERSION, MARCOS_PARTS, MARCOS_PHOTO_FILES, pageModel } from './config.js'
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -326,9 +326,7 @@ function listenLabel() {
 }
 
 function ouçaEm(seconds) {
-  const total = Math.round(seconds)
-  if (!Number.isFinite(total) || total <= 0) return 'Ouça a mensagem'
-  if (total < 60) return `Ouça em ${total}s`
+  if (!Number.isFinite(seconds) || seconds <= 0) return 'Ouça a mensagem'
   return `Ouça em ${formatTime(seconds)}`
 }
 
@@ -354,7 +352,8 @@ function paintMarcos() {
   if (!label) return
   if (playing) {
     const part = marcosUi[marcosIndex]
-    label.textContent = `${formatTime(audio.currentTime)} · parte ${marcosIndex + 1} de ${marcosUi.length}`
+    const progress = formatTime(audio.currentTime)
+    label.textContent = marcosUi.length > 1 ? `${progress} · parte ${marcosIndex + 1} de ${marcosUi.length}` : progress
     paintBars(bars, part?.duration ? audio.currentTime / part.duration : 0)
     return
   }
@@ -406,12 +405,19 @@ function measureDuration(url) {
   })
 }
 
-async function discoverMarcosParts() {
+function versioned(url) {
+  const next = new URL(url)
+  next.searchParams.set('v', MARCOS_AUDIO_VERSION)
+  return next.href
+}
+
+async function loadMarcosParts() {
   const parts = []
-  for (let index = 1; index <= 8; index += 1) {
-    const url = await findAudio([`marcos-${index}.mp3`])
-    if (!url) break
-    parts.push({ url, duration: await measureDuration(url) })
+  for (const name of MARCOS_PARTS) {
+    const url = await findAudio([name])
+    if (!url) continue
+    const playUrl = versioned(url)
+    parts.push({ url: playUrl, duration: await measureDuration(playUrl) })
   }
   return parts
 }
@@ -455,8 +461,10 @@ function wireAudio() {
     marcosIndex = -1
     paintMarcos()
   })
-  discoverMarcosParts().then((parts) => {
+  loadMarcosParts().then((parts) => {
     marcosUi.splice(0, marcosUi.length, ...parts)
+    const hint = document.querySelector('.voice-hint')
+    if (hint) hint.hidden = parts.length < 2
     paintMarcos()
   })
   findAudio(MARCOS_PHOTO_FILES).then((url) => {

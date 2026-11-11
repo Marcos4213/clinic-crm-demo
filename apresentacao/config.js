@@ -14,9 +14,9 @@
  *   ?nicho=implantes|lentes|harmonizacao|plastica|dermatologia
  *   ?clinica=Nome da clínica
  *
- * Áudios do Marcos: a página procura marcos-1.mp3, depois marcos-2.mp3,
- * e assim por diante, até faltar um arquivo. A duração sai do próprio MP3.
- * Trocar a quantidade não exige mudança de código. Veja apresentacao/audio/LEIA-ME.md.
+ * Áudio do Marcos: só os nomes em MARCOS_PARTS. A duração sai do MP3.
+ * Ao trocar o arquivo, aumente MARCOS_AUDIO_VERSION para o navegador não
+ * reaproveitar o MP3 antigo. Veja apresentacao/audio/LEIA-ME.md.
  * Foto opcional: marcos.jpg, marcos.webp ou marcos.png.
  * Áudios do paciente: paciente-implantes.mp3, paciente-lentes.mp3,
  *   paciente-harmonizacao.mp3, paciente-plastica.mp3, paciente-dermato.mp3.
@@ -26,7 +26,9 @@
 
 export const WHATSAPP_E164 = ''
 
-export const MARCOS_PARTS = ['marcos-1.mp3', 'marcos-2.mp3', 'marcos-3.mp3']
+export const MARCOS_PARTS = ['marcos-1.mp3']
+
+export const MARCOS_AUDIO_VERSION = '2'
 
 export const MARCOS_PHOTO_FILES = ['marcos.jpg', 'marcos.webp', 'marcos.png']
 
