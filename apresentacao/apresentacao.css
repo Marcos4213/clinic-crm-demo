@@ -619,41 +619,62 @@ h2 {
   color: var(--ink);
 }
 
+.modulos { margin-top: 8px; }
+
 .modules {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scroll-snap-type: x mandatory;
-}
-
-.module {
-  flex: 0 0 auto;
-  min-height: 44px;
-  padding: 0 14px;
-  scroll-snap-align: start;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--body);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.module[aria-pressed='true'] {
-  border-color: transparent;
-  background: var(--green);
-  color: var(--green-ink);
-}
-
-.gains {
   display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.module-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
-  margin: 12px 0 0;
+  min-height: 132px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
   color: var(--muted);
-  font-size: 14px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.module-card svg { color: var(--green); }
+
+.module-card strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.module-card[aria-pressed='true'] {
+  border-color: var(--green);
+}
+
+.mini { margin-top: 12px; }
+
+.mini-kicker {
+  margin: 0 0 6px;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#mini-note { margin: 0 0 8px; color: var(--muted); font-size: 14px; }
+
+#mini-frame {
+  width: 100%;
+  height: 420px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #080f1c;
 }
 
 .wa-demo { display: flex; flex-direction: column; gap: 18px; }
@@ -662,7 +683,7 @@ h2 {
   .pair { flex-direction: row; align-items: flex-start; }
   .pair figure:first-child { flex: 0 0 280px; }
   .pair figure:last-child { flex: 1; }
-  .modules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
+  .modules { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .wa-demo { display: grid; grid-template-columns: minmax(0, 1fr) 340px; align-items: start; column-gap: 36px; }
   .phone-col { position: sticky; top: 24px; }
   h1 { font-size: 2.7rem; }
