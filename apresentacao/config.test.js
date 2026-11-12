@@ -85,14 +85,16 @@ describe('apresentação', () => {
     expect(source).toMatch(/paciente/)
     expect(source).toMatch(/nossa equipe/i)
     expect(source).toMatch(/demonstração ilustrativa/i)
-    expect(source).toMatch(/Marcar uma conversa com o Marcos/)
+    expect(source).toMatch(/Agendar 15 minutos com o Marcos/)
+    expect(source).toMatch(/Uma apresentação rápida do aplicativo por dentro, e de onde a clínica perde paciente hoje/)
+    expect(source).toMatch(/A clínica perde paciente entre o primeiro oi e a avaliação no Google/)
+    expect(source).toMatch(/Para a recepção encaminhar e para o doutor ver em poucos minutos/)
     expect(source).toMatch(/A próxima começa em seguida/)
-    expect(source).toMatch(/Tudo num sistema só/)
-    expect(source).toMatch(/CRM e Pipeline/)
     expect(source).toMatch(/Portfólio/)
     expect(source).toMatch(/Métricas/)
-    expect(source).toMatch(/Pixel e integrações/)
-    expect(source).toMatch(/Acesse pelo celular/)
+    expect(source).toMatch(/Pixel em breve/)
+    expect(source).toMatch(/loading="lazy"/)
+    expect(source).toMatch(/safe-area-inset-bottom/)
     expect(source).toMatch(/Ouça em /)
     expect(source).toMatch(/MARCOS_AUDIO_VERSION/)
     expect(source).not.toMatch(/instalar no celular|baixar/i)
@@ -102,8 +104,19 @@ describe('apresentação', () => {
     expect(source).toMatch(/paciente-implantes\.mp3/)
     expect(source).toMatch(/paciente-dermato\.mp3/)
     expect(source).toMatch(/og:title/)
-    expect(source).toMatch(/https:\/\/marcos4213\.github\.io\/clinic-crm-demo\/apresentacao\/og\.png/)
-    for (const label of ['Resposta 24h', 'Qualificação', 'Agendamento', 'Lembrete', 'Recuperação']) {
+    expect(source).toMatch(/https:\/\/apresentacao\.devbrasil\.online\//)
+    expect(source).toMatch(/https:\/\/apresentacao\.devbrasil\.online\/og\.png/)
+    expect(source).not.toMatch(/marcos4213\.github\.io/)
+    expect(source).not.toMatch(/logo abaixo/)
+    expect(source).not.toMatch(/Resposta 24h/)
+    expect(source).not.toMatch(/while \(id === runId\)/)
+    expect(source).not.toMatch(/Harvard|HBR|Dr\(a\)|o\(a\)/i)
+    expect(source).toMatch(/Pesquisa da Doctoralia: 80% dos pacientes escolhem o especialista pelas avaliações online/)
+    expect(source).toMatch(/Não é um resultado da Automatize/)
+    for (const route of ['/#/demo"', '/#/demo/whatsapp', '/#/demo/instagram', '/#/demo/pipeline', '/#/demo/agenda', '/#/demo/avaliacoes', '/#/demo/portfolio', '/#/demo/metricas', '/#/demo/integracoes']) {
+      expect(source).toContain(`https://automatize.devbrasil.online${route.replace(/"$/, '')}`)
+    }
+    for (const label of ['Resposta na hora', 'Qualificação', 'Agendamento', 'Lembrete', 'Follow-up']) {
       expect(source).toContain(label)
     }
     expect(existsSync(join(process.cwd(), 'public', 'apresentacao'))).toBe(false)
@@ -115,6 +128,7 @@ describe('apresentação', () => {
     expect(workflow).toMatch(/apresentacao\/audio/)
     expect(workflow).not.toMatch(/narracao\.mp3/)
     expect(workflow).toMatch(/apresentacao\/index\.html/)
+    expect(workflow).toMatch(/apresentacao\/favicon\.ico/)
     expect(workflow).not.toMatch(/cloudflare/i)
   })
 
@@ -135,7 +149,7 @@ describe('apresentação', () => {
     const model = pageModel('?nicho=dermatologia&clinica=Pele%20Viva&whatsapp=5511900000000')
     expect(model.niche).toBe('dermatologia')
     expect(model.header).toBe('Pele Viva')
-    expect(model.kicker).toBe('Para a equipe da Pele Viva mostrar ao doutor')
+    expect(model.kicker).toBe('Para a recepção da Pele Viva encaminhar e para o doutor ver em poucos minutos.')
     expect(model.place).toBe('da Pele Viva')
     expect(model.initial).toBe('P')
     expect(model.href).toMatch(/^https:\/\/wa\.me\/5511900000000\?text=/)
@@ -150,12 +164,12 @@ describe('apresentação', () => {
     expect(plain.phone).toBe('5511913221587')
     expect(plain.href).toMatch(/^https:\/\/wa\.me\/5511913221587\?text=/)
     expect(decodeURIComponent(plain.href.split('text=')[1])).toBe(
-      'Olá, Marcos! Vi a apresentação da Automatize e quero marcar uma conversa.',
+      'Olá, Marcos! Vi a apresentação da Automatize e quero agendar 15 minutos para ver o aplicativo por dentro.',
     )
     const named = pageModel('?nicho=implantes&clinica=Aurora')
     expect(named.href).toMatch(/^https:\/\/wa\.me\/5511913221587\?text=/)
     expect(decodeURIComponent(named.href.split('text=')[1])).toBe(
-      'Olá, Marcos! Vi a apresentação da Automatize e quero marcar uma conversa. Clínica: Aurora. Nicho: Implantes.',
+      'Olá, Marcos! Vi a apresentação da Automatize e quero agendar 15 minutos para ver o aplicativo por dentro. Clínica: Aurora. Nicho: Implantes.',
     )
     expect(plain.header).toBe('Sua clínica')
     expect(plain.thread.some((step) => step.text?.includes('a nossa equipe'))).toBe(true)
@@ -169,10 +183,16 @@ describe('apresentação', () => {
     for (const niche of NICHES) {
       const thread = buildThread(niche.id, '')
       const labels = thread.filter((step) => step.kind === 'status').map((step) => step.text)
-      expect(labels).toEqual(['Resposta 24h', 'Qualificação', 'Agendamento', 'Lembrete', 'Recuperação'])
+      expect(labels).toEqual(['Resposta na hora', 'Qualificação', 'Agendamento', 'Lembrete', 'Follow-up'])
       expect(thread.some((step) => step.kind === 'typing')).toBe(true)
       expect(thread.some((step) => step.text === 'Véspera')).toBe(true)
-      expect(thread.some((step) => step.text === 'Sem resposta')).toBe(true)
+      expect(thread.some((step) => step.text === 'Depois da avaliação')).toBe(true)
+      expect(thread.some((step) => step.text === 'Sem resposta')).toBe(false)
+      expect(thread.some((step) => /ficou parada|ficou em aberto|ficou pendente|ficou sem retorno|conversa parou/i.test(step.text || ''))).toBe(false)
+      const bookedAt = thread.findIndex((step) => /marcada|marcado/i.test(step.text || ''))
+      const followAt = thread.findIndex((step) => step.kind === 'status' && step.text === 'Follow-up')
+      expect(bookedAt).toBeGreaterThan(-1)
+      expect(followAt).toBeGreaterThan(bookedAt)
     }
     expect(buildThread('lentes', '')[0].text).toBe(PATIENT_LINES.lentes)
     expect(buildThread('plastica', 'Aurora').some((step) => step.text?.includes('na Aurora'))).toBe(true)

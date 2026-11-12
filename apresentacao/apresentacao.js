@@ -89,33 +89,29 @@ async function runThread(thread) {
     return
   }
 
-  while (id === runId) {
-    if (!(await waitIfPatientPlaying(id))) return
-    chat.classList.add('is-reset')
-    await wait(180)
+  if (!(await waitIfPatientPlaying(id))) return
+  chat.classList.add('is-reset')
+  await wait(180)
+  if (id !== runId) return
+  chat.replaceChildren()
+  chat.classList.remove('is-reset')
+  for (const step of thread) {
     if (id !== runId) return
-    chat.replaceChildren()
-    chat.classList.remove('is-reset')
-    for (const step of thread) {
-      if (id !== runId) return
-      if (step.kind === 'status') {
-        phase.textContent = step.text
-        await wait(200)
-        continue
-      }
-      if (step.kind === 'typing') {
-        chat.append(typing)
-        chat.scrollTop = chat.scrollHeight
-        await wait(1100)
-        typing.remove()
-        continue
-      }
-      chat.append(step.kind === 'voice' ? renderVoice(step) : renderStep(step))
-      chat.scrollTop = chat.scrollHeight
-      await wait(step.kind === 'voice' ? 1400 : step.kind === 'note' ? 480 : readPause(step.text))
+    if (step.kind === 'status') {
+      phase.textContent = step.text
+      await wait(200)
+      continue
     }
-    if (id !== runId) return
-    await wait(2600)
+    if (step.kind === 'typing') {
+      chat.append(typing)
+      chat.scrollTop = chat.scrollHeight
+      await wait(1100)
+      typing.remove()
+      continue
+    }
+    chat.append(step.kind === 'voice' ? renderVoice(step) : renderStep(step))
+    chat.scrollTop = chat.scrollHeight
+    await wait(step.kind === 'voice' ? 1400 : step.kind === 'note' ? 480 : readPause(step.text))
   }
 }
 
@@ -145,23 +141,30 @@ async function waitIfPatientPlaying(id) {
 
 const fileCache = new Map()
 
-async function findAudio(names) {
-  const key = names.join('|')
+async function findIn(folders, names) {
+  const key = `${folders.join(',')}::${names.join('|')}`
   if (fileCache.has(key)) return fileCache.get(key)
   const pending = (async () => {
-    for (const name of names) {
-      try {
-        const response = await fetch(`./audio/${name}`, { headers: { Range: 'bytes=0-15' } })
-        const type = response.headers.get('content-type') || ''
-        if (response.ok && !/text\/html/i.test(type)) return new URL(`./audio/${name}`, window.location.href).href
-      } catch {
-        /* tenta o próximo nome */
+    for (const folder of folders) {
+      for (const name of names) {
+        const path = `${folder}${name}`
+        try {
+          const response = await fetch(path, { headers: { Range: 'bytes=0-15' } })
+          const type = response.headers.get('content-type') || ''
+          if (response.ok && !/text\/html/i.test(type)) return new URL(path, window.location.href).href
+        } catch {
+          /* tenta o próximo arquivo */
+        }
       }
     }
     return ''
   })()
   fileCache.set(key, pending)
   return pending
+}
+
+function findAudio(names) {
+  return findIn(['./audio/'], names)
 }
 
 function playIcon() {
@@ -304,14 +307,19 @@ function renderVoice(step) {
 }
 
 function paintAvatar(node, photoUrl) {
+  if (!node) return
   node.replaceChildren()
   if (!photoUrl) {
     node.textContent = 'M'
     return
   }
   const image = document.createElement('img')
-  image.src = photoUrl
   image.alt = ''
+  image.addEventListener('error', () => {
+    node.replaceChildren()
+    node.textContent = 'M'
+  })
+  image.src = photoUrl
   node.append(image)
 }
 
@@ -422,6 +430,25 @@ async function loadMarcosParts() {
   return parts
 }
 
+function wireDock() {
+  const dock = document.querySelector('.dock')
+  const anchors = [...document.querySelectorAll('.cta-block [data-cta]')]
+  if (!dock || anchors.length === 0) return
+  if (!('IntersectionObserver' in window)) {
+    dock.classList.add('is-on')
+    return
+  }
+  const visible = new Set()
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) visible.add(entry.target)
+      else visible.delete(entry.target)
+    }
+    dock.classList.toggle('is-on', visible.size === 0)
+  }, { threshold: 0.65 })
+  anchors.forEach((node) => observer.observe(node))
+}
+
 function wireAudio() {
   const audio = document.querySelector('#marcos-audio')
   const button = document.querySelector('#play')
@@ -467,8 +494,8 @@ function wireAudio() {
     if (hint) hint.hidden = parts.length < 2
     paintMarcos()
   })
-  findAudio(MARCOS_PHOTO_FILES).then((url) => {
-    if (url) paintAvatar(document.querySelector('#marcos-avatar'), url)
+  findIn(['./', './audio/'], MARCOS_PHOTO_FILES).then((url) => {
+    paintAvatar(document.querySelector('#marcos-avatar'), url)
   })
 }
 
@@ -486,48 +513,49 @@ function wireModuleCards() {
     })
     const demo = card.dataset.demo || ''
     mini.hidden = false
-    if (demo === 'whatsapp') {
+    if (!demo) {
       frame.hidden = true
-      note.textContent = 'A conversa ilustrativa, com o áudio do paciente, está logo abaixo.'
-      document.querySelector('#wa-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      frame.removeAttribute('src')
+      note.textContent = card.dataset.note || 'Em breve.'
       return
     }
-    if (demo) {
-      note.textContent = 'Tela da demonstração local, com dados fictícios.'
-      frame.hidden = false
-      if (frame.getAttribute('src') !== demo) frame.src = demo
-      return
-    }
-    frame.hidden = true
-    frame.removeAttribute('src')
-    note.textContent = card.dataset.note || 'Em breve.'
+    note.textContent = 'Demonstração ilustrativa, com dados fictícios. A conta da clínica não está ligada.'
+    frame.hidden = false
+    if (frame.getAttribute('src') !== demo) frame.src = demo
+    mini.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' })
   })
 }
 
 function apply(search) {
   const model = pageModel(search)
-  document.querySelector('#kicker').textContent = model.kicker
-  document.querySelector('#place').textContent = model.heroPlace
-  document.querySelector('#doutor-copy').textContent = `Acompanha o funil ${model.place} todos os dias, no consultório ou fora. Acesse pelo celular.`
-  document.querySelector('#atendente-copy').textContent = `Conduz a fila, as conversas e abre a agenda no mesmo painel ${model.place}.`
-  document.querySelector('#cta-help').textContent = model.ctaHelp
+  const kicker = document.querySelector('#kicker')
+  if (kicker) kicker.textContent = model.kicker
+  document.querySelector('#doutor-copy').textContent =
+    `Acompanha o caminho do paciente ${model.place}, no consultório ou fora. A tela é a visão do dono, com dados fictícios.`
+  document.querySelector('#atendente-copy').textContent =
+    `Conduz a fila, as conversas e a agenda no mesmo painel ${model.place}. A recepção vê o que está esperando.`
+  document.querySelectorAll('.cta-help').forEach((node) => {
+    node.textContent = model.ctaHelp
+  })
   document.querySelector('#phone-name').textContent = model.header
   document.querySelector('#phone-initial').textContent = model.initial
   const radio = document.querySelector(`input[name="nicho"][value="${model.niche}"]`)
   if (radio) radio.checked = true
-  const cta = document.querySelector('#cta')
-  const missing = document.querySelector('#cta-missing')
-  cta.target = '_self'
-  cta.rel = 'noopener'
-  if (model.href) {
-    cta.href = model.href
-    cta.removeAttribute('aria-disabled')
-    missing.hidden = true
-  } else {
-    cta.removeAttribute('href')
-    cta.setAttribute('aria-disabled', 'true')
-    missing.hidden = false
-  }
+  document.querySelectorAll('[data-cta]').forEach((cta) => {
+    cta.rel = 'noopener'
+    if (model.href) {
+      cta.href = model.href
+      cta.target = '_blank'
+      cta.removeAttribute('aria-disabled')
+    } else {
+      cta.removeAttribute('href')
+      cta.removeAttribute('target')
+      cta.setAttribute('aria-disabled', 'true')
+    }
+  })
+  document.querySelectorAll('.cta-missing').forEach((missing) => {
+    missing.hidden = Boolean(model.href)
+  })
   runThread(model.thread)
   return model
 }
@@ -538,6 +566,7 @@ function currentSearch() {
 
 export function boot() {
   wireAudio()
+  wireDock()
   wireModuleCards()
   apply(currentSearch())
   document.querySelectorAll('input[name="nicho"]').forEach((input) => {
@@ -553,8 +582,10 @@ export function boot() {
   document.querySelector('#replay').addEventListener('click', () => {
     apply(currentSearch())
   })
-  document.querySelector('#cta').addEventListener('click', (event) => {
-    if (!event.currentTarget.getAttribute('href')) event.preventDefault()
+  document.querySelectorAll('[data-cta]').forEach((cta) => {
+    cta.addEventListener('click', (event) => {
+      if (!event.currentTarget.getAttribute('href')) event.preventDefault()
+    })
   })
 }
 
