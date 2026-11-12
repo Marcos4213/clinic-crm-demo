@@ -6,7 +6,11 @@ O Automatize.app agenda. A sua equipe fecha.
 
 App de clínicas no mesmo repositório. `#/` entra com e-mail e senha. `#/demo` é a amostra local e não grava no Supabase. `#/app` é a clínica autenticada depois que o esquema com RLS está aplicado.
 
-Não há página de marketing. O WhatsApp de teste não envia sozinho e não aparece como conectado sem evidência de entrega. Instagram e Google Calendar não estão conectados. A agenda interna usa `America/Sao_Paulo`. Sem a chave `XAI_API_KEY` no servidor, a IA responde `grok_unconfigured` e não simula uma resposta. A simulação existe só na demonstração local, identificada como amostra.
+A apresentação de envio, para a recepção encaminhar ao doutor, fica em `/apresentacao/`. Ela mostra o sistema inteiro, não só o WhatsApp. É página estática: sem login e sem Supabase. O app continua em `#/` e a amostra em `#/demo`. O botão da call usa `WHATSAPP_E164` em `apresentacao/config.js` (só dígitos, com DDI) ou o parâmetro `?whatsapp=` no link. Nichos: `?nicho=implantes`, `lentes`, `harmonizacao`, `plastica` ou `dermatologia`, com `?clinica=Nome`.
+
+Os áudios ficam em `apresentacao/audio/`. A mensagem do Marcos é `marcos-1.mp3`. A lista e a versão de cache estão em `MARCOS_PARTS` e `MARCOS_AUDIO_VERSION`, em `apresentacao/config.js`. Os áudios do paciente, um por nicho, estão no mesmo diretório. A troca está em `apresentacao/audio/LEIA-ME.md`. Nada toca sem um toque.
+
+O WhatsApp de teste não envia sozinho e não aparece como conectado sem evidência de entrega. Instagram e Google Calendar não estão conectados. A agenda interna usa `America/Sao_Paulo`. Sem a chave `XAI_API_KEY` no servidor, a IA responde `grok_unconfigured` e não simula uma resposta. A simulação existe só na demonstração local, identificada como amostra.
 
 ## Local
 
@@ -26,4 +30,4 @@ O esquema, os testes de RLS e as Edge Functions estão em `supabase/`. Os passos
 
 Site URL a configurar: `https://marcos4213.github.io/clinic-crm-demo/`.
 
-O workflow `.github/workflows/pages.yml` publica `main` em `https://marcos4213.github.io/clinic-crm-demo/#/`.
+O workflow `.github/workflows/pages.yml` publica `main` em `https://marcos4213.github.io/clinic-crm-demo/#/`. A apresentação vai junto, em `https://marcos4213.github.io/clinic-crm-demo/apresentacao/`.
