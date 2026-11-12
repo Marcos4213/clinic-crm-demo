@@ -38,7 +38,7 @@ jobs:
         # Kept out of public/ so an upload that only walks the Vite dist does not include it.
         run: |
           mkdir -p dist/apresentacao
-          cp apresentacao/index.html apresentacao/apresentacao.css apresentacao/apresentacao.js apresentacao/config.js apresentacao/og.png apresentacao/favicon.svg dist/apresentacao/
+          cp apresentacao/index.html apresentacao/apresentacao.css apresentacao/apresentacao.js apresentacao/config.js apresentacao/og.png apresentacao/favicon.svg apresentacao/favicon.ico dist/apresentacao/
           cp -R apresentacao/audio dist/apresentacao/audio
           cp -R apresentacao/painel dist/apresentacao/painel
       - name: Upload Pages artifact
