@@ -37,12 +37,13 @@
   </head>
   <body>
     <a class="skip" href="#conteudo">Ir para o conteúdo</a>
+    <div id="conteudo">
+    <div class="hero-shell">
     <div class="wrap">
       <header class="brand">
         <img src="./favicon.svg" width="28" height="28" alt="" />
         <span>Automatize.app</span>
       </header>
-      <main id="conteudo">
         <section class="hero" aria-labelledby="hero-title">
           <p class="eyebrow" id="kicker">Para a recepção encaminhar e para o doutor ver em poucos minutos.</p>
           <h1 id="hero-title">A clínica perde paciente entre o primeiro oi e a avaliação no Google.</h1>
@@ -51,12 +52,12 @@
           </p>
           <ul class="diffs">
             <li>
-              <strong>Instagram</strong>
-              <span>Direct e comentários entram na implantação. A conta da clínica ainda não está ligada.</span>
+              <span class="mark-icon mark-ig" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><rect x="4" y="4" width="16" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="17.2" cy="6.8" r="0.9" fill="currentColor"/></svg></span>
+              <span><strong>Instagram</strong><span>Direct e comentários entram na implantação. A conta da clínica ainda não está ligada.</span></span>
             </li>
             <li>
-              <strong>Google</strong>
-              <span>O pedido de avaliação entra na implantação, depois da consulta.</span>
+              <span class="mark-icon mark-google" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><path d="m12 4 2.1 4.3 4.7.7-3.4 3.3.8 4.7L12 14.8 7.8 17l.8-4.7L5.2 9l4.7-.7L12 4Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>
+              <span><strong>Google</strong><span>O pedido de avaliação entra na implantação, depois da consulta.</span></span>
             </li>
           </ul>
           <section class="voice listen" aria-label="Mensagem do Marcos">
@@ -80,6 +81,47 @@
             <p class="cta-missing" hidden>O WhatsApp desta call ainda não está no link.</p>
           </div>
         </section>
+    </div>
+    </div>
+    <div class="wrap sheet">
+      <main>
+        <section class="band funnel" aria-labelledby="funil-title">
+          <p class="eyebrow">Demonstração ilustrativa</p>
+          <h2 id="funil-title">Toque e veja o paciente avançar</h2>
+          <p class="section-lead">Do primeiro oi no WhatsApp ou no Instagram até o cartão que o doutor vê no celular. Instagram e o pedido no Google entram na implantação. Nada aqui é um atendimento real.</p>
+          <div class="channel" role="radiogroup" aria-label="Canal da demonstração">
+            <label class="chip"><input type="radio" name="canal" value="whatsapp" checked /><span class="chip-label"><span class="mark-icon mark-wa" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 17.5 6.2 14A7 7 0 1 1 8.5 18L5 19Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>WhatsApp</span></label>
+            <label class="chip"><input type="radio" name="canal" value="instagram" /><span class="chip-label"><span class="mark-icon mark-ig" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><rect x="4" y="4" width="16" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span>Instagram</span></label>
+          </div>
+          <div class="steps" id="funnel-steps" role="tablist" aria-label="Etapas da demonstração"></div>
+          <div class="stage" id="funnel-stage" role="tabpanel" aria-live="polite"></div>
+          <div class="step-nav">
+            <button type="button" id="step-prev">Anterior</button>
+            <button type="button" id="step-next">Próxima etapa</button>
+          </div>
+        </section>
+
+        <section class="band calc" aria-labelledby="calc-title">
+          <p class="eyebrow">Conta da própria clínica</p>
+          <h2 id="calc-title">Quantas mensagens ficam sem continuidade</h2>
+          <p class="section-lead">Uma conta simples com os números que a recepção informar. Não é um resultado prometido e não usa estatística de mercado.</p>
+          <form id="risco" class="calc-form">
+            <label for="msgs">Mensagens que a clínica recebe por dia
+              <input id="msgs" name="msgs" type="number" inputmode="numeric" min="0" max="10000" step="1" placeholder="Ex.: 40" />
+            </label>
+            <label for="pct">Premissa editável: percentual sem resposta ou sem follow-up
+              <input id="pct" name="pct" type="number" inputmode="numeric" min="0" max="100" step="1" value="30" />
+            </label>
+            <p class="assumption">O 30% inicial é só um ponto de partida para a conta. Troque pelo número da clínica. Não é estatística de mercado.</p>
+            <p id="risco-formula" class="formula"></p>
+            <p id="risco-out" class="result" aria-live="polite">Informe as mensagens do dia para ver a conta.</p>
+            <p class="assumption">A conta é mensagens por dia × percentual × 30 dias. O 30 é o tamanho do mês nesta conta, não uma meta. Estimativa feita só com os números digitados aqui.</p>
+          </form>
+          <div class="cta-block">
+            <a class="cta" data-cta rel="noopener">Agendar 15 minutos com o Marcos</a>
+            <p class="cta-help">Uma apresentação rápida do aplicativo por dentro, e de onde a clínica perde paciente hoje.</p>
+          </div>
+        </section>
 
         <section class="band" aria-labelledby="quem-title">
           <p class="eyebrow">Dois lugares, o mesmo painel</p>
@@ -87,7 +129,7 @@
           <p class="section-lead">O doutor acompanha no celular. A recepção conduz o dia no computador.</p>
           <div class="pair">
             <article class="role-card">
-              <div class="phone-frame">
+              <div class="phone-frame float-phone">
                 <img src="./painel/doutor-mobile.png" width="390" height="844" loading="lazy" alt="Visão do dono no celular, painel de demonstração com dados fictícios." />
               </div>
               <h3>O doutor, no celular</h3>
@@ -208,6 +250,7 @@
       <noscript>
         <p>Ative o JavaScript para ver a demonstração no celular. A mensagem do Marcos está no arquivo de áudio desta página.</p>
       </noscript>
+    </div>
     </div>
     <div class="dock">
       <a class="cta" data-cta rel="noopener">Agendar 15 minutos com o Marcos</a>

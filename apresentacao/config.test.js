@@ -10,8 +10,13 @@ import {
   buildThread,
   cleanClinic,
   cleanPhone,
+  FUNNEL,
+  MONTH_DAYS,
+  DEFAULT_UNANSWERED_PERCENT,
   pageModel,
+  patientsAtRisk,
   resolveNiche,
+  riskCopy,
   whatsappHref,
 } from './config.js'
 
@@ -80,7 +85,7 @@ describe('apresentação', () => {
   it('keeps the copy rules and stays independent of the app', () => {
     const scrubbed = source.replace(/clínica/gi, '')
     expect(scrubbed).not.toMatch(/cliente/i)
-    expect(source).not.toMatch(/faturamento|depoimento|garantimos|últimas vagas|por mês|R\$|supabase/i)
+    expect(source).not.toMatch(/faturamento|depoimento|garantimos|últimas vagas|R\$|supabase/i)
     expect(source).not.toMatch(/autoplay/i)
     expect(source).toMatch(/paciente/)
     expect(source).toMatch(/nossa equipe/i)
@@ -113,6 +118,10 @@ describe('apresentação', () => {
     expect(source).not.toMatch(/Harvard|HBR|Dr\(a\)|o\(a\)/i)
     expect(source).toMatch(/Pesquisa da Doctoralia: 80% dos pacientes escolhem o especialista pelas avaliações online/)
     expect(source).toMatch(/Não é um resultado da Automatize/)
+    expect(source).toMatch(/não é um resultado prometido/i)
+    expect(source).toMatch(/Não é estatística de mercado/)
+    expect(source).toMatch(/Premissa editável/)
+    expect(source).toMatch(/Toque e veja o paciente avançar/)
     for (const route of ['/#/demo"', '/#/demo/whatsapp', '/#/demo/instagram', '/#/demo/pipeline', '/#/demo/agenda', '/#/demo/avaliacoes', '/#/demo/portfolio', '/#/demo/metricas', '/#/demo/integracoes']) {
       expect(source).toContain(`https://automatize.devbrasil.online${route.replace(/"$/, '')}`)
     }
@@ -222,5 +231,19 @@ describe('apresentação', () => {
       expect(duration).toBeGreaterThanOrEqual(3)
       expect(duration).toBeLessThanOrEqual(8)
     }
+  })
+
+  it('estimates patients at risk only from the typed numbers', () => {
+    expect(MONTH_DAYS).toBe(30)
+    expect(DEFAULT_UNANSWERED_PERCENT).toBe(30)
+    expect(FUNNEL.map((step) => step.id)).toEqual(['oi', 'resposta', 'agenda', 'lembrete', 'consulta', 'follow', 'google', 'crm'])
+    expect(patientsAtRisk(40, 25)).toMatchObject({ value: 300, exact: 300, days: 30 })
+    expect(patientsAtRisk(1, 33).value).toBe(10)
+    expect(patientsAtRisk(0, 30).value).toBe(0)
+    expect(patientsAtRisk('', 30)).toBe(null)
+    expect(patientsAtRisk(-1, 30)).toBe(null)
+    expect(patientsAtRisk(10, 101)).toBe(null)
+    expect(riskCopy(patientsAtRisk(40, 25)).sentence).toBe('300 pacientes em risco nesta conta, por mês.')
+    expect(riskCopy(patientsAtRisk(40, 25)).formula).toBe('40 × 25% × 30 dias = 300')
   })
 })

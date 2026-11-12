@@ -373,3 +373,104 @@ export function pageModel(search, configuredPhone = WHATSAPP_E164) {
     thread: buildThread(niche, clinic),
   }
 }
+
+export const MONTH_DAYS = 30
+
+export const DEFAULT_UNANSWERED_PERCENT = 30
+
+export const FUNNEL = [
+  {
+    id: 'oi',
+    label: 'Primeiro oi',
+    title: 'O paciente escreve',
+    whatsapp: 'Oi. Vi o perfil e queria uma avaliação esta semana.',
+    instagram: 'Vi o procedimento no feed. A avaliação é presencial?',
+    note: 'Demonstração ilustrativa. Não é uma mensagem real.',
+  },
+  {
+    id: 'resposta',
+    label: 'Resposta automática',
+    title: 'A resposta sai na hora',
+    text: 'Boa noite. Aqui é a nossa equipe. A avaliação pode ser nesta semana. Posso ver um horário?',
+    note: 'Na implantação, a resposta automática continua o atendimento. Esta tela não envia mensagem.',
+  },
+  {
+    id: 'agenda',
+    label: 'Agendamento',
+    title: 'A avaliação entra na agenda',
+    text: 'Tenho terça às 10h ou quinta às 16h.',
+    reply: 'Terça às 10h.',
+    confirm: 'Avaliação marcada: terça, 10h.',
+    note: 'Demonstração ilustrativa. Horários fictícios.',
+  },
+  {
+    id: 'lembrete',
+    label: 'Lembrete',
+    title: 'A véspera',
+    text: 'Lembrete: amanhã, terça, 10h, sua avaliação. Você confirma?',
+    reply: 'Confirmado. Estarei lá.',
+    note: 'Demonstração ilustrativa.',
+  },
+  {
+    id: 'consulta',
+    label: 'Consulta',
+    title: 'A avaliação aconteceu',
+    text: 'A consulta foi feita. O paciente segue no painel, com a etapa atualizada.',
+    note: 'Demonstração ilustrativa. Não é um atendimento real.',
+  },
+  {
+    id: 'follow',
+    label: 'Follow-up',
+    title: 'Depois da avaliação',
+    text: 'Oi. Como foi a avaliação? Se quiser, deixo o pedido de avaliação no Google.',
+    note: 'O follow-up continua depois da consulta marcada. Demonstração ilustrativa.',
+  },
+  {
+    id: 'google',
+    label: 'Google',
+    title: 'Pedido de avaliação',
+    text: 'O pedido de avaliação no Google sai depois da consulta. Ele entra na implantação. A conta da clínica ainda não está ligada.',
+    note: 'Demonstração ilustrativa.',
+  },
+  {
+    id: 'crm',
+    label: 'No celular',
+    title: 'O doutor vê o cartão',
+    card: true,
+    name: 'Maria',
+    procedure: 'Avaliação',
+    stage: 'Pedido de avaliação no Google',
+    note: 'Demonstração ilustrativa, com dados fictícios. O doutor acompanha este cartão no celular.',
+  },
+]
+
+export function patientsAtRisk(messagesPerDay, unansweredPercent, days = MONTH_DAYS) {
+  if (typeof messagesPerDay === 'string' && messagesPerDay.trim() === '') return null
+  if (typeof unansweredPercent === 'string' && unansweredPercent.trim() === '') return null
+  const messages = Number(messagesPerDay)
+  const percent = Number(unansweredPercent)
+  const span = Number(days)
+  if (!Number.isFinite(messages) || !Number.isFinite(percent) || !Number.isFinite(span)) return null
+  if (messages < 0 || percent < 0 || percent > 100 || span <= 0) return null
+  const exact = messages * (percent / 100) * span
+  return {
+    messages,
+    percent,
+    days: span,
+    exact,
+    value: Math.round(exact),
+  }
+}
+
+const ptNumber = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 })
+
+export function riskCopy(result) {
+  if (!result) return null
+  const formula = `${ptNumber.format(result.messages)} × ${ptNumber.format(result.percent)}% × ${ptNumber.format(result.days)} dias = ${ptNumber.format(result.exact)}`
+  const rounded = new Intl.NumberFormat('pt-BR').format(result.value)
+  const sentence =
+    result.value === 1
+      ? '1 paciente em risco nesta conta, por mês.'
+      : `${rounded} pacientes em risco nesta conta, por mês.`
+  return { formula, sentence }
+}

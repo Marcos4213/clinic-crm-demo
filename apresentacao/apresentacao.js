@@ -1,4 +1,4 @@
-import { MARCOS_AUDIO_VERSION, MARCOS_PARTS, MARCOS_PHOTO_FILES, pageModel } from './config.js'
+import { DEFAULT_UNANSWERED_PERCENT, FUNNEL, MARCOS_AUDIO_VERSION, MARCOS_PARTS, MARCOS_PHOTO_FILES, pageModel, patientsAtRisk, riskCopy } from './config.js'
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -564,10 +564,141 @@ function currentSearch() {
   return window.location.search
 }
 
+function line(text, team = false) {
+  const node = document.createElement('p')
+  node.className = `bubble-demo${team ? ' from-team' : ''}`
+  node.textContent = text
+  return node
+}
+
+function paintFunnel(index, channel) {
+  const step = FUNNEL[index]
+  const stage = document.querySelector('#funnel-stage')
+  const steps = document.querySelector('#funnel-steps')
+  if (!step || !stage || !steps) return
+  steps.querySelectorAll('[role="tab"]').forEach((tab, tabIndex) => {
+    const selected = tabIndex === index
+    tab.setAttribute('aria-selected', selected ? 'true' : 'false')
+    tab.tabIndex = selected ? 0 : -1
+  })
+  stage.setAttribute('aria-labelledby', `funnel-${step.id}`)
+  stage.replaceChildren()
+  const title = document.createElement('h3')
+  title.textContent = step.title
+  stage.append(title)
+  const channelLine = document.createElement('p')
+  channelLine.className = 'stage-note'
+  channelLine.textContent = channel === 'instagram'
+    ? 'Canal desta demonstração: Instagram. A conta entra na implantação.'
+    : 'Canal desta demonstração: WhatsApp.'
+  stage.append(channelLine)
+  if (step.card) {
+    const card = document.createElement('div')
+    card.className = 'crm-card'
+    const name = document.createElement('strong')
+    name.textContent = step.name
+    const procedure = document.createElement('p')
+    procedure.textContent = step.procedure
+    const stageName = document.createElement('p')
+    stageName.className = 'stage-name'
+    stageName.textContent = step.stage
+    card.append(name, procedure, stageName)
+    stage.append(card)
+  } else {
+    const opening = channel === 'instagram' && step.instagram ? step.instagram : step.whatsapp || step.text
+    if (opening) stage.append(line(opening, !step.whatsapp && !step.instagram))
+    if (step.reply) stage.append(line(step.reply, false))
+    if (step.confirm) stage.append(line(step.confirm, true))
+  }
+  const note = document.createElement('p')
+  note.className = 'stage-note'
+  note.textContent = step.note
+  stage.append(note)
+  const prev = document.querySelector('#step-prev')
+  const next = document.querySelector('#step-next')
+  if (prev) prev.disabled = index === 0
+  if (next) next.disabled = index === FUNNEL.length - 1
+}
+
+function wireFunnel() {
+  const host = document.querySelector('#funnel-steps')
+  if (!host) return
+  let index = 0
+  let channel = 'whatsapp'
+  FUNNEL.forEach((step, stepIndex) => {
+    const tab = document.createElement('button')
+    tab.type = 'button'
+    tab.role = 'tab'
+    tab.id = `funnel-${step.id}`
+    tab.textContent = step.label
+    tab.setAttribute('aria-controls', 'funnel-stage')
+    tab.setAttribute('aria-selected', stepIndex === 0 ? 'true' : 'false')
+    tab.tabIndex = stepIndex === 0 ? 0 : -1
+    tab.addEventListener('click', () => {
+      index = stepIndex
+      paintFunnel(index, channel)
+    })
+    host.append(tab)
+  })
+  host.addEventListener('keydown', (event) => {
+    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
+    event.preventDefault()
+    index = event.key === 'ArrowRight' ? Math.min(FUNNEL.length - 1, index + 1) : Math.max(0, index - 1)
+    paintFunnel(index, channel)
+    host.querySelectorAll('[role="tab"]')[index]?.focus()
+  })
+  document.querySelectorAll('input[name="canal"]').forEach((input) => {
+    input.addEventListener('change', () => {
+      if (!input.checked) return
+      channel = input.value
+      paintFunnel(index, channel)
+    })
+  })
+  document.querySelector('#step-prev')?.addEventListener('click', () => {
+    index = Math.max(0, index - 1)
+    paintFunnel(index, channel)
+  })
+  document.querySelector('#step-next')?.addEventListener('click', () => {
+    index = Math.min(FUNNEL.length - 1, index + 1)
+    paintFunnel(index, channel)
+  })
+  paintFunnel(0, channel)
+}
+
+function wireCalculator() {
+  const form = document.querySelector('#risco')
+  const output = document.querySelector('#risco-out')
+  const formula = document.querySelector('#risco-formula')
+  if (!form || !output || !formula) return
+  const messages = form.querySelector('#msgs')
+  const percent = form.querySelector('#pct')
+  if (percent && percent.value === '') percent.value = String(DEFAULT_UNANSWERED_PERCENT)
+  const paint = () => {
+    if (messages.value.trim() === '') {
+      formula.textContent = ''
+      output.textContent = 'Informe as mensagens do dia para ver a conta.'
+      return
+    }
+    const result = patientsAtRisk(messages.value, percent.value)
+    const copy = riskCopy(result)
+    if (!copy) {
+      formula.textContent = ''
+      output.textContent = 'Use um número de mensagens a partir de zero e um percentual de 0 a 100.'
+      return
+    }
+    formula.textContent = copy.formula
+    output.textContent = copy.sentence
+  }
+  form.addEventListener('input', paint)
+  paint()
+}
+
 export function boot() {
   wireAudio()
   wireDock()
   wireModuleCards()
+  wireFunnel()
+  wireCalculator()
   apply(currentSearch())
   document.querySelectorAll('input[name="nicho"]').forEach((input) => {
     input.addEventListener('change', () => {
