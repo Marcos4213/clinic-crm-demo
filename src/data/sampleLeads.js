@@ -4,7 +4,7 @@ function msg(id, role, text, at, receipt = null) {
   return { id, role, text, at, receipt, localDemo: false }
 }
 
-export const sampleLeads = [
+const rows = [
   {
     id: 'maria',
     name: 'Maria Silva',
@@ -173,3 +173,20 @@ export const sampleLeads = [
     ],
   },
 ]
+
+const extras = {
+  maria: { value: 1800, channel: 'whatsapp' },
+  helena: { value: 2400, channel: 'whatsapp' },
+  ana: { value: 2200, channel: 'instagram' },
+  larissa: { value: 280, channel: 'whatsapp' },
+  joao: { value: 12000, channel: 'whatsapp' },
+  camila: { value: 18000, channel: 'instagram' },
+  rafael: { value: 4500, channel: 'whatsapp' },
+  beatriz: { value: 3500, channel: 'whatsapp' },
+  pedro: { value: 350, channel: 'instagram' },
+  thiago: { value: 1600, channel: 'whatsapp' },
+  fernanda: { value: 1800, channel: 'whatsapp' },
+  gustavo: { value: 12000, channel: 'instagram' },
+}
+
+export const sampleLeads = rows.map((lead) => ({ ...lead, sample: true, ...extras[lead.id] }))

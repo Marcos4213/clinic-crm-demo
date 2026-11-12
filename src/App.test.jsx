@@ -34,7 +34,7 @@ function compactMedia() {
 }
 
 beforeEach(() => {
-  window.location.hash = '#/demo'
+  window.location.hash = '#/demo/pipeline'
   desktopMedia()
 })
 
@@ -164,6 +164,7 @@ describe('other sections and compact layout', () => {
     const user = userEvent.setup()
     render(<App />)
 
+    await user.click(screen.getByRole('link', { name: 'WhatsApp' }))
     await user.click(screen.getByRole('link', { name: 'Disparos em Massa' }))
     expect(screen.getByRole('heading', { level: 1, name: 'Disparos em Massa' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Envio desativado — sem integração' })).toBeDisabled()
