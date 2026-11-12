@@ -1,7 +1,7 @@
 import { Check, CheckCheck } from 'lucide-react'
 import { formatStamp } from '../../domain/crm'
 
-const ROLE_LABEL = { ia: 'IA', cliente: 'Cliente', humano: 'Humano' }
+const ROLE_LABEL = { ia: 'IA', cliente: 'Paciente', humano: 'Humano' }
 
 function Receipt({ receipt }) {
   const read = receipt === 'read'
