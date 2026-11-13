@@ -500,7 +500,7 @@ function wireModuleCards() {
       note.textContent = card.dataset.note || 'Em breve.'
       return
     }
-    note.textContent = 'Demonstração ilustrativa, com dados fictícios. A conta da clínica não está ligada.'
+    note.textContent = 'Demonstração ilustrativa, com dados fictícios.'
     frame.hidden = false
     if (frame.getAttribute('src') !== demo) frame.src = demo
     mini.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' })
@@ -515,7 +515,7 @@ function apply(search) {
     `Acompanha o caminho do paciente ${model.place}, no consultório ou fora. A tela é a visão do dono, com dados fictícios.`
   document.querySelector('#atendente-copy').textContent =
     `Conduz a fila, as conversas e a agenda no mesmo painel ${model.place}. A recepção vê o que está esperando.`
-  document.querySelectorAll('.cta-help').forEach((node) => {
+  document.querySelectorAll('.cta-help:not([data-keep])').forEach((node) => {
     node.textContent = model.ctaHelp
   })
   document.querySelector('#phone-name').textContent = model.header
