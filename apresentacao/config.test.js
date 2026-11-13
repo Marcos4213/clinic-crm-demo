@@ -10,13 +10,13 @@ import {
   buildThread,
   cleanClinic,
   cleanPhone,
+  DEFAULT_BOOKING_PERCENT,
   FUNNEL,
-  MONTH_DAYS,
   DEFAULT_UNANSWERED_PERCENT,
+  clinicEstimate,
+  estimateCopy,
   pageModel,
-  patientsAtRisk,
   resolveNiche,
-  riskCopy,
   whatsappHref,
 } from './config.js'
 
@@ -85,7 +85,8 @@ describe('apresentação', () => {
   it('keeps the copy rules and stays independent of the app', () => {
     const scrubbed = source.replace(/clínica/gi, '')
     expect(scrubbed).not.toMatch(/cliente/i)
-    expect(source).not.toMatch(/faturamento|depoimento|garantimos|últimas vagas|R\$|supabase/i)
+    expect(source).not.toMatch(/depoimento|garantimos|últimas vagas|supabase/i)
+    expect(source).not.toMatch(/class="dock"|wireDock/)
     expect(source).not.toMatch(/autoplay/i)
     expect(source).toMatch(/paciente/)
     expect(source).toMatch(/nossa equipe/i)
@@ -99,7 +100,8 @@ describe('apresentação', () => {
     expect(source).toMatch(/Métricas/)
     expect(source).toMatch(/Pixel em breve/)
     expect(source).toMatch(/loading="lazy"/)
-    expect(source).toMatch(/safe-area-inset-bottom/)
+    expect(source).toMatch(/mark-float/)
+    expect(source).toMatch(/prefers-reduced-motion/)
     expect(source).toMatch(/Ouça em /)
     expect(source).toMatch(/MARCOS_AUDIO_VERSION/)
     expect(source).not.toMatch(/instalar no celular|baixar/i)
@@ -233,17 +235,26 @@ describe('apresentação', () => {
     }
   })
 
-  it('estimates patients at risk only from the typed numbers', () => {
-    expect(MONTH_DAYS).toBe(30)
+  it('estimates only from the numbers the clinic types', () => {
     expect(DEFAULT_UNANSWERED_PERCENT).toBe(30)
+    expect(DEFAULT_BOOKING_PERCENT).toBe(100)
     expect(FUNNEL.map((step) => step.id)).toEqual(['oi', 'resposta', 'agenda', 'lembrete', 'consulta', 'follow', 'google', 'crm'])
-    expect(patientsAtRisk(40, 25)).toMatchObject({ value: 300, exact: 300, days: 30 })
-    expect(patientsAtRisk(1, 33).value).toBe(10)
-    expect(patientsAtRisk(0, 30).value).toBe(0)
-    expect(patientsAtRisk('', 30)).toBe(null)
-    expect(patientsAtRisk(-1, 30)).toBe(null)
-    expect(patientsAtRisk(10, 101)).toBe(null)
-    expect(riskCopy(patientsAtRisk(40, 25)).sentence).toBe('300 pacientes em risco nesta conta, por mês.')
-    expect(riskCopy(patientsAtRisk(40, 25)).formula).toBe('40 × 25% × 30 dias = 300')
+    const base = {
+      messagesPerDay: 40,
+      daysPerMonth: 20,
+      unansweredPercent: 25,
+      bookingPercent: 100,
+      averageValue: '',
+    }
+    expect(clinicEstimate(base)).toMatchObject({ conversations: 200, patients: 200, revenue: null })
+    expect(clinicEstimate({ ...base, bookingPercent: 50 })).toMatchObject({ conversations: 200, patients: 100, revenue: null })
+    expect(clinicEstimate({ ...base, bookingPercent: 50, averageValue: 400 })).toMatchObject({ revenue: 40000 })
+    expect(clinicEstimate({ ...base, daysPerMonth: '' })).toBe(null)
+    expect(clinicEstimate({ ...base, messagesPerDay: -1 })).toBe(null)
+    expect(clinicEstimate({ ...base, unansweredPercent: 101 })).toBe(null)
+    const copy = estimateCopy(clinicEstimate(base))
+    expect(copy.conversations).toBe('40 mensagens × 20 dias × 25% = 200')
+    expect(copy.patients).toBe('200 conversas × 100% = 200')
+    expect(copy.revenue).toBe('')
   })
 })

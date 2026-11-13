@@ -52,6 +52,10 @@
           </p>
           <ul class="diffs">
             <li>
+              <span class="mark-icon mark-wa" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M5 17.5 6.2 14A7 7 0 1 1 8.5 18L5 19Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>
+              <span><strong>WhatsApp</strong><span>Resposta, agenda e follow-up neste canal. A linha entra na implantação.</span></span>
+            </li>
+            <li>
               <span class="mark-icon mark-ig" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><rect x="4" y="4" width="16" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="17.2" cy="6.8" r="0.9" fill="currentColor"/></svg></span>
               <span><strong>Instagram</strong><span>Direct e comentários entram na implantação. A conta da clínica ainda não está ligada.</span></span>
             </li>
@@ -93,8 +97,18 @@
             <label class="chip"><input type="radio" name="canal" value="whatsapp" checked /><span class="chip-label"><span class="mark-icon mark-wa" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 17.5 6.2 14A7 7 0 1 1 8.5 18L5 19Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>WhatsApp</span></label>
             <label class="chip"><input type="radio" name="canal" value="instagram" /><span class="chip-label"><span class="mark-icon mark-ig" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><rect x="4" y="4" width="16" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span>Instagram</span></label>
           </div>
-          <div class="steps" id="funnel-steps" role="tablist" aria-label="Etapas da demonstração"></div>
-          <div class="stage" id="funnel-stage" role="tabpanel" aria-live="polite"></div>
+          <div class="funnel-stage">
+            <div class="track" id="funnel-steps" role="tablist" aria-label="Etapas da demonstração"></div>
+            <div class="handset">
+              <div class="handset-top">
+                <span class="mark-icon mark-wa" id="live-wa" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 17.5 6.2 14A7 7 0 1 1 8.5 18L5 19Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>
+                <span class="mark-icon mark-ig" id="live-ig" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><rect x="4" y="4" width="16" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span>
+                <span class="mark-icon mark-google" id="live-google" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path d="m12 4 2.1 4.3 4.7.7-3.4 3.3.8 4.7L12 14.8 7.8 17l.8-4.7L5.2 9l4.7-.7L12 4Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>
+                <button type="button" class="demo-run" id="funnel-play" aria-pressed="true">Pausar</button>
+              </div>
+              <div class="handset-screen" id="funnel-stage" role="tabpanel" aria-live="polite"></div>
+            </div>
+          </div>
           <div class="step-nav">
             <button type="button" id="step-prev">Anterior</button>
             <button type="button" id="step-next">Próxima etapa</button>
@@ -106,16 +120,43 @@
           <h2 id="calc-title">Quantas mensagens ficam sem continuidade</h2>
           <p class="section-lead">Uma conta simples com os números que a recepção informar. Não é um resultado prometido e não usa estatística de mercado.</p>
           <form id="risco" class="calc-form">
-            <label for="msgs">Mensagens que a clínica recebe por dia
-              <input id="msgs" name="msgs" type="number" inputmode="numeric" min="0" max="10000" step="1" placeholder="Ex.: 40" />
+            <label class="field" for="msgs">Mensagens ou contatos novos por dia
+              <span class="pair-input"><input id="msgs-range" type="range" min="0" max="200" step="1" value="0" aria-label="Ajustar mensagens por dia" /><input id="msgs" name="msgs" type="number" inputmode="numeric" min="0" max="10000" step="1" placeholder="0" /></span>
             </label>
-            <label for="pct">Premissa editável: percentual sem resposta ou sem follow-up
-              <input id="pct" name="pct" type="number" inputmode="numeric" min="0" max="100" step="1" value="30" />
+            <label class="field" for="days">Dias de atendimento por mês
+              <span class="pair-input"><input id="days-range" type="range" min="1" max="31" step="1" value="1" aria-label="Ajustar dias de atendimento" /><input id="days" name="days" type="number" inputmode="numeric" min="1" max="31" step="1" placeholder="" /></span>
+            </label>
+            <label class="field" for="pct">Premissa editável: percentual sem resposta ou sem follow-up
+              <span class="pair-input"><input id="pct-range" type="range" min="0" max="100" step="1" value="30" aria-label="Ajustar percentual sem continuidade" /><input id="pct" name="pct" type="number" inputmode="numeric" min="0" max="100" step="1" value="30" /></span>
             </label>
             <p class="assumption">O 30% inicial é só um ponto de partida para a conta. Troque pelo número da clínica. Não é estatística de mercado.</p>
-            <p id="risco-formula" class="formula"></p>
-            <p id="risco-out" class="result" aria-live="polite">Informe as mensagens do dia para ver a conta.</p>
-            <p class="assumption">A conta é mensagens por dia × percentual × 30 dias. O 30 é o tamanho do mês nesta conta, não uma meta. Estimativa feita só com os números digitados aqui.</p>
+            <label class="field" for="book">Premissa editável: percentual que viraria agendamento
+              <span class="pair-input"><input id="book-range" type="range" min="0" max="100" step="1" value="100" aria-label="Ajustar percentual de agendamento" /><input id="book" name="book" type="number" inputmode="numeric" min="0" max="100" step="1" value="100" /></span>
+            </label>
+            <p class="assumption">O 100% inicial é premissa da clínica nesta conta: cada conversa sem continuidade entra como um paciente potencial. Troque pelo número da clínica. Não é estatística de mercado.</p>
+            <label class="field" for="valor">Valor médio por consulta ou procedimento, opcional
+              <span class="pair-input"><input id="valor-range" type="range" min="0" max="5000" step="50" value="0" aria-label="Ajustar valor médio" /><input id="valor" name="valor" type="number" inputmode="decimal" min="0" max="1000000" step="1" placeholder="Em branco" /></span>
+            </label>
+            <p class="assumption">Deixe em branco para não calcular valor. O número é o da clínica, não um preço da Automatize.</p>
+            <div class="out-grid" aria-live="polite">
+              <article class="out-card">
+                <p>Conversas sem continuidade por mês</p>
+                <strong id="out-conversations">—</strong>
+                <p class="formula" id="formula-conversations"></p>
+              </article>
+              <article class="out-card">
+                <p>Pacientes potenciais perdidos por mês</p>
+                <strong id="out-patients">—</strong>
+                <p class="formula" id="formula-patients"></p>
+              </article>
+              <article class="out-card" id="out-revenue-card" hidden>
+                <p>Faturamento potencial em risco por mês</p>
+                <strong id="out-revenue">—</strong>
+                <p class="formula" id="formula-revenue"></p>
+              </article>
+            </div>
+            <p class="assumption" id="risco-wait">Informe as mensagens por dia e os dias de atendimento para ver a conta.</p>
+            <p class="assumption">Estimativa feita só com os números digitados aqui. Não é um resultado prometido e não usa estatística de mercado.</p>
           </form>
           <div class="cta-block">
             <a class="cta" data-cta rel="noopener">Agendar 15 minutos com o Marcos</a>
@@ -251,10 +292,6 @@
         <p>Ative o JavaScript para ver a demonstração no celular. A mensagem do Marcos está no arquivo de áudio desta página.</p>
       </noscript>
     </div>
-    </div>
-    <div class="dock">
-      <a class="cta" data-cta rel="noopener">Agendar 15 minutos com o Marcos</a>
-      <p class="cta-help">Uma apresentação rápida do aplicativo por dentro, e de onde a clínica perde paciente hoje.</p>
     </div>
     <script type="module" src="./apresentacao.js"></script>
   </body>

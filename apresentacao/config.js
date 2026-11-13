@@ -374,9 +374,9 @@ export function pageModel(search, configuredPhone = WHATSAPP_E164) {
   }
 }
 
-export const MONTH_DAYS = 30
-
 export const DEFAULT_UNANSWERED_PERCENT = 30
+
+export const DEFAULT_BOOKING_PERCENT = 100
 
 export const FUNNEL = [
   {
@@ -444,33 +444,63 @@ export const FUNNEL = [
   },
 ]
 
-export function patientsAtRisk(messagesPerDay, unansweredPercent, days = MONTH_DAYS) {
-  if (typeof messagesPerDay === 'string' && messagesPerDay.trim() === '') return null
-  if (typeof unansweredPercent === 'string' && unansweredPercent.trim() === '') return null
-  const messages = Number(messagesPerDay)
-  const percent = Number(unansweredPercent)
-  const span = Number(days)
-  if (!Number.isFinite(messages) || !Number.isFinite(percent) || !Number.isFinite(span)) return null
-  if (messages < 0 || percent < 0 || percent > 100 || span <= 0) return null
-  const exact = messages * (percent / 100) * span
+function readCount(value, { min, max }) {
+  if (typeof value === 'string' && value.trim() === '') return null
+  if (value == null) return null
+  const number = Number(value)
+  if (!Number.isFinite(number) || number < min || number > max) return null
+  return number
+}
+
+export function clinicEstimate({
+  messagesPerDay,
+  daysPerMonth,
+  unansweredPercent,
+  bookingPercent,
+  averageValue,
+} = {}) {
+  const messages = readCount(messagesPerDay, { min: 0, max: 10000 })
+  const days = readCount(daysPerMonth, { min: 1, max: 31 })
+  const unanswered = readCount(unansweredPercent, { min: 0, max: 100 })
+  const booking = readCount(bookingPercent, { min: 0, max: 100 })
+  if (messages == null || days == null || unanswered == null || booking == null) return null
+  const money = readCount(averageValue, { min: 0, max: 1000000 })
+  const conversationsExact = messages * days * (unanswered / 100)
+  const patientsExact = conversationsExact * (booking / 100)
+  const revenueExact = money == null || money === 0 ? null : patientsExact * money
   return {
     messages,
-    percent,
-    days: span,
-    exact,
-    value: Math.round(exact),
+    days,
+    unanswered,
+    booking,
+    averageValue: revenueExact == null ? null : money,
+    conversationsExact,
+    patientsExact,
+    revenueExact,
+    conversations: Math.round(conversationsExact),
+    patients: Math.round(patientsExact),
+    revenue: revenueExact == null ? null : Math.round(revenueExact),
   }
 }
 
 const ptNumber = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 })
+const ptWhole = new Intl.NumberFormat('pt-BR')
+const ptMoney = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 
-export function riskCopy(result) {
+export function estimateCopy(result) {
   if (!result) return null
-  const formula = `${ptNumber.format(result.messages)} × ${ptNumber.format(result.percent)}% × ${ptNumber.format(result.days)} dias = ${ptNumber.format(result.exact)}`
-  const rounded = new Intl.NumberFormat('pt-BR').format(result.value)
-  const sentence =
-    result.value === 1
-      ? '1 paciente em risco nesta conta, por mês.'
-      : `${rounded} pacientes em risco nesta conta, por mês.`
-  return { formula, sentence }
+  const conversations = `${ptNumber.format(result.messages)} mensagens × ${ptNumber.format(result.days)} dias × ${ptNumber.format(result.unanswered)}% = ${ptNumber.format(result.conversationsExact)}`
+  const patients = `${ptNumber.format(result.conversationsExact)} conversas × ${ptNumber.format(result.booking)}% = ${ptNumber.format(result.patientsExact)}`
+  const revenue =
+    result.revenue == null
+      ? ''
+      : `${ptNumber.format(result.patientsExact)} × ${ptMoney.format(result.averageValue)} = ${ptMoney.format(result.revenueExact)}`
+  return {
+    conversations,
+    patients,
+    revenue,
+    conversationsValue: ptWhole.format(result.conversations),
+    patientsValue: ptWhole.format(result.patients),
+    revenueValue: result.revenue == null ? '' : ptMoney.format(result.revenue),
+  }
 }

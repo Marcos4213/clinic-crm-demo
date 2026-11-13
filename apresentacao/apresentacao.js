@@ -1,4 +1,4 @@
-import { DEFAULT_UNANSWERED_PERCENT, FUNNEL, MARCOS_AUDIO_VERSION, MARCOS_PARTS, MARCOS_PHOTO_FILES, pageModel, patientsAtRisk, riskCopy } from './config.js'
+import { DEFAULT_BOOKING_PERCENT, DEFAULT_UNANSWERED_PERCENT, FUNNEL, MARCOS_AUDIO_VERSION, MARCOS_PARTS, MARCOS_PHOTO_FILES, clinicEstimate, estimateCopy, pageModel } from './config.js'
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -430,25 +430,6 @@ async function loadMarcosParts() {
   return parts
 }
 
-function wireDock() {
-  const dock = document.querySelector('.dock')
-  const anchors = [...document.querySelectorAll('.cta-block [data-cta]')]
-  if (!dock || anchors.length === 0) return
-  if (!('IntersectionObserver' in window)) {
-    dock.classList.add('is-on')
-    return
-  }
-  const visible = new Set()
-  const observer = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (entry.isIntersecting) visible.add(entry.target)
-      else visible.delete(entry.target)
-    }
-    dock.classList.toggle('is-on', visible.size === 0)
-  }, { threshold: 0.65 })
-  anchors.forEach((node) => observer.observe(node))
-}
-
 function wireAudio() {
   const audio = document.querySelector('#marcos-audio')
   const button = document.querySelector('#play')
@@ -564,9 +545,9 @@ function currentSearch() {
   return window.location.search
 }
 
-function line(text, team = false) {
+function line(text, patient = false) {
   const node = document.createElement('p')
-  node.className = `bubble-demo${team ? ' from-team' : ''}`
+  node.className = `bubble-demo${patient ? ' from-patient' : ''}`
   node.textContent = text
   return node
 }
@@ -579,41 +560,52 @@ function paintFunnel(index, channel) {
   steps.querySelectorAll('[role="tab"]').forEach((tab, tabIndex) => {
     const selected = tabIndex === index
     tab.setAttribute('aria-selected', selected ? 'true' : 'false')
+    tab.classList.toggle('is-done', tabIndex < index)
     tab.tabIndex = selected ? 0 : -1
+    if (selected) {
+      const left = tab.offsetLeft - steps.clientWidth / 2 + tab.clientWidth / 2
+      steps.scrollTo({ left: Math.max(0, left), behavior: reduceMotion ? 'auto' : 'smooth' })
+    }
   })
+  document.querySelector('#live-wa')?.classList.toggle('is-live', channel !== 'instagram' && step.id !== 'google')
+  document.querySelector('#live-ig')?.classList.toggle('is-live', channel === 'instagram' && step.id !== 'google')
+  document.querySelector('#live-google')?.classList.toggle('is-live', step.id === 'google' || step.id === 'crm')
   stage.setAttribute('aria-labelledby', `funnel-${step.id}`)
+  stage.classList.remove('is-in')
   stage.replaceChildren()
+  const kicker = document.createElement('p')
+  kicker.className = 'app-kicker'
+  kicker.textContent = 'Demonstração'
   const title = document.createElement('h3')
   title.textContent = step.title
-  stage.append(title)
-  const channelLine = document.createElement('p')
-  channelLine.className = 'stage-note'
-  channelLine.textContent = channel === 'instagram'
-    ? 'Canal desta demonstração: Instagram. A conta entra na implantação.'
-    : 'Canal desta demonstração: WhatsApp.'
-  stage.append(channelLine)
+  const card = document.createElement('div')
+  card.className = 'crm-card'
+  const who = document.createElement('strong')
+  who.textContent = 'Maria'
+  const meta = document.createElement('p')
+  meta.textContent = channel === 'instagram' ? 'Instagram · entra na implantação' : 'WhatsApp'
+  const stageName = document.createElement('p')
+  stageName.className = 'stage-name'
+  stageName.textContent = step.label
+  card.append(who, meta, stageName)
+  stage.append(kicker, title, card)
   if (step.card) {
-    const card = document.createElement('div')
-    card.className = 'crm-card'
-    const name = document.createElement('strong')
-    name.textContent = step.name
     const procedure = document.createElement('p')
-    procedure.textContent = step.procedure
-    const stageName = document.createElement('p')
-    stageName.className = 'stage-name'
-    stageName.textContent = step.stage
-    card.append(name, procedure, stageName)
-    stage.append(card)
+    procedure.className = 'bubble-demo'
+    procedure.textContent = `${step.procedure}. ${step.stage}.`
+    stage.append(procedure)
   } else {
     const opening = channel === 'instagram' && step.instagram ? step.instagram : step.whatsapp || step.text
-    if (opening) stage.append(line(opening, !step.whatsapp && !step.instagram))
-    if (step.reply) stage.append(line(step.reply, false))
-    if (step.confirm) stage.append(line(step.confirm, true))
+    const fromPatient = Boolean(step.whatsapp || step.instagram)
+    if (opening) stage.append(line(opening, fromPatient))
+    if (step.reply) stage.append(line(step.reply, true))
+    if (step.confirm) stage.append(line(step.confirm, false))
   }
   const note = document.createElement('p')
   note.className = 'stage-note'
   note.textContent = step.note
   stage.append(note)
+  if (!reduceMotion) requestAnimationFrame(() => stage.classList.add('is-in'))
   const prev = document.querySelector('#step-prev')
   const next = document.querySelector('#step-next')
   if (prev) prev.disabled = index === 0
@@ -622,19 +614,46 @@ function paintFunnel(index, channel) {
 
 function wireFunnel() {
   const host = document.querySelector('#funnel-steps')
+  const play = document.querySelector('#funnel-play')
   if (!host) return
   let index = 0
   let channel = 'whatsapp'
+  let timer = 0
+  let playing = !reduceMotion
+  const paintPlay = () => {
+    if (!play) return
+    play.hidden = reduceMotion
+    play.textContent = playing ? 'Pausar' : 'Retomar'
+    play.setAttribute('aria-pressed', playing ? 'true' : 'false')
+    play.setAttribute('aria-label', playing ? 'Pausar a demonstração' : 'Retomar a demonstração')
+  }
+  const stop = () => {
+    window.clearInterval(timer)
+    timer = 0
+  }
+  const start = () => {
+    stop()
+    if (!playing || reduceMotion) return
+    timer = window.setInterval(() => {
+      index = (index + 1) % FUNNEL.length
+      paintFunnel(index, channel)
+    }, 2800)
+  }
   FUNNEL.forEach((step, stepIndex) => {
     const tab = document.createElement('button')
     tab.type = 'button'
     tab.role = 'tab'
     tab.id = `funnel-${step.id}`
-    tab.textContent = step.label
     tab.setAttribute('aria-controls', 'funnel-stage')
-    tab.setAttribute('aria-selected', stepIndex === 0 ? 'true' : 'false')
-    tab.tabIndex = stepIndex === 0 ? 0 : -1
+    const mark = document.createElement('i')
+    mark.textContent = String(stepIndex + 1)
+    const label = document.createElement('span')
+    label.textContent = step.label
+    tab.append(mark, label)
     tab.addEventListener('click', () => {
+      playing = false
+      paintPlay()
+      stop()
       index = stepIndex
       paintFunnel(index, channel)
     })
@@ -643,6 +662,9 @@ function wireFunnel() {
   host.addEventListener('keydown', (event) => {
     if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
     event.preventDefault()
+    playing = false
+    paintPlay()
+    stop()
     index = event.key === 'ArrowRight' ? Math.min(FUNNEL.length - 1, index + 1) : Math.max(0, index - 1)
     paintFunnel(index, channel)
     host.querySelectorAll('[role="tab"]')[index]?.focus()
@@ -655,39 +677,118 @@ function wireFunnel() {
     })
   })
   document.querySelector('#step-prev')?.addEventListener('click', () => {
+    playing = false
+    paintPlay()
+    stop()
     index = Math.max(0, index - 1)
     paintFunnel(index, channel)
   })
   document.querySelector('#step-next')?.addEventListener('click', () => {
+    playing = false
+    paintPlay()
+    stop()
     index = Math.min(FUNNEL.length - 1, index + 1)
     paintFunnel(index, channel)
   })
+  play?.addEventListener('click', () => {
+    playing = !playing
+    paintPlay()
+    if (playing) start()
+    else stop()
+  })
+  paintPlay()
   paintFunnel(0, channel)
+  const block = document.querySelector('.funnel')
+  if (!block || !('IntersectionObserver' in window) || reduceMotion) return
+  const observer = new IntersectionObserver((entries) => {
+    if (entries.some((entry) => entry.isIntersecting)) start()
+    else stop()
+  }, { threshold: 0.35 })
+  observer.observe(block)
+}
+
+function animateFigure(node, text, target) {
+  if (!node) return
+  if (reduceMotion || !Number.isFinite(target)) {
+    node.textContent = text
+    return
+  }
+  const from = Number(node.dataset.n || 0)
+  const money = text.includes('R$')
+  const start = performance.now()
+  const tick = (now) => {
+    const progress = Math.min(1, (now - start) / 420)
+    const current = Math.round(from + (target - from) * progress)
+    node.dataset.n = String(current)
+    node.textContent = money
+      ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(current)
+      : new Intl.NumberFormat('pt-BR').format(current)
+    if (progress < 1) requestAnimationFrame(tick)
+    else node.textContent = text
+  }
+  requestAnimationFrame(tick)
+}
+
+function bindPair(range, number) {
+  if (!range || !number) return
+  range.addEventListener('input', () => {
+    number.value = range.value
+    number.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  number.addEventListener('input', () => {
+    if (number.value === '') return
+    const value = Number(number.value)
+    if (!Number.isFinite(value)) return
+    range.value = String(Math.min(Number(range.max), Math.max(Number(range.min), value)))
+  })
 }
 
 function wireCalculator() {
   const form = document.querySelector('#risco')
-  const output = document.querySelector('#risco-out')
-  const formula = document.querySelector('#risco-formula')
-  if (!form || !output || !formula) return
+  if (!form) return
   const messages = form.querySelector('#msgs')
+  const days = form.querySelector('#days')
   const percent = form.querySelector('#pct')
+  const booking = form.querySelector('#book')
+  const value = form.querySelector('#valor')
   if (percent && percent.value === '') percent.value = String(DEFAULT_UNANSWERED_PERCENT)
+  if (booking && booking.value === '') booking.value = String(DEFAULT_BOOKING_PERCENT)
+  bindPair(form.querySelector('#msgs-range'), messages)
+  bindPair(form.querySelector('#days-range'), days)
+  bindPair(form.querySelector('#pct-range'), percent)
+  bindPair(form.querySelector('#book-range'), booking)
+  bindPair(form.querySelector('#valor-range'), value)
+  const wait = form.querySelector('#risco-wait')
+  const revenueCard = form.querySelector('#out-revenue-card')
   const paint = () => {
-    if (messages.value.trim() === '') {
-      formula.textContent = ''
-      output.textContent = 'Informe as mensagens do dia para ver a conta.'
-      return
-    }
-    const result = patientsAtRisk(messages.value, percent.value)
-    const copy = riskCopy(result)
+    const result = clinicEstimate({
+      messagesPerDay: messages.value,
+      daysPerMonth: days.value,
+      unansweredPercent: percent.value,
+      bookingPercent: booking.value,
+      averageValue: value.value,
+    })
+    const copy = estimateCopy(result)
     if (!copy) {
-      formula.textContent = ''
-      output.textContent = 'Use um número de mensagens a partir de zero e um percentual de 0 a 100.'
+      if (wait) wait.hidden = false
+      form.querySelector('#formula-conversations').textContent = ''
+      form.querySelector('#formula-patients').textContent = ''
+      form.querySelector('#formula-revenue').textContent = ''
+      form.querySelector('#out-conversations').textContent = '—'
+      form.querySelector('#out-patients').textContent = '—'
+      if (revenueCard) revenueCard.hidden = true
       return
     }
-    formula.textContent = copy.formula
-    output.textContent = copy.sentence
+    if (wait) wait.hidden = true
+    form.querySelector('#formula-conversations').textContent = copy.conversations
+    form.querySelector('#formula-patients').textContent = copy.patients
+    animateFigure(form.querySelector('#out-conversations'), copy.conversationsValue, result.conversations)
+    animateFigure(form.querySelector('#out-patients'), copy.patientsValue, result.patients)
+    if (revenueCard) revenueCard.hidden = !copy.revenue
+    if (copy.revenue) {
+      form.querySelector('#formula-revenue').textContent = copy.revenue
+      animateFigure(form.querySelector('#out-revenue'), copy.revenueValue, result.revenue)
+    }
   }
   form.addEventListener('input', paint)
   paint()
@@ -695,7 +796,6 @@ function wireCalculator() {
 
 export function boot() {
   wireAudio()
-  wireDock()
   wireModuleCards()
   wireFunnel()
   wireCalculator()
