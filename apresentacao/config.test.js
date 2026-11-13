@@ -121,9 +121,9 @@ describe('apresentação', () => {
     expect(source).toMatch(/Pesquisa da Doctoralia: 80% dos pacientes escolhem o especialista pelas avaliações online/)
     expect(source).toMatch(/Não é um resultado da Automatize/)
     expect(source).toMatch(/não é um resultado prometido/i)
-    expect(source).toMatch(/Não é estatística de mercado/)
-    expect(source).toMatch(/Premissa editável/)
-    expect(source).toMatch(/Toque e veja o paciente avançar/)
+    expect(source).toMatch(/Estimativa conservadora/)
+    expect(source).toMatch(/O método Automatize/)
+    expect(source).not.toMatch(/type="number"/)
     for (const route of ['/#/demo"', '/#/demo/whatsapp', '/#/demo/instagram', '/#/demo/pipeline', '/#/demo/agenda', '/#/demo/avaliacoes', '/#/demo/portfolio', '/#/demo/metricas', '/#/demo/integracoes']) {
       expect(source).toContain(`https://automatize.devbrasil.online${route.replace(/"$/, '')}`)
     }
@@ -237,8 +237,8 @@ describe('apresentação', () => {
 
   it('estimates only from the numbers the clinic types', () => {
     expect(DEFAULT_UNANSWERED_PERCENT).toBe(30)
-    expect(DEFAULT_BOOKING_PERCENT).toBe(100)
-    expect(FUNNEL.map((step) => step.id)).toEqual(['oi', 'resposta', 'agenda', 'lembrete', 'consulta', 'follow', 'google', 'crm'])
+    expect(DEFAULT_BOOKING_PERCENT).toBe(25)
+    expect(FUNNEL.map((step) => step.id)).toEqual(['resposta', 'agenda', 'lembrete', 'retorno', 'google', 'crm'])
     const base = {
       messagesPerDay: 40,
       daysPerMonth: 20,
@@ -250,6 +250,8 @@ describe('apresentação', () => {
     expect(clinicEstimate({ ...base, bookingPercent: 50 })).toMatchObject({ conversations: 200, patients: 100, revenue: null })
     expect(clinicEstimate({ ...base, bookingPercent: 50, averageValue: 400 })).toMatchObject({ revenue: 40000 })
     expect(clinicEstimate({ ...base, daysPerMonth: '' })).toBe(null)
+    expect(clinicEstimate({ messagesPerDay: 30 })).toMatchObject({ conversations: 198, patients: 50 })
+    expect(clinicEstimate({ messagesPerDay: 30, averageValue: 300 })).toMatchObject({ revenue: 15000 })
     expect(clinicEstimate({ ...base, messagesPerDay: -1 })).toBe(null)
     expect(clinicEstimate({ ...base, unansweredPercent: 101 })).toBe(null)
     const copy = estimateCopy(clinicEstimate(base))

@@ -376,71 +376,101 @@ export function pageModel(search, configuredPhone = WHATSAPP_E164) {
 
 export const DEFAULT_UNANSWERED_PERCENT = 30
 
-export const DEFAULT_BOOKING_PERCENT = 100
+export const DEFAULT_BOOKING_PERCENT = 25
+
+export const WORK_DAYS = 22
 
 export const FUNNEL = [
   {
-    id: 'oi',
-    label: 'Primeiro oi',
-    title: 'O paciente escreve',
-    whatsapp: 'Oi. Vi o perfil e queria uma avaliação esta semana.',
-    instagram: 'Vi o procedimento no feed. A avaliação é presencial?',
-    note: 'Demonstração ilustrativa. Não é uma mensagem real.',
-  },
-  {
     id: 'resposta',
-    label: 'Resposta automática',
-    title: 'A resposta sai na hora',
-    text: 'Boa noite. Aqui é a nossa equipe. A avaliação pode ser nesta semana. Posso ver um horário?',
-    note: 'Na implantação, a resposta automática continua o atendimento. Esta tela não envia mensagem.',
+    label: 'Responde na hora',
+    title: 'Maria escreve às 22h. A resposta chega em segundos.',
+    time: '22:04',
+    chat: [
+      { from: 'patient', text: 'Oi! Queria marcar uma avaliação. Vocês atendem sábado?' },
+      { from: 'clinic', text: 'Oi, Maria! Boa noite 😊 Aqui é a Ana, da clínica.' },
+      { from: 'clinic', text: 'Atendemos sim! A avaliação é com a Dra. Paula e dura uns 40 minutos.' },
+      { from: 'clinic', text: 'Prefere sábado às 9h ou terça às 18h?' },
+    ],
+    instagram: 'Vi o vídeo no Reels 😍 vocês atendem sábado?',
+    method: 'Resposta imediata, 24 horas',
+    why: 'Quem pergunta à noite costuma escrever para mais de uma clínica. A primeira que responde bem sai na frente.',
   },
   {
     id: 'agenda',
-    label: 'Agendamento',
-    title: 'A avaliação entra na agenda',
-    text: 'Tenho terça às 10h ou quinta às 16h.',
-    reply: 'Terça às 10h.',
-    confirm: 'Avaliação marcada: terça, 10h.',
-    note: 'Demonstração ilustrativa. Horários fictícios.',
+    label: 'Marca sozinho',
+    title: 'Ela escolhe o horário e a consulta já entra na agenda.',
+    time: '22:05',
+    chat: [
+      { from: 'patient', text: 'Sábado às 9h!' },
+      { from: 'clinic', text: 'Prontinho, Maria! ✅ Sábado, às 9h, com a Dra. Paula.' },
+      { from: 'clinic', text: 'Te mando um lembrete na véspera. Qualquer dúvida, é só chamar aqui.' },
+    ],
+    method: 'Duas opções de horário',
+    why: 'Em vez de “qual horário você quer?”, a paciente escolhe entre duas opções. Menos vai e vem, mais consulta marcada.',
   },
   {
     id: 'lembrete',
-    label: 'Lembrete',
-    title: 'A véspera',
-    text: 'Lembrete: amanhã, terça, 10h, sua avaliação. Você confirma?',
-    reply: 'Confirmado. Estarei lá.',
-    note: 'Demonstração ilustrativa.',
+    label: 'Lembra na véspera',
+    title: 'Na sexta, ela confirma com uma resposta.',
+    time: 'Sex · 10:00',
+    chat: [
+      { from: 'clinic', text: 'Oi, Maria! Passando pra lembrar da sua avaliação amanhã, sábado, às 9h 😊' },
+      { from: 'clinic', text: 'Responde 1 pra confirmar ou 2 pra remarcar.' },
+      { from: 'patient', text: '1' },
+      { from: 'clinic', text: 'Confirmado! Até amanhã, Maria.' },
+    ],
+    method: 'Lembrete com confirmação',
+    why: 'Revisão Cochrane (2013): lembretes por mensagem aumentam o comparecimento em consultas, comparados a nenhum lembrete.',
   },
   {
-    id: 'consulta',
-    label: 'Consulta',
-    title: 'A avaliação aconteceu',
-    text: 'A consulta foi feita. O paciente segue no painel, com a etapa atualizada.',
-    note: 'Demonstração ilustrativa. Não é um atendimento real.',
-  },
-  {
-    id: 'follow',
-    label: 'Follow-up',
-    title: 'Depois da avaliação',
-    text: 'Oi. Como foi a avaliação? Se quiser, deixo o pedido de avaliação no Google.',
-    note: 'O follow-up continua depois da consulta marcada. Demonstração ilustrativa.',
+    id: 'retorno',
+    label: 'Recupera quem sumiu',
+    title: 'João perguntou e não marcou. Ele recebe um retorno.',
+    time: '2 dias depois',
+    patient: 'João',
+    chat: [
+      { from: 'patient', text: 'Quanto fica a avaliação?' },
+      { from: 'note', text: 'João não respondeu mais.' },
+      { from: 'clinic', text: 'Oi, João! Vi que você perguntou da avaliação e acabou não dando tempo de marcar.' },
+      { from: 'clinic', text: 'Ainda tenho quinta às 18h. Quer que eu reserve pra você?' },
+      { from: 'patient', text: 'Quero sim!' },
+    ],
+    method: 'Follow-up de quem não marcou',
+    why: 'A maioria não disse não, só se distraiu. Um retorno educado no momento certo traz de volta quem a recepção não teve tempo de chamar.',
   },
   {
     id: 'google',
-    label: 'Google',
-    title: 'Pedido de avaliação',
-    text: 'O pedido de avaliação no Google sai depois da consulta. Ele entra na implantação. A conta da clínica ainda não está ligada.',
-    note: 'Demonstração ilustrativa.',
+    label: 'Pede avaliação no Google',
+    title: 'Depois da consulta, Maria recebe o pedido de avaliação.',
+    time: 'Sáb · 11:30',
+    chat: [
+      { from: 'clinic', text: 'Maria, obrigada por vir hoje! 💙 Foi um prazer te atender.' },
+      { from: 'clinic', text: 'Se puder, conta como foi no Google. Leva 1 minuto: g.page/clinica' },
+      { from: 'patient', text: 'Claro! Amei o atendimento ⭐⭐⭐⭐⭐' },
+    ],
+    method: 'Pedido no momento certo',
+    why: 'Pedir logo depois da consulta, com a experiência fresca. A avaliação é o que o próximo paciente lê antes de escolher a clínica.',
   },
   {
     id: 'crm',
-    label: 'No celular',
-    title: 'O doutor vê o cartão',
+    label: 'O doutor acompanha',
+    title: 'O doutor vê tudo no celular, sem perguntar pra recepção.',
+    time: 'Hoje',
     card: true,
-    name: 'Maria',
-    procedure: 'Avaliação',
-    stage: 'Pedido de avaliação no Google',
-    note: 'Demonstração ilustrativa, com dados fictícios. O doutor acompanha este cartão no celular.',
+    stats: [
+      ['Mensagens hoje', '18'],
+      ['Consultas marcadas', '7'],
+      ['Recuperados no retorno', '2'],
+      ['Avaliações no Google', '3'],
+    ],
+    rows: [
+      ['Maria', 'Veio · avaliou no Google ⭐'],
+      ['João', 'Marcou após o retorno'],
+      ['Carla', 'Aguardando confirmação'],
+    ],
+    method: 'Tudo num painel',
+    why: 'Cada paciente com a etapa em que está: chegou, marcou, confirmou, veio, avaliou. O doutor acompanha o resultado sem depender de planilha.',
   },
 ]
 
@@ -454,9 +484,9 @@ function readCount(value, { min, max }) {
 
 export function clinicEstimate({
   messagesPerDay,
-  daysPerMonth,
-  unansweredPercent,
-  bookingPercent,
+  daysPerMonth = WORK_DAYS,
+  unansweredPercent = DEFAULT_UNANSWERED_PERCENT,
+  bookingPercent = DEFAULT_BOOKING_PERCENT,
   averageValue,
 } = {}) {
   const messages = readCount(messagesPerDay, { min: 0, max: 10000 })
@@ -467,7 +497,7 @@ export function clinicEstimate({
   const money = readCount(averageValue, { min: 0, max: 1000000 })
   const conversationsExact = messages * days * (unanswered / 100)
   const patientsExact = conversationsExact * (booking / 100)
-  const revenueExact = money == null || money === 0 ? null : patientsExact * money
+  const revenueExact = money == null || money === 0 ? null : Math.round(patientsExact) * money
   return {
     messages,
     days,

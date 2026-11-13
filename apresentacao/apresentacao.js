@@ -1,4 +1,4 @@
-import { DEFAULT_BOOKING_PERCENT, DEFAULT_UNANSWERED_PERCENT, FUNNEL, MARCOS_AUDIO_VERSION, MARCOS_PARTS, MARCOS_PHOTO_FILES, clinicEstimate, estimateCopy, pageModel } from './config.js'
+import { FUNNEL, MARCOS_AUDIO_VERSION, MARCOS_PARTS, MARCOS_PHOTO_FILES, clinicEstimate, pageModel } from './config.js'
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -552,60 +552,99 @@ function line(text, patient = false) {
   return node
 }
 
+let funnelToken = 0
+
 function paintFunnel(index, channel) {
   const step = FUNNEL[index]
   const stage = document.querySelector('#funnel-stage')
   const steps = document.querySelector('#funnel-steps')
+  const method = document.querySelector('#funnel-method')
   if (!step || !stage || !steps) return
+  const token = ++funnelToken
   steps.querySelectorAll('[role="tab"]').forEach((tab, tabIndex) => {
     const selected = tabIndex === index
     tab.setAttribute('aria-selected', selected ? 'true' : 'false')
     tab.classList.toggle('is-done', tabIndex < index)
     tab.tabIndex = selected ? 0 : -1
-    if (selected) {
+    if (selected && steps.scrollWidth > steps.clientWidth) {
       const left = tab.offsetLeft - steps.clientWidth / 2 + tab.clientWidth / 2
       steps.scrollTo({ left: Math.max(0, left), behavior: reduceMotion ? 'auto' : 'smooth' })
     }
   })
-  document.querySelector('#live-wa')?.classList.toggle('is-live', channel !== 'instagram' && step.id !== 'google')
-  document.querySelector('#live-ig')?.classList.toggle('is-live', channel === 'instagram' && step.id !== 'google')
-  document.querySelector('#live-google')?.classList.toggle('is-live', step.id === 'google' || step.id === 'crm')
+  const name = step.card ? 'Painel do doutor' : 'Clínica Dra. Paula'
+  const avatar = document.querySelector('#chat-avatar')
+  if (avatar) avatar.textContent = step.card ? '★' : 'P'
+  const who = document.querySelector('#chat-name')
+  if (who) who.textContent = name
+  const time = document.querySelector('#chat-time')
+  if (time) time.textContent = step.card ? 'Automatize · hoje' : `${channel === 'instagram' ? 'Instagram Direct' : 'WhatsApp'} · ${step.time}`
   stage.setAttribute('aria-labelledby', `funnel-${step.id}`)
-  stage.classList.remove('is-in')
+  stage.classList.toggle('is-panel', Boolean(step.card))
   stage.replaceChildren()
-  const kicker = document.createElement('p')
-  kicker.className = 'app-kicker'
-  kicker.textContent = 'Demonstração'
-  const title = document.createElement('h3')
+  const title = document.createElement('p')
+  title.className = 'chat-day'
   title.textContent = step.title
-  const card = document.createElement('div')
-  card.className = 'crm-card'
-  const who = document.createElement('strong')
-  who.textContent = 'Maria'
-  const meta = document.createElement('p')
-  meta.textContent = channel === 'instagram' ? 'Instagram · entra na implantação' : 'WhatsApp'
-  const stageName = document.createElement('p')
-  stageName.className = 'stage-name'
-  stageName.textContent = step.label
-  card.append(who, meta, stageName)
-  stage.append(kicker, title, card)
+  stage.append(title)
+  const nodes = []
   if (step.card) {
-    const procedure = document.createElement('p')
-    procedure.className = 'bubble-demo'
-    procedure.textContent = `${step.procedure}. ${step.stage}.`
-    stage.append(procedure)
+    const grid = document.createElement('div')
+    grid.className = 'kpi-grid'
+    step.stats.forEach(([label, value]) => {
+      const box = document.createElement('div')
+      const strong = document.createElement('strong')
+      strong.textContent = value
+      const small = document.createElement('span')
+      small.textContent = label
+      box.append(strong, small)
+      grid.append(box)
+    })
+    nodes.push(grid)
+    step.rows.forEach(([who, where]) => {
+      const row = document.createElement('div')
+      row.className = 'kpi-row'
+      const b = document.createElement('b')
+      b.textContent = who
+      const span = document.createElement('span')
+      span.textContent = where
+      row.append(b, span)
+      nodes.push(row)
+    })
   } else {
-    const opening = channel === 'instagram' && step.instagram ? step.instagram : step.whatsapp || step.text
-    const fromPatient = Boolean(step.whatsapp || step.instagram)
-    if (opening) stage.append(line(opening, fromPatient))
-    if (step.reply) stage.append(line(step.reply, true))
-    if (step.confirm) stage.append(line(step.confirm, false))
+    step.chat.forEach((msg, msgIndex) => {
+      const text = msgIndex === 0 && channel === 'instagram' && step.instagram ? step.instagram : msg.text
+      if (msg.from === 'note') {
+        const n = document.createElement('p')
+        n.className = 'chat-note'
+        n.textContent = text
+        nodes.push(n)
+        return
+      }
+      const node = line(text, msg.from === 'patient')
+      if (msg.from === 'clinic') node.classList.add('from-clinic')
+      nodes.push(node)
+    })
   }
-  const note = document.createElement('p')
-  note.className = 'stage-note'
-  note.textContent = step.note
-  stage.append(note)
-  if (!reduceMotion) requestAnimationFrame(() => stage.classList.add('is-in'))
+  if (reduceMotion) stage.append(...nodes)
+  else {
+    nodes.forEach((node, nodeIndex) => {
+      window.setTimeout(() => {
+        if (token !== funnelToken) return
+        node.classList.add('pop')
+        stage.append(node)
+      }, 250 + nodeIndex * 650)
+    })
+  }
+  if (method) {
+    method.replaceChildren()
+    const k = document.createElement('p')
+    k.className = 'method-kicker'
+    k.textContent = `Etapa ${index + 1} de ${FUNNEL.length} · Método`
+    const h = document.createElement('h3')
+    h.textContent = step.method
+    const p = document.createElement('p')
+    p.textContent = step.why
+    method.append(k, h, p)
+  }
   const prev = document.querySelector('#step-prev')
   const next = document.querySelector('#step-next')
   if (prev) prev.disabled = index === 0
@@ -637,7 +676,7 @@ function wireFunnel() {
     timer = window.setInterval(() => {
       index = (index + 1) % FUNNEL.length
       paintFunnel(index, channel)
-    }, 2800)
+    }, 6500)
   }
   FUNNEL.forEach((step, stepIndex) => {
     const tab = document.createElement('button')
@@ -729,69 +768,85 @@ function animateFigure(node, text, target) {
   requestAnimationFrame(tick)
 }
 
-function bindPair(range, number) {
-  if (!range || !number) return
-  range.addEventListener('input', () => {
-    number.value = range.value
-    number.dispatchEvent(new Event('input', { bubbles: true }))
+const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+
+function buildRuler(node, onChange) {
+  const min = Number(node.dataset.min)
+  const max = Number(node.dataset.max)
+  const step = Number(node.dataset.step)
+  const major = Number(node.dataset.major)
+  const gap = 12
+  const strip = document.createElement('div')
+  strip.className = 'ruler-strip'
+  const count = Math.round((max - min) / step)
+  for (let i = 0; i <= count; i += 1) {
+    const value = min + i * step
+    const tick = document.createElement('span')
+    const isMajor = value % major === 0
+    const isMid = !isMajor && value % (major / 2) === 0
+    tick.className = `tick${isMajor ? ' major' : isMid ? ' mid' : ''}`
+    if (isMajor) {
+      tick.dataset.label = node.dataset.money ? (value >= 1000 ? `${value / 1000} mil` : String(value)) : String(value)
+    }
+    strip.append(tick)
+  }
+  const needle = document.createElement('i')
+  needle.className = 'needle'
+  const wrap = document.createElement('div')
+  wrap.className = 'ruler-wrap'
+  node.before(wrap)
+  wrap.append(node, needle)
+  node.append(strip)
+  const toValue = () => Math.min(max, Math.max(min, min + Math.round(node.scrollLeft / gap) * step))
+  let last = null
+  const set = (value, smooth) => {
+    node.scrollTo({ left: ((value - min) / step) * gap, behavior: smooth && !reduceMotion ? 'smooth' : 'auto' })
+  }
+  node.addEventListener('scroll', () => {
+    const value = toValue()
+    if (value === last) return
+    last = value
+    node.setAttribute('aria-valuenow', String(value))
+    if (navigator.vibrate && node.dataset.touched) navigator.vibrate(4)
+    onChange(value)
+  }, { passive: true })
+  node.addEventListener('pointerdown', () => { node.dataset.touched = '1' })
+  node.addEventListener('keydown', (event) => {
+    const delta = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[event.key]
+    if (!delta) return
+    event.preventDefault()
+    set(Math.min(max, Math.max(min, toValue() + delta * step)), true)
   })
-  number.addEventListener('input', () => {
-    if (number.value === '') return
-    const value = Number(number.value)
-    if (!Number.isFinite(value)) return
-    range.value = String(Math.min(Number(range.max), Math.max(Number(range.min), value)))
-  })
+  requestAnimationFrame(() => set(Number(node.dataset.value), false))
+  onChange(Number(node.dataset.value))
 }
 
 function wireCalculator() {
   const form = document.querySelector('#risco')
   if (!form) return
-  const messages = form.querySelector('#msgs')
-  const days = form.querySelector('#days')
-  const percent = form.querySelector('#pct')
-  const booking = form.querySelector('#book')
-  const value = form.querySelector('#valor')
-  if (percent && percent.value === '') percent.value = String(DEFAULT_UNANSWERED_PERCENT)
-  if (booking && booking.value === '') booking.value = String(DEFAULT_BOOKING_PERCENT)
-  bindPair(form.querySelector('#msgs-range'), messages)
-  bindPair(form.querySelector('#days-range'), days)
-  bindPair(form.querySelector('#pct-range'), percent)
-  bindPair(form.querySelector('#book-range'), booking)
-  bindPair(form.querySelector('#valor-range'), value)
-  const wait = form.querySelector('#risco-wait')
+  const state = { messages: 30, value: 0 }
   const revenueCard = form.querySelector('#out-revenue-card')
   const paint = () => {
-    const result = clinicEstimate({
-      messagesPerDay: messages.value,
-      daysPerMonth: days.value,
-      unansweredPercent: percent.value,
-      bookingPercent: booking.value,
-      averageValue: value.value,
-    })
-    const copy = estimateCopy(result)
-    if (!copy) {
-      if (wait) wait.hidden = false
-      form.querySelector('#formula-conversations').textContent = ''
-      form.querySelector('#formula-patients').textContent = ''
-      form.querySelector('#formula-revenue').textContent = ''
-      form.querySelector('#out-conversations').textContent = '—'
-      form.querySelector('#out-patients').textContent = '—'
-      if (revenueCard) revenueCard.hidden = true
-      return
-    }
-    if (wait) wait.hidden = true
-    form.querySelector('#formula-conversations').textContent = copy.conversations
-    form.querySelector('#formula-patients').textContent = copy.patients
-    animateFigure(form.querySelector('#out-conversations'), copy.conversationsValue, result.conversations)
-    animateFigure(form.querySelector('#out-patients'), copy.patientsValue, result.patients)
-    if (revenueCard) revenueCard.hidden = !copy.revenue
-    if (copy.revenue) {
-      form.querySelector('#formula-revenue').textContent = copy.revenue
-      animateFigure(form.querySelector('#out-revenue'), copy.revenueValue, result.revenue)
-    }
+    const result = clinicEstimate({ messagesPerDay: state.messages, averageValue: state.value })
+    if (!result) return
+    animateFigure(form.querySelector('#out-conversations'), new Intl.NumberFormat('pt-BR').format(result.conversations), result.conversations)
+    animateFigure(form.querySelector('#out-patients'), new Intl.NumberFormat('pt-BR').format(result.patients), result.patients)
+    if (revenueCard) revenueCard.hidden = result.revenue == null
+    if (result.revenue != null) animateFigure(form.querySelector('#out-revenue'), brl.format(result.revenue), result.revenue)
   }
-  form.addEventListener('input', paint)
-  paint()
+  const msgs = form.querySelector('#msgs-ruler')
+  const valor = form.querySelector('#valor-ruler')
+  if (msgs) buildRuler(msgs, (value) => {
+    state.messages = value
+    form.querySelector('#msgs-out').textContent = String(value)
+    paint()
+  })
+  if (valor) buildRuler(valor, (value) => {
+    state.value = value
+    form.querySelector('#valor-out').textContent = value ? brl.format(value) : 'Arraste para incluir'
+    form.querySelector('#valor-out').classList.toggle('is-empty', !value)
+    paint()
+  })
 }
 
 export function boot() {
