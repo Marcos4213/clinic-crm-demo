@@ -93,7 +93,7 @@ describe('apresentação', () => {
     expect(source).toMatch(/demonstração ilustrativa/i)
     expect(source).toMatch(/Agendar 15 minutos com o Marcos/)
     expect(source).toMatch(/Uma apresentação rápida do aplicativo por dentro, e de onde a clínica perde paciente hoje/)
-    expect(source).toMatch(/A clínica perde paciente entre o primeiro oi e a avaliação no Google/)
+    expect(source).toMatch(/Sua clínica responde, agenda e lembra cada paciente sozinha/)
     expect(source).toMatch(/Para a recepção encaminhar e para o doutor ver em poucos minutos/)
     expect(source).toMatch(/A próxima começa em seguida/)
     expect(source).toMatch(/Portfólio/)
