@@ -40,6 +40,13 @@ export async function beginManualSend({ routes, routeError, clinicId, transport,
   return { status: result.status, body: { ...result.body, connected: false } }
 }
 
+export const OUTBOUND_RATE_MAX = 10
+
+export function allowOutboundRate({ recentCount = 0, max = OUTBOUND_RATE_MAX } = {}) {
+  if (Number(recentCount) >= Number(max)) return { ok: false, error: 'rate_limited' }
+  return { ok: true }
+}
+
 export async function handleSend({
   confirm,
   idempotencyKey,
@@ -50,6 +57,7 @@ export async function handleSend({
   route,
   token,
   transport,
+  recentOutboundCount = 0,
 }) {
   if (!member || !route) return { status: 403, body: { error: 'forbidden' } }
   const decision = outboundDecision({ confirm, idempotencyKey, existing })
@@ -62,6 +70,8 @@ export async function handleSend({
   }
   const window = canSendSessionText({ lastInboundAt, now })
   if (!window.ok) return { status: 409, body: { error: window.error } }
+  const rate = allowOutboundRate({ recentCount: recentOutboundCount })
+  if (!rate.ok) return { status: 429, body: { error: rate.error } }
   if (!token) return { status: 503, body: { status: 'unconfigured', error: 'whatsapp_token_unconfigured' } }
   try {
     const result = await transport({ phoneNumberId: route.phoneNumberId })
@@ -72,11 +82,12 @@ export async function handleSend({
   }
 }
 
-export function handleStatus({ route, token, lastInboundAt, now }) {
+export function handleStatus({ route, token, lastInboundAt, now, integrationState }) {
   const window = canSendSessionText({ lastInboundAt, now })
+  const state = integrationState || (route ? 'pending' : 'unconfigured')
   return {
-    connected: false,
-    state: route ? 'pending' : 'unconfigured',
+    connected: state === 'connected',
+    state,
     tokenConfigured: Boolean(token),
     canSend: Boolean(route && token && window.ok),
   }

@@ -85,6 +85,12 @@ export default {
         .order('received_at', { ascending: false })
         .limit(1)
         .maybeSingle()
+      const { data: statusRow } = await supabase
+        .from('integration_status')
+        .select('state, last_inbound_at')
+        .eq('clinic_id', route.clinicId)
+        .eq('provider', 'whatsapp')
+        .maybeSingle()
       return withCors(
         request,
         json(
@@ -92,8 +98,9 @@ export default {
             ...handleStatus({
               route: { phoneNumberId: route.phoneNumberId },
               token,
-              lastInboundAt: inbound?.received_at,
+              lastInboundAt: statusRow?.last_inbound_at ?? inbound?.received_at,
               now: Date.now(),
+              integrationState: statusRow?.state,
             }),
             clinicId: route.clinicId,
           },
@@ -128,6 +135,13 @@ export default {
           .maybeSingle()
       : { data: null }
 
+    const since = new Date(Date.now() - 60 * 1000).toISOString()
+    const { count: recentOutboundCount } = await supabase
+      .from('whatsapp_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('clinic_id', route.clinicId)
+      .eq('direction', 'outbound')
+      .gte('created_at', since)
     const decision = await beginManualSend({
       routes: [route],
       clinicId: route.clinicId,
@@ -138,6 +152,7 @@ export default {
         : null,
       lastInboundAt: inbound?.received_at,
       now: Date.now(),
+      recentOutboundCount: recentOutboundCount ?? 0,
       token,
       transport: async ({ phoneNumberId }) => {
         const version = Deno.env.get('WHATSAPP_GRAPH_VERSION') || 'v27.0'

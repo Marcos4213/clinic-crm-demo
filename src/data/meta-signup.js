@@ -27,6 +27,7 @@ export function useWhatsappSignup(client, clinicId) {
   const sessionRef = useRef(null)
   const codeRef = useRef('')
   const finishingRef = useRef(false)
+  const pinRef = useRef('')
   const clientRef = useRef(client)
   const clinicRef = useRef(clinicId)
 
@@ -38,20 +39,26 @@ export function useWhatsappSignup(client, clinicId) {
   useEffect(() => {
     if (!client) return undefined
     let cancel = false
-    client.functions.invoke('whatsapp-onboard', { method: 'GET' }).then(({ data, error }) => {
+    const headers = clinicId ? { 'x-clinic-id': clinicId } : undefined
+    client.functions.invoke('whatsapp-onboard', { method: 'GET', headers }).then(({ data, error }) => {
       if (cancel) return
       if (error || !data) {
         setConfig({ configured: false, connected: false, ready: true })
         return
       }
-      setConfig({ ...data, configured: data.configured === true, connected: false, ready: true })
+      setConfig({
+        ...data,
+        configured: data.configured === true,
+        connected: data.connected === true || data.diagnostics?.state === 'connected',
+        ready: true,
+      })
     }).catch(() => {
       if (!cancel) setConfig({ configured: false, connected: false, ready: true })
     })
     return () => {
       cancel = true
     }
-  }, [client])
+  }, [client, clinicId])
 
   function waitForSession() {
     const ready = sessionRef.current
@@ -68,7 +75,7 @@ export function useWhatsappSignup(client, clinicId) {
     })
   }
 
-  async function finish(session, code) {
+  async function finish(session, code, pin = '') {
     if (finishingRef.current) return
     const current = clientRef.current
     const clinic = clinicRef.current
@@ -82,6 +89,7 @@ export function useWhatsappSignup(client, clinicId) {
         phoneNumberId: session?.phoneNumberId || '',
         wabaId: session?.wabaId || '',
         event: session?.event || 'CODE_ONLY',
+        pin: /^[0-9]{6}$/.test(String(pin ?? '')) ? String(pin) : '',
       },
     })
     let payload = data
@@ -108,7 +116,7 @@ export function useWhatsappSignup(client, clinicId) {
       setSignupNotice(failure[payload?.error] || 'O cadastro não foi concluído. A linha não foi marcada como conectada.')
       return
     }
-    setSignupNotice('Cadastro recebido. Mande um oi do celular para este WhatsApp e responda em Conversas.')
+    setSignupNotice('Cadastro recebido. Peça à paciente que mande um oi para este WhatsApp e responda em Conversas.')
     setRevision((value) => value + 1)
   }
 
@@ -117,17 +125,18 @@ export function useWhatsappSignup(client, clinicId) {
       const session = readSignupSession(event.data, event.origin)
       if (!session) return
       sessionRef.current = session
-      if ((session.done || session.wabaId) && codeRef.current) finish(session, codeRef.current)
+      if ((session.done || session.wabaId) && codeRef.current) finish(session, codeRef.current, pinRef.current)
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
   }, [])
 
-  async function onConnect() {
+  async function onConnect(pin = '') {
     if (!config.configured) return
     finishingRef.current = false
     sessionRef.current = null
     codeRef.current = ''
+    pinRef.current = /^[0-9]{6}$/.test(String(pin ?? '')) ? String(pin) : ''
     setSignupNotice('')
     try {
       const fb = await loadFacebookSdk(config.appId)
@@ -148,7 +157,7 @@ export function useWhatsappSignup(client, clinicId) {
         setSignupNotice('A Meta cancelou antes de ligar o WhatsApp do celular.')
         return
       }
-      finish(session, code)
+      finish(session, code, pinRef.current)
     } catch {
       setSignupNotice('A janela da Meta não abriu. Nada foi marcado como conectado.')
     }

@@ -1,5 +1,6 @@
 import { hmacSha256Hex } from '../_shared/webhook.js'
 import { handleChannelRequest } from '../_shared/whatsapp-http.js'
+import { integrationStateAfterIngest, shouldIgnoreStatus, webhookLogFields } from '../_shared/whatsapp-policy.js'
 import { describe, expect, it } from 'vitest'
 
 const secret = 'test-app-secret'
@@ -142,5 +143,44 @@ describe('channel webhook', () => {
     expect(JSON.stringify(thrown)).not.toContain(phone)
     expect(JSON.stringify(thrown)).not.toContain('Oi')
     expect(thrown.body.error).toBe('persist_failed')
+  })
+
+  it('rejects an unsigned post and does not ingest it', async () => {
+    const raw = payload('wamid.unsigned')
+    const stored = []
+    const unsigned = await handleChannelRequest({
+      method: 'POST',
+      url: 'https://example.test/hook',
+      rawBody: raw,
+      signature: null,
+      env: { WHATSAPP_APP_SECRET: secret, WHATSAPP_VERIFY_TOKEN: token },
+      ingest: async (event) => stored.push(event),
+    })
+    expect(unsigned.status).toBe(401)
+    expect(unsigned.body.error).toBe('bad_signature')
+    expect(stored).toEqual([])
+  })
+
+  it('ignores a status callback without a prior message and marks a stored inbound as connected', () => {
+    expect(shouldIgnoreStatus({ kind: 'status', hasExisting: false })).toBe(true)
+    expect(shouldIgnoreStatus({ kind: 'status', hasExisting: true })).toBe(false)
+    expect(shouldIgnoreStatus({ kind: 'message', hasExisting: false })).toBe(false)
+    expect(integrationStateAfterIngest({ kind: 'message', persisted: true, currentState: 'pending' })).toBe('connected')
+    expect(integrationStateAfterIngest({ kind: 'status', persisted: false, currentState: 'pending' })).toBe('pending')
+  })
+
+  it('exposes only non-PII fields for webhook logs', () => {
+    const fields = webhookLogFields({
+      kind: 'message',
+      providerMessageId: 'wamid.1',
+      phoneNumberId: phone,
+      waId: '5500000000001',
+      text: 'Oi, meu nome é Ana',
+    })
+    const raw = JSON.stringify(fields)
+    expect(fields).toMatchObject({ kind: 'message', hasProviderMessageId: true })
+    expect(raw).not.toContain('5500000000001')
+    expect(raw).not.toContain('Ana')
+    expect(raw).not.toContain('Oi')
   })
 })

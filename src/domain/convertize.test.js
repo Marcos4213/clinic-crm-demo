@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { allowCreateAppointment, buildResponsesRequest, customerConfirmedSlot, GROK_MODEL, systemInstructions, unconfiguredGrokBody, validateReplyRequest } from '../../supabase/functions/_shared/ai-policy.js'
+import { allowCreateAppointment, buildResponsesRequest, clinicAiRepliesEnabled, customerConfirmedSlot, GROK_MODEL, systemInstructions, unconfiguredGrokBody, validateReplyRequest } from '../../supabase/functions/_shared/ai-policy.js'
 import { hasScheduledConflict, openSlots, reportFromWorkspace, zonedLocalToUtc } from '../../supabase/functions/_shared/schedule.js'
 import { hmacSha256Hex, verifyHubSignature } from '../../supabase/functions/_shared/webhook.js'
 import { authRedirectUrl, classifyAuthCallback, urlAfterAuthCallback } from '../config.js'
@@ -20,8 +20,33 @@ describe('grok policy', () => {
     expect(request.model).toBe(GROK_MODEL)
     expect(request.store).toBe(false)
     expect(request.tools.map((tool) => tool.name)).toEqual(['list_open_slots', 'create_appointment'])
-    expect(request.instructions).toMatch(/Do not diagnose/)
-    expect(request.instructions).toMatch(/untrusted data/)
+    expect(request.instructions).toMatch(/Não diagnostique|Do not diagnose/)
+    expect(request.instructions).toMatch(/untrusted data|dados não confiáveis/i)
+  })
+
+  it('puts clinic hours and FAQ in a Portuguese prompt, never invents prices, and keeps replies off by default', () => {
+    expect(clinicAiRepliesEnabled(undefined)).toBe(false)
+    expect(clinicAiRepliesEnabled(null)).toBe(false)
+    expect(clinicAiRepliesEnabled(false)).toBe(false)
+    expect(clinicAiRepliesEnabled(true)).toBe(true)
+    const instructions = systemInstructions({
+      clinicName: 'Estetica clean',
+      faq: 'Avaliação presencial. Não informamos valores aqui.',
+      dayStart: '09:00',
+      dayEnd: '18:00',
+      slotMinutes: 30,
+    })
+    expect(instructions).toMatch(/português/i)
+    expect(instructions).toMatch(/Estetica clean/)
+    expect(instructions).toMatch(/09:00/)
+    expect(instructions).toMatch(/18:00/)
+    expect(instructions).toMatch(/30/)
+    expect(instructions).toMatch(/Avaliação presencial/)
+    expect(instructions).toMatch(/Não diagnostique/)
+    expect(instructions).toMatch(/não invente preços/i)
+    expect(instructions).toMatch(/humano/i)
+    expect(instructions).toMatch(/paciente/i)
+    expect(instructions).not.toMatch(/cliente/i)
   })
 
   it('creates an appointment only after an explicit confirmation and a real offer id', () => {

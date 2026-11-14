@@ -98,3 +98,20 @@ export function parseWebhook(rawBody) {
   }
   return events.filter((event) => event.providerMessageId)
 }
+
+export function shouldIgnoreStatus({ kind, hasExisting }) {
+  return kind === 'status' && hasExisting !== true
+}
+
+export function integrationStateAfterIngest({ kind, persisted, currentState }) {
+  if (kind === 'message' && persisted) return 'connected'
+  return currentState || 'pending'
+}
+
+export function webhookLogFields(event) {
+  return {
+    kind: event?.kind ?? 'unknown',
+    hasProviderMessageId: Boolean(event?.providerMessageId),
+    hasPhoneNumberId: Boolean(event?.phoneNumberId),
+  }
+}

@@ -3,6 +3,7 @@ import { WhatsAppConnect } from '../components/whatsapp/WhatsAppConnect'
 import { useWhatsappSignup } from '../data/meta-signup'
 import { useAuth } from '../state/useAuth'
 import { useCrm } from '../state/useCrm'
+import { integrationBadge } from '../domain/integration-status'
 
 const STATUS_LABEL = {
   received: 'Recebido',
@@ -16,7 +17,7 @@ const STATUS_LABEL = {
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-export function WhatsAppPanel({ route, messages = [], canSend = false, sendHint = '', notice, onSend, signup, signupNotice, signupPending, onConnect, embedded = false }) {
+export function WhatsAppPanel({ route, messages = [], canSend = false, sendHint = '', notice, onSend, signup, signupNotice, signupPending, onConnect, embedded = false, integrationState, diagnostics }) {
   const [confirm, setConfirm] = useState(false)
   const [text, setText] = useState('')
   const [waId, setWaId] = useState('')
@@ -31,12 +32,19 @@ export function WhatsAppPanel({ route, messages = [], canSend = false, sendHint 
           </>
         )}
         <p className={`${embedded ? '' : 'mt-2'} text-[13px] leading-5 text-muted`}>
-          {route
-            ? 'O número desta clínica já foi registrado. Ainda não há prova de entrega e nada parte sozinho.'
-            : 'A linha entra pela janela oficial da Meta. Nada é marcado como conectado sem uma mensagem recebida.'}
+          <span className="font-semibold tracking-[0.12em] text-emerald uppercase">{integrationBadge(integrationState).label}. </span>
+          {integrationBadge(integrationState).detail}
+          {route ? ' Este número já está associado à clínica.' : ''}
         </p>
         <WhatsAppConnect config={signup} pending={signupPending} onConnect={onConnect} />
         {signupNotice && <p className="mt-3 text-[13px] text-muted">{signupNotice}</p>}
+        {diagnostics && (
+          <p className="mt-3 text-[12px] leading-5 text-muted">
+            Diagnóstico: rota {diagnostics.routePresent ? 'presente' : 'ausente'}, token {diagnostics.tokenPresent ? 'presente' : 'ausente'},
+            webhook {diagnostics.subscribedAppsOk ? 'inscrito' : 'não inscrito'}, Graph {diagnostics.graphVersion}.
+            {diagnostics.lastInboundAt ? ' Última mensagem inbound registrada.' : ' Ainda sem mensagem inbound.'}
+          </p>
+        )}
         <ul className="mt-4 divide-y divide-line rounded-2xl border border-line" aria-label="Mensagens do WhatsApp">
           {messages.length === 0 && <li className="px-3 py-3 text-[13px] text-muted">Nenhuma mensagem deste número.</li>}
           {messages.map((message) => (
@@ -145,6 +153,8 @@ export default function WhatsAppTest() {
       signupNotice={signup.signupNotice}
       signupPending={signup.pending}
       onConnect={signup.onConnect}
+      integrationState={crm.integrations?.find((item) => item.provider === 'whatsapp')?.state}
+      diagnostics={signup.config?.diagnostics}
     />
   )
 }
