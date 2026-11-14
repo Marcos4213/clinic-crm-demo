@@ -13,6 +13,17 @@ import {
   signupStatusAfterHooks,
   wabaIdsFromDebug,
 } from './onboard.js'
+import {
+  GRAPH_STEPS,
+  graphStepError,
+  isExpiredSignupCode,
+  logGraphFailure,
+  publicUpstreamBody,
+  readGraphError,
+  readGraphStepError,
+  readResponsePayload,
+  tokenExchangeUrl,
+} from './graph.js'
 
 const ALLOWED_ORIGINS = new Set([
   'https://marcos4213.github.io',
@@ -73,24 +84,43 @@ function signupConfig() {
   })
 }
 
+function failGraph(step: string, response: Response, payload: unknown): never {
+  const graphError = readGraphError(payload, response.status)
+  const errorName = isExpiredSignupCode(graphError) ? 'token_expired' : 'upstream'
+  logGraphFailure(step, graphError)
+  throw graphStepError(step, graphError, errorName)
+}
+
+function upstreamResponse(request: Request, error: unknown, fallbackStep: string) {
+  const stepped = readGraphStepError(error)
+  if (stepped) {
+    const name = stepped.errorName === 'token_expired' ? 'token_expired' : 'upstream'
+    const status = name === 'token_expired' ? 401 : 502
+    return withCors(request, json(publicUpstreamBody(stepped.step, stepped.graphError, name), status))
+  }
+  logGraphFailure(fallbackStep, readGraphError({}, 0))
+  return withCors(request, json({ error: 'upstream', step: fallbackStep, connected: false }, 502))
+}
+
 async function exchangeCode(code: string) {
-  const body = new URLSearchParams({
-    client_id: Deno.env.get('WHATSAPP_APP_ID') ?? '',
-    client_secret: Deno.env.get('WHATSAPP_APP_SECRET') ?? '',
+  // Official Embedded Signup exchange is GET /oauth/access_token with client_id,
+  // client_secret and code, and no redirect_uri (FB.login via the JS SDK does not use one).
+  const url = tokenExchangeUrl({
+    graphVersion: graphVersion(),
+    appId: Deno.env.get('WHATSAPP_APP_ID') ?? '',
+    appSecret: Deno.env.get('WHATSAPP_APP_SECRET') ?? '',
     code,
   })
-  const response = await fetch(`https://graph.facebook.com/${graphVersion()}/oauth/access_token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body,
-  })
-  const payload = await response.json().catch(() => ({}))
-  if (!response.ok) {
-    const error = new Error('graph') as Error & { code?: string }
-    error.code = payload?.error?.code === 190 ? 'token_expired' : 'upstream'
-    throw error
+  const response = await fetch(url, { method: 'GET' })
+  const payload = await readResponsePayload(response)
+  if (!response.ok) failGraph(GRAPH_STEPS.exchange_code, response, payload)
+  const token = readTokenExchange(payload)
+  if (!token) {
+    const graphError = readGraphError(payload, response.status)
+    logGraphFailure(GRAPH_STEPS.exchange_code, graphError)
+    throw graphStepError(GRAPH_STEPS.exchange_code, graphError, 'upstream')
   }
-  return readTokenExchange(payload)
+  return token
 }
 
 async function debugToken(accessToken: string) {
@@ -99,12 +129,8 @@ async function debugToken(accessToken: string) {
   const debugUrl = new URL(`https://graph.facebook.com/${graphVersion()}/debug_token`)
   debugUrl.searchParams.set('input_token', accessToken)
   const debugResponse = await fetch(debugUrl, { headers: { Authorization: `Bearer ${appId}|${secret}` } })
-  const debug = await debugResponse.json().catch(() => ({}))
-  if (!debugResponse.ok) {
-    const error = new Error('graph') as Error & { code?: string }
-    error.code = 'upstream'
-    throw error
-  }
+  const debug = await readResponsePayload(debugResponse)
+  if (!debugResponse.ok) failGraph(GRAPH_STEPS.debug_token, debugResponse, debug)
   return debug
 }
 
@@ -122,44 +148,35 @@ async function exchangeLongLived(shortToken: string) {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body,
   })
-  const payload = await response.json().catch(() => ({}))
-  if (!response.ok) return null
+  const payload = await readResponsePayload(response)
+  if (!response.ok) {
+    logGraphFailure('exchange_long_lived', readGraphError(payload, response.status))
+    return null
+  }
   return readTokenExchange(payload)
 }
 
-async function graphGet(path: string, accessToken: string) {
+async function graphGet(path: string, accessToken: string, step = GRAPH_STEPS.discover) {
   const response = await fetch(`https://graph.facebook.com/${graphVersion()}/${path}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
-  const payload = await response.json().catch(() => ({}))
-  if (!response.ok) {
-    const error = new Error('graph') as Error & { code?: string }
-    error.code = 'upstream'
-    throw error
-  }
+  const payload = await readResponsePayload(response)
+  if (!response.ok) failGraph(step, response, payload)
   return payload
 }
 
 async function discoverNumber(accessToken: string, preferredPhone: string, preferredWaba: string) {
-  const appId = Deno.env.get('WHATSAPP_APP_ID') ?? ''
-  const secret = Deno.env.get('WHATSAPP_APP_SECRET') ?? ''
-  const debugUrl = new URL(`https://graph.facebook.com/${graphVersion()}/debug_token`)
-  debugUrl.searchParams.set('input_token', accessToken)
-  const debugResponse = await fetch(debugUrl, { headers: { Authorization: `Bearer ${appId}|${secret}` } })
-  const debug = await debugResponse.json().catch(() => ({}))
-  if (!debugResponse.ok) {
-    const error = new Error('graph') as Error & { code?: string }
-    error.code = 'upstream'
-    throw error
-  }
+  const debug = await debugToken(accessToken)
   const wabaIds = wabaIdsFromDebug(debug)
   if (preferredWaba && !wabaIds.includes(preferredWaba)) wabaIds.unshift(preferredWaba)
   const phonesByWaba: Record<string, { id?: string }[]> = {}
   for (const wabaId of wabaIds) {
     try {
-      const payload = await graphGet(`${wabaId}/phone_numbers?fields=id`, accessToken)
+      const payload = await graphGet(`${wabaId}/phone_numbers?fields=id`, accessToken, GRAPH_STEPS.discover)
       phonesByWaba[wabaId] = Array.isArray(payload.data) ? payload.data : []
-    } catch {
+    } catch (error) {
+      const stepped = readGraphStepError(error)
+      if (stepped) logGraphFailure(GRAPH_STEPS.discover, stepped.graphError)
       phonesByWaba[wabaId] = []
     }
   }
@@ -171,11 +188,8 @@ async function subscribeApp(wabaId: string, accessToken: string) {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}` },
   })
-  if (!response.ok) {
-    const error = new Error('graph') as Error & { code?: string }
-    error.code = 'upstream'
-    throw error
-  }
+  const payload = await readResponsePayload(response)
+  if (!response.ok) failGraph(GRAPH_STEPS.subscribe, response, payload)
 }
 
 async function registerPhone(phoneNumberId: string, accessToken: string, pin: string) {
@@ -187,7 +201,8 @@ async function registerPhone(phoneNumberId: string, accessToken: string, pin: st
     },
     body: JSON.stringify({ messaging_product: 'whatsapp', pin }),
   })
-  const payload = await response.json().catch(() => ({}))
+  const payload = await readResponsePayload(response)
+  if (!response.ok) logGraphFailure(GRAPH_STEPS.register, readGraphError(payload, response.status))
   return { ok: response.ok, errorCode: payload?.error?.code }
 }
 
@@ -305,11 +320,9 @@ export default {
     try {
       token = await exchangeCode(String(body.code))
     } catch (error) {
-      const code = (error as { code?: string })?.code === 'token_expired' ? 'token_expired' : 'upstream'
-      const status = code === 'token_expired' ? 401 : 502
-      return withCors(request, json({ error: code, connected: false }, status))
+      return upstreamResponse(request, error, GRAPH_STEPS.exchange_code)
     }
-    if (!token) return withCors(request, json({ error: 'upstream', connected: false }, 502))
+    if (!token) return withCors(request, json({ error: 'upstream', step: GRAPH_STEPS.exchange_code, connected: false }, 502))
 
     let accessToken = token.accessToken
     let described = describeAccessToken({})
@@ -334,8 +347,8 @@ export default {
         if (!found.ok) return withCors(request, json({ error: found.error, connected: false }, 409))
         phoneNumberId = found.phoneNumberId
         wabaId = found.wabaId
-      } catch {
-        return withCors(request, json({ error: 'upstream', connected: false }, 502))
+      } catch (error) {
+        return upstreamResponse(request, error, GRAPH_STEPS.discover)
       }
     }
 
@@ -363,7 +376,9 @@ export default {
     try {
       await subscribeApp(wabaId, accessToken)
       subscribedOk = true
-    } catch {
+    } catch (error) {
+      const stepped = readGraphStepError(error)
+      if (stepped) logGraphFailure(GRAPH_STEPS.subscribe, stepped.graphError)
       subscribedOk = false
     }
 
@@ -420,7 +435,7 @@ export default {
     if (!subscribedOk) {
       return withCors(
         request,
-        json({ error: 'webhook_subscribe_failed', connected: false, stored: true, state: status.state }, 502),
+        json({ error: 'webhook_subscribe_failed', step: GRAPH_STEPS.subscribe, connected: false, stored: true, state: status.state }, 502),
       )
     }
     return withCors(

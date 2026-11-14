@@ -27,6 +27,7 @@ describe('embedded signup', () => {
     expect(beginSignup({ role: 'owner', code: 'https://wa.me/5511999999999', phoneNumberId: phone, wabaId: waba, event: 'FINISH' }).ok).toBe(false)
     expect(beginSignup({ role: 'owner', code, phoneNumberId: phone, wabaId: waba, event: 'FINISH' }).ok).toBe(true)
     expect(beginSignup({ role: 'owner', code, phoneNumberId: phone, wabaId: waba, event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING' }).ok).toBe(true)
+    expect(beginSignup({ role: 'owner', code, phoneNumberId: phone, wabaId: waba, event: 'finish_whatsapp_business_app_onboarding' }).ok).toBe(true)
     expect(beginSignup({ role: 'owner', code, phoneNumberId: '', wabaId: waba, event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING' }).needsDiscovery).toBe(true)
     expect(beginSignup({ role: 'owner', code, phoneNumberId: '', wabaId: '', event: 'CODE_ONLY' }).needsDiscovery).toBe(true)
     expect(beginSignup({ role: 'owner', code, phoneNumberId: '', wabaId: '', event: 'FINISH' }).needsDiscovery).toBe(true)

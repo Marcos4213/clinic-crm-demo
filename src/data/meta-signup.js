@@ -1,6 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { embeddedSignupOptions, readSignupSession } from '../domain/embedded-signup'
 
+export function signupFailureMessage(payload, catalog, fallback) {
+  const base = catalog[payload?.error] || fallback
+  const step = typeof payload?.step === 'string' && payload.step ? payload.step : ''
+  let code = ''
+  if (payload?.metaCode != null && payload.metaCode !== '') {
+    code = `código ${payload.metaCode}`
+    if (payload.metaSubcode != null && payload.metaSubcode !== '') code += `/${payload.metaSubcode}`
+  }
+  const detail = [step, code].filter(Boolean).join(', ')
+  return detail ? `${base} (${detail})` : base
+}
+
 function loadFacebookSdk(appId) {
   if (window.FB) {
     window.FB.init({ appId, cookie: false, xfbml: false, version: 'v27.0' })
@@ -107,13 +119,19 @@ export function useWhatsappSignup(client, clinicId) {
       persist_failed: 'O cadastro não foi gravado. Nada foi marcado como conectado.',
     }
     if (payload?.error === 'webhook_subscribe_failed') {
-      setSignupNotice(failure.webhook_subscribe_failed)
+      setSignupNotice(signupFailureMessage(payload, failure, failure.webhook_subscribe_failed))
       setRevision((value) => value + 1)
       return
     }
     if (error || payload?.stored !== true) {
       finishingRef.current = false
-      setSignupNotice(failure[payload?.error] || 'O cadastro não foi concluído. A linha não foi marcada como conectada.')
+      setSignupNotice(
+        signupFailureMessage(
+          payload,
+          failure,
+          'O cadastro não foi concluído. A linha não foi marcada como conectada.',
+        ),
+      )
       return
     }
     setSignupNotice('Cadastro recebido. Peça à paciente que mande um oi para este WhatsApp e responda em Conversas.')

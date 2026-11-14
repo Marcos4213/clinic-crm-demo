@@ -17,6 +17,7 @@ export function publicSignupConfig({ appId, appSecret, configId, coexistence }) 
 
 export function beginSignup({ role, code, phoneNumberId, wabaId, event }) {
   if (role !== 'owner') return { ok: false, status: 403, error: 'forbidden' }
+  event = String(event ?? '').toUpperCase()
   if (event === 'CANCEL' || event === 'ERROR' || !EVENTS.has(event)) return { ok: false, status: 400, error: 'signup_incomplete' }
   if (typeof code !== 'string' || code.length < 8 || code.length > 512 || /[\s:/]/.test(code)) {
     return { ok: false, status: 400, error: 'signup_incomplete' }

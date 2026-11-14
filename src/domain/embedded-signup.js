@@ -29,9 +29,9 @@ export function readSignupSession(data, origin) {
     }
   }
   if (payload?.type !== 'WA_EMBEDDED_SIGNUP') return null
-  const event = payload.event
-  const phoneNumberId = String(payload.data?.phone_number_id ?? '')
-  const wabaId = String(payload.data?.waba_id ?? '')
+  const event = String(payload.event ?? '').toUpperCase()
+  const phoneNumberId = String(payload.data?.phone_number_id ?? payload.data?.phoneNumberId ?? '')
+  const wabaId = String(payload.data?.waba_id ?? payload.data?.wabaId ?? '')
   const phoneOk = DIGITS.test(phoneNumberId)
   const wabaOk = DIGITS.test(wabaId)
   const coexistence = event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'
