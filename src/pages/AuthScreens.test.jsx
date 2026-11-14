@@ -19,3 +19,18 @@ describe('auth entry', () => {
     expect(screen.getByLabelText('Senha')).toBeInTheDocument()
   })
 })
+
+describe('legal identification', () => {
+  it('shows razão social and CNPJ on login and in the demo shell', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const razao = /60\.095\.721 MARCOS PAULO DA SILVA/
+    const cnpj = /CNPJ 60\.095\.721\/0001-54/
+    expect(screen.getByText(razao)).toBeInTheDocument()
+    expect(screen.getByText(cnpj)).toBeInTheDocument()
+    await user.click(screen.getByRole('link', { name: 'Abrir demonstração local' }))
+    expect(screen.getByText(razao)).toBeInTheDocument()
+    expect(screen.getByText(cnpj)).toBeInTheDocument()
+  })
+})
+

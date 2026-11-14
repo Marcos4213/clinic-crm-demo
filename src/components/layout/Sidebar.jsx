@@ -42,7 +42,7 @@ export default function Sidebar({ base = '/demo', demo = true }) {
   return (
     <nav
       aria-label="Seções do Automatize.app"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-navy-950/95 backdrop-blur-md lg:static lg:z-auto lg:flex lg:h-dvh lg:w-[112px] lg:shrink-0 lg:flex-col lg:border-t-0 lg:border-r lg:bg-navy-950"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-navy-950/95 backdrop-blur-md lg:static lg:z-auto lg:flex lg:h-full lg:w-[112px] lg:shrink-0 lg:flex-col lg:border-t-0 lg:border-r lg:bg-navy-950"
     >
       <NavLink
         to={base}

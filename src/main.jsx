@@ -19,4 +19,5 @@ prepareAuth().finally(() => {
       <App />
     </StrictMode>,
   )
+  document.querySelector('[data-static-legal]')?.remove()
 })

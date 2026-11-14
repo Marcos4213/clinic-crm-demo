@@ -1,6 +1,7 @@
 import { HashRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { ProductMark } from './components/brand/Marks'
 import Sidebar from './components/layout/Sidebar'
+import SiteLegalFooter from './components/layout/SiteLegalFooter'
 import Agenda from './pages/Agenda'
 import { InstagramDirect, InstagramLayout } from './pages/InstagramDesk'
 import Home from './pages/Home'
@@ -22,7 +23,7 @@ import { WorkspaceProvider } from './state/WorkspaceProvider'
 function Frame({ base, demo = false }) {
   const auth = useAuth()
   return (
-    <div className="flex h-dvh flex-col bg-canvas text-ink lg:flex-row">
+    <div className="flex h-full min-h-0 flex-col bg-canvas text-ink lg:flex-row">
       <a
         href="#conteudo"
         className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:bg-surface focus:px-3 focus:py-2 focus:text-ink"
@@ -107,7 +108,7 @@ function Onboarding() {
     crm.bootstrap(String(name ?? ''))
   }
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4">
+    <main className="mx-auto flex min-h-full max-w-md flex-col justify-center px-4">
       <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app</p>
       <h1 className="mt-2 text-[28px] font-semibold">Sua clínica</h1>
       <p className="mt-2 text-[13px] leading-5 text-muted">Cria um espaço privado para esta conta. Não entra em outra clínica.</p>
@@ -161,17 +162,22 @@ export default function App() {
   return (
     <AuthProvider>
       <HashRouter>
-        <Routes>
-          <Route path="/demo" element={<DemoLayout />}>
-            {workspaceRoutes('demo')}
-          </Route>
-          <Route path="/cadastro" element={<SignupScreen />} />
-          <Route path="/app" element={<WorkspaceGate />}>
-            {workspaceRoutes('app')}
-          </Route>
-          <Route path="/" element={<LoginScreen />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <div className="flex min-h-dvh flex-col">
+          <div className="min-h-0 flex-1">
+            <Routes>
+              <Route path="/demo" element={<DemoLayout />}>
+                {workspaceRoutes('demo')}
+              </Route>
+              <Route path="/cadastro" element={<SignupScreen />} />
+              <Route path="/app" element={<WorkspaceGate />}>
+                {workspaceRoutes('app')}
+              </Route>
+              <Route path="/" element={<LoginScreen />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
+          <SiteLegalFooter />
+        </div>
       </HashRouter>
     </AuthProvider>
   )

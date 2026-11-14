@@ -5,7 +5,7 @@ import { useAuth } from '../state/useAuth'
 
 function Shell({ title, children }) {
   return (
-    <main className="grid min-h-dvh lg:grid-cols-[minmax(0,460px)_1fr]">
+    <main className="grid min-h-full lg:grid-cols-[minmax(0,460px)_1fr]">
       <section className="mx-auto flex w-full max-w-md flex-col justify-center px-4 py-10">
         <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app</p>
         <h1 className="mt-2 text-[32px] font-semibold tracking-tight text-ink">{title}</h1>
