@@ -1,6 +1,7 @@
 import { withSupabase } from 'npm:@supabase/server@1'
 import {
   allowCreateAppointment,
+  clinicAiRepliesEnabled,
   assistantText,
   buildResponsesRequest,
   functionCalls,
@@ -98,13 +99,20 @@ export default {
 
     const { data: settings } = await supabase
       .from('clinic_settings')
-      .select('display_name, business_faq, slot_minutes, day_start, day_end')
+      .select('display_name, business_faq, slot_minutes, day_start, day_end, ai_replies_enabled')
       .eq('clinic_id', body.clinicId)
       .maybeSingle()
+
+    if (!clinicAiRepliesEnabled(settings?.ai_replies_enabled)) {
+      return withCors(request, json(humanTakeoverBody(), 409))
+    }
 
     const instructions = systemInstructions({
       clinicName: settings?.display_name ?? '',
       faq: settings?.business_faq ?? '',
+      dayStart: settings?.day_start,
+      dayEnd: settings?.day_end,
+      slotMinutes: settings?.slot_minutes,
     })
     const customerMessage = body.message.trim()
     let requestBody = buildResponsesRequest({

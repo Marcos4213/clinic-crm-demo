@@ -5,11 +5,11 @@ import { InstagramMark } from '../components/brand/Marks'
 import { useWhatsappSignup } from '../data/meta-signup'
 import { useAuth } from '../state/useAuth'
 import { useCrm } from '../state/useCrm'
+import { integrationBadge } from '../domain/integration-status'
 
 function statusOf(integrations, provider) {
   const state = integrations.find((item) => item.provider === provider)?.state
-  if (state === 'pending') return { label: 'Não conectado', detail: 'O cadastro começou, mas ainda não há prova de entrega.' }
-  return { label: 'Não conectado', detail: 'Este canal ainda não está ligado nesta clínica.' }
+  return integrationBadge(state)
 }
 
 function Card({ icon, title, badge, detail, children }) {

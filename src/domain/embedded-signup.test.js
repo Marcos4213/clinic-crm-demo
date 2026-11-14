@@ -30,5 +30,14 @@ describe('embedded signup session', () => {
     expect(phoneLater).toMatchObject({ done: true, phoneNumberId: '', wabaId: '8200000000000001' })
     expect(readSignupSession('https://wa.me/5511999999999', 'https://wa.me')).toBeNull()
     expect(readSignupSession(JSON.stringify({ type: 'WA_EMBEDDED_SIGNUP', event: 'CANCEL' }), 'https://facebook.com').done).toBe(false)
+    const camel = readSignupSession(
+      {
+        type: 'WA_EMBEDDED_SIGNUP',
+        event: 'finish_whatsapp_business_app_onboarding',
+        data: { phoneNumberId: '8100000000000001', wabaId: '8200000000000001' },
+      },
+      'https://www.facebook.com',
+    )
+    expect(camel).toMatchObject({ done: true, coexistence: true, event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING', phoneNumberId: '8100000000000001', wabaId: '8200000000000001' })
   })
 })

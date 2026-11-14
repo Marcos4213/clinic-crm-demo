@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { beginManualSend, clinicFromRequest, handleSend, handleStatus } from './send-handler.js'
+import { allowOutboundRate, beginManualSend, clinicFromRequest, handleSend, handleStatus } from './send-handler.js'
 
 const clinicA = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1'
 const clinicB = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2'
@@ -62,8 +62,35 @@ describe('manual whatsapp send', () => {
     expect(calls).toEqual([])
   })
 
-  it('never reports the simulated status as a live connection', () => {
-    expect(handleStatus({ route: { phoneNumberId: '1' }, token: 'present', lastInboundAt: '2026-11-08T17:00:00Z', now: Date.parse('2026-11-08T18:00:00Z') }).connected).toBe(false)
+  it('reports connected only when the clinic integration is connected', () => {
+    const base = { route: { phoneNumberId: '1' }, token: 'present', lastInboundAt: '2026-11-08T17:00:00Z', now: Date.parse('2026-11-08T18:00:00Z') }
+    expect(handleStatus({ ...base, integrationState: 'pending' })).toMatchObject({ connected: false, state: 'pending' })
+    expect(handleStatus({ ...base, integrationState: 'connected' })).toMatchObject({ connected: true, state: 'connected' })
+    expect(handleStatus({ ...base, integrationState: 'error' })).toMatchObject({ connected: false, state: 'error' })
+  })
+
+  it('blocks a burst of manual sends beyond the basic clinic rate limit and does not call transport', async () => {
+    expect(allowOutboundRate({ recentCount: 9, max: 10 }).ok).toBe(true)
+    expect(allowOutboundRate({ recentCount: 10, max: 10 })).toMatchObject({ ok: false, error: 'rate_limited' })
+    const calls = []
+    const blocked = await handleSend({
+      confirm: true,
+      idempotencyKey: 'k-rate',
+      existing: null,
+      lastInboundAt: '2026-11-08T17:00:00Z',
+      now: Date.parse('2026-11-08T18:00:00Z'),
+      member: true,
+      route: { phoneNumberId: phoneA },
+      token: 'present',
+      recentOutboundCount: 10,
+      transport: async () => {
+        calls.push(1)
+        return { id: 'wamid.new' }
+      },
+    })
+    expect(blocked.status).toBe(429)
+    expect(blocked.body.error).toBe('rate_limited')
+    expect(calls).toEqual([])
   })
 
   it('fails closed when the route query fails or more than one clinic is visible', async () => {

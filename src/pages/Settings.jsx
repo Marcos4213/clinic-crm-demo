@@ -4,12 +4,9 @@ import { WhatsAppConnect } from '../components/whatsapp/WhatsAppConnect'
 import { useWhatsappSignup } from '../data/meta-signup'
 import { useAuth } from '../state/useAuth'
 import { useCrm } from '../state/useCrm'
+import { integrationBadge } from '../domain/integration-status'
 
 const COPY = {
-  whatsapp: {
-    unconfigured: 'A linha entra pela janela oficial da Meta. Este painel não marca o canal como conectado.',
-    pending: 'O número ainda não está autorizado para envio. Conclua a janela da Meta até o QR do celular.',
-  },
   instagram: {
     unconfigured: 'O Instagram ainda não entra no atendimento. Os contatos continuam neste CRM.',
     pending: 'O Instagram ainda não entra no atendimento. Os contatos continuam neste CRM.',
@@ -90,7 +87,9 @@ export function SettingsPanel({ clinicName, settings, integrations = [], notice,
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-[16px] font-semibold">WhatsApp</h2>
-              <p className="mt-1 max-w-xl text-[13px] leading-5 text-muted">{COPY.whatsapp[whatsapp?.state] ?? COPY.whatsapp.unconfigured}</p>
+              <p className="mt-1 text-[11px] font-semibold tracking-[0.12em] text-emerald uppercase">{integrationBadge(whatsapp?.state).label}</p>
+              <p className="mt-1 max-w-xl text-[13px] leading-5 text-muted">{integrationBadge(whatsapp?.state).detail}</p>
+              <p className="mt-2 max-w-xl text-[13px] leading-5 text-muted">A resposta automática da IA permanece desligada nesta clínica.</p>
             </div>
             <Link to={whatsappTo} className="inline-flex h-10 items-center rounded-lg border border-line px-3 text-[13px] font-semibold text-ink">
               Abrir conversas

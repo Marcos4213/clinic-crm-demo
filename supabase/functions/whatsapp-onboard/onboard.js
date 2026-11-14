@@ -17,6 +17,7 @@ export function publicSignupConfig({ appId, appSecret, configId, coexistence }) 
 
 export function beginSignup({ role, code, phoneNumberId, wabaId, event }) {
   if (role !== 'owner') return { ok: false, status: 403, error: 'forbidden' }
+  event = String(event ?? '').toUpperCase()
   if (event === 'CANCEL' || event === 'ERROR' || !EVENTS.has(event)) return { ok: false, status: 400, error: 'signup_incomplete' }
   if (typeof code !== 'string' || code.length < 8 || code.length > 512 || /[\s:/]/.test(code)) {
     return { ok: false, status: 400, error: 'signup_incomplete' }
@@ -67,4 +68,67 @@ export function readTokenExchange(payload) {
   const token = payload?.access_token
   if (typeof token !== 'string' || token.length < 20 || token.length > 4096) return null
   return { accessToken: token }
+}
+
+export function describeAccessToken(debugPayload) {
+  const data = debugPayload?.data ?? {}
+  const type = String(data.type ?? 'UNKNOWN') || 'UNKNOWN'
+  const expiresAt = Number(data.expires_at ?? 0)
+  const longLived = !Number.isFinite(expiresAt) || expiresAt <= 0 || expiresAt * 1000 > Date.now() + 7 * 24 * 60 * 60 * 1000
+  const shouldExchange = !longLived && /user/i.test(type) && !/system/i.test(type)
+  return {
+    longLived,
+    shouldExchange,
+    type,
+    expiresAt: Number.isFinite(expiresAt) && expiresAt > 0 ? new Date(expiresAt * 1000).toISOString() : null,
+  }
+}
+
+export function shouldRegisterPhone({ coexistence, alreadyRegistered, pin }) {
+  if (coexistence === true) return { action: 'skip', reason: 'coexistence' }
+  if (alreadyRegistered === true) return { action: 'skip', reason: 'already_registered' }
+  if (!/^[0-9]{6}$/.test(String(pin ?? ''))) return { action: 'needs_pin', reason: 'pin_required' }
+  return { action: 'register' }
+}
+
+const ALREADY_REGISTERED = new Set([133015, '133015'])
+
+export function interpretRegisterResponse({ ok, errorCode }) {
+  if (ok === true) return { ok: true }
+  if (ALREADY_REGISTERED.has(errorCode) || ALREADY_REGISTERED.has(String(errorCode ?? ''))) return { ok: true }
+  return { ok: false }
+}
+
+export function signupStatusAfterHooks({ stored, subscribedOk, registerResult, currentState }) {
+  if (!stored) return { state: 'error', detail: 'O cadastro não foi gravado.' }
+  if (!subscribedOk) {
+    return { state: 'error', detail: 'Cadastro gravado. A inscrição do webhook na Meta falhou.' }
+  }
+  if (currentState === 'connected') {
+    return { state: 'connected', detail: 'Canal já conectado. Cadastro atualizado.' }
+  }
+  if (registerResult === 'needs_pin') {
+    return { state: 'pending', detail: 'Webhook inscrito. Falta registrar o número com o PIN de duas etapas.' }
+  }
+  if (registerResult === 'failed') {
+    return { state: 'pending', detail: 'Webhook inscrito. O registro do número na Cloud API não concluiu.' }
+  }
+  return { state: 'pending', detail: 'Cadastro Meta recebido. Aguardando a primeira mensagem da paciente.' }
+}
+
+export function clinicDiagnostics({ route, lastInboundAt, subscribedAppsOk, hasToken, graphVersion, state } = {}) {
+  return {
+    routePresent: Boolean(route?.phoneNumberId || route === true),
+    lastInboundAt: lastInboundAt || null,
+    subscribedAppsOk: subscribedAppsOk === true,
+    tokenPresent: hasToken === true,
+    graphVersion: graphVersion || 'v27.0',
+    state: state || 'unconfigured',
+  }
+}
+
+export function readPhoneRegistration(payload) {
+  const platform = String(payload?.platform_type ?? payload?.platformType ?? '').toUpperCase()
+  const status = String(payload?.code_verification_status ?? payload?.codeVerificationStatus ?? '').toUpperCase()
+  return platform === 'CLOUD_API' || status === 'VERIFIED'
 }

@@ -558,6 +558,8 @@ begin
   perform public.ingest_whatsapp_event('8100000000000001', 'wamid.inbound', 'message', 'text', 'Oi', 'received', '5500000000001', null);
   perform public.ingest_whatsapp_event('8100000000000001', 'wamid.inbound', 'message', 'text', 'Oi', 'received', '5500000000001', null);
   perform public.ingest_whatsapp_event('0000000000000000', 'wamid.unknown', 'message', 'text', 'segredo', 'received', '5500000000002', null);
+  perform public.ingest_whatsapp_event('8100000000000001', 'wamid.ghost', 'status', 'status', null, 'delivered', '5500000000001', null);
+  perform public.record_whatsapp_outbound('8100000000000001', 'k-status', '5500000000001', 'oi', 'wamid.out', 'accepted', null);
   perform public.ingest_whatsapp_event('8100000000000001', 'wamid.out', 'status', 'status', null, 'delivered', '5500000000001', null);
   perform public.ingest_whatsapp_event('8100000000000001', 'wamid.out', 'status', 'status', null, 'sent', '5500000000001', null);
   execute 'reset role';
@@ -570,8 +572,20 @@ begin
   if exists (select 1 from public.whatsapp_messages where provider_message_id = 'wamid.unknown') then
     raise exception 'unknown phone number was stored';
   end if;
+  if exists (select 1 from public.whatsapp_messages where provider_message_id = 'wamid.ghost') then
+    raise exception 'unmatched status callback was stored';
+  end if;
   if (select status from public.whatsapp_messages where provider_message_id = 'wamid.out') is distinct from 'delivered' then
     raise exception 'whatsapp status regressed';
+  end if;
+  if (select state from public.integration_status where clinic_id = clinic_a and provider = 'whatsapp') is distinct from 'connected' then
+    raise exception 'inbound message did not mark whatsapp as connected';
+  end if;
+  if (select last_inbound_at from public.integration_status where clinic_id = clinic_a and provider = 'whatsapp') is null then
+    raise exception 'inbound message did not record last_inbound_at';
+  end if;
+  if (select ai_replies_enabled from public.clinic_settings where clinic_id = clinic_a) is distinct from false then
+    raise exception 'clinic AI replies were enabled by default';
   end if;
 
   begin
