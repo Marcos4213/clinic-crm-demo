@@ -79,12 +79,26 @@ export function readGraphStepError(error) {
 }
 
 /** Official Embedded Signup exchange: GET /oauth/access_token, no redirect_uri. */
-export function tokenExchangeUrl({ graphVersion, appId, appSecret, code }) {
+export function tokenExchangeUrl({ graphVersion, appId, appSecret, code, redirectUri }) {
   const url = new URL(`https://graph.facebook.com/${graphVersion}/oauth/access_token`)
   url.searchParams.set('client_id', appId)
   url.searchParams.set('client_secret', appSecret)
   url.searchParams.set('code', code)
+  if (typeof redirectUri === 'string') url.searchParams.set('redirect_uri', redirectUri)
   return url
+}
+
+// Meta error 100/36008 means the code was issued for a different redirect_uri.
+// The JS SDK popup may bind the code to the page URL, the origin, or nothing.
+export function redirectUriCandidates(origin) {
+  const list = [undefined]
+  if (origin && /^https?:\/\/[^/]+$/.test(origin)) list.push(`${origin}/`, origin)
+  list.push('')
+  return list
+}
+
+export function isRedirectMismatch(payload) {
+  return payload?.error?.code === 100 && payload?.error?.error_subcode === 36008
 }
 
 export async function readResponsePayload(response) {

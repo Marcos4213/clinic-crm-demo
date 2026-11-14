@@ -23,6 +23,8 @@ import {
   readGraphStepError,
   readResponsePayload,
   tokenExchangeUrl,
+  redirectUriCandidates,
+  isRedirectMismatch,
 } from './graph.js'
 
 const ALLOWED_ORIGINS = new Set([
@@ -102,21 +104,32 @@ function upstreamResponse(request: Request, error: unknown, fallbackStep: string
   return withCors(request, json({ error: 'upstream', step: fallbackStep, connected: false }, 502))
 }
 
-async function exchangeCode(code: string) {
+async function exchangeCode(code: string, origin = '') {
   // Official Embedded Signup exchange is GET /oauth/access_token with client_id,
-  // client_secret and code, and no redirect_uri (FB.login via the JS SDK does not use one).
-  const url = tokenExchangeUrl({
-    graphVersion: graphVersion(),
-    appId: Deno.env.get('WHATSAPP_APP_ID') ?? '',
-    appSecret: Deno.env.get('WHATSAPP_APP_SECRET') ?? '',
-    code,
-  })
-  const response = await fetch(url, { method: 'GET' })
-  const payload = await readResponsePayload(response)
-  if (!response.ok) failGraph(GRAPH_STEPS.exchange_code, response, payload)
+  // client_secret and code. If Meta answers 100/36008 (redirect_uri mismatch),
+  // retry with the redirect_uri candidates the JS SDK may have bound the code to.
+  let response: Response | null = null
+  let payload: any = {}
+  for (const redirectUri of redirectUriCandidates(ALLOWED_ORIGINS.has(origin) ? origin : '')) {
+    const url = tokenExchangeUrl({
+      graphVersion: graphVersion(),
+      appId: Deno.env.get('WHATSAPP_APP_ID') ?? '',
+      appSecret: Deno.env.get('WHATSAPP_APP_SECRET') ?? '',
+      code,
+      redirectUri,
+    })
+    response = await fetch(url, { method: 'GET' })
+    payload = await readResponsePayload(response)
+    if (response.ok || !isRedirectMismatch(payload)) {
+      console.log(JSON.stringify({ source: 'whatsapp-onboard', step: 'exchange_code_attempt', redirectUri: redirectUri ?? null, ok: response.ok }))
+      break
+    }
+    console.log(JSON.stringify({ source: 'whatsapp-onboard', step: 'exchange_code_attempt', redirectUri: redirectUri ?? null, ok: false, metaSubcode: 36008 }))
+  }
+  if (!response!.ok) failGraph(GRAPH_STEPS.exchange_code, response!, payload)
   const token = readTokenExchange(payload)
   if (!token) {
-    const graphError = readGraphError(payload, response.status)
+    const graphError = readGraphError(payload, response!.status)
     logGraphFailure(GRAPH_STEPS.exchange_code, graphError)
     throw graphStepError(GRAPH_STEPS.exchange_code, graphError, 'upstream')
   }
@@ -318,7 +331,7 @@ export default {
 
     let token
     try {
-      token = await exchangeCode(String(body.code))
+      token = await exchangeCode(String(body.code), request.headers.get('Origin') ?? '')
     } catch (error) {
       return upstreamResponse(request, error, GRAPH_STEPS.exchange_code)
     }
