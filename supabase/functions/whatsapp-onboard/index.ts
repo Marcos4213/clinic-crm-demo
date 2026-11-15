@@ -193,7 +193,18 @@ async function discoverNumber(accessToken: string, preferredPhone: string, prefe
       phonesByWaba[wabaId] = []
     }
   }
-  return selectDiscoveredNumber({ debug, phonesByWaba, preferredPhone, preferredWaba })
+  const picked = selectDiscoveredNumber({ debug, phonesByWaba, preferredPhone, preferredWaba })
+  console.log(JSON.stringify({
+    source: 'whatsapp-onboard',
+    step: 'discover_summary',
+    wabaCount: wabaIds.length,
+    phoneCount: Object.values(phonesByWaba).reduce((n, rows) => n + rows.length, 0),
+    hadPreferredPhone: Boolean(preferredPhone),
+    hadPreferredWaba: Boolean(preferredWaba),
+    scopes: Array.isArray(debug?.data?.scopes) ? debug.data.scopes : [],
+    result: picked.ok ? 'ok' : picked.error,
+  }))
+  return picked
 }
 
 async function subscribeApp(wabaId: string, accessToken: string) {
