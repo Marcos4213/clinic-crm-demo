@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   BarChart3,
+  Building2,
   CalendarDays,
   Kanban,
   LayoutDashboard,
   MoreHorizontal,
   Plug,
   Settings,
-  Sparkles,
   Star,
   Users,
 } from 'lucide-react'
@@ -28,7 +28,7 @@ function moreItems(base) {
   return [
     { to: `${base}/instagram`, label: 'Instagram', logo: InstagramMark },
     { to: `${base}/avaliacoes`, label: 'Avaliações', icon: Star },
-    { to: `${base}/portfolio`, label: 'Portfólio', icon: Sparkles },
+    { to: `${base}/imoveis`, label: 'Imóveis', icon: Building2 },
     { to: `${base}/metricas`, label: 'Métricas', icon: BarChart3 },
     { to: `${base}/integracoes`, label: 'Integrações', icon: Plug },
     { to: `${base}/equipe`, label: 'Equipe', icon: Users },

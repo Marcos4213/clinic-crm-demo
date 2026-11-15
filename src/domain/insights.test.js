@@ -70,6 +70,7 @@ describe('home panel insights', () => {
   it('labels visit outcomes without clinical wording', () => {
     expect(visitStatusLabel('attended')).toBe('Visita feita')
     expect(visitStatusLabel('no_show')).toBe('No-show')
-    expect(visitStatusLabel('scheduled')).toBe('Visita')
+    expect(visitStatusLabel('scheduled')).toBe('Agendada')
+    expect(visitStatusLabel('confirmada')).toBe('Confirmada')
   })
 })

@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
+import { clinicDateKey, formatVisitTime } from '../domain/insights'
 import { QUALIFICATION_FIELDS, appBase, buildTimeline, formatSheetDate, formatSheetTime } from '../domain/lead-sheet'
+import { compatibleProperties, formatPropertyPrice, propertyStatusLabel } from '../domain/properties'
 import { brokerName } from '../domain/roulette'
+import { visitStatusLabel } from '../domain/visits'
 import { useCrm } from '../state/useCrm'
 
 function TemperatureBadge({ temperature }) {
@@ -85,12 +88,31 @@ export default function LeadProfile() {
     })
   }, [profile?.id, profile?.nextStep?.text, profile?.nextStep?.at, profile?.nextStep?.brokerId, profile?.brokerId])
 
+  const [visitForm, setVisitForm] = useState({
+    propertyId: profile?.propertyId || '',
+    brokerId: profile?.brokerId || '',
+    date: clinicDateKey(),
+    time: '10:00',
+  })
+  const [visitAlert, setVisitAlert] = useState('')
+
+  useEffect(() => {
+    setVisitForm((current) => ({
+      ...current,
+      propertyId: profile?.propertyId || current.propertyId || '',
+      brokerId: profile?.brokerId || current.brokerId || '',
+    }))
+  }, [profile?.id, profile?.propertyId, profile?.brokerId])
+
   const timeline = useMemo(
     () => (profile ? buildTimeline({ messages: profile.messages, events: profile.events }) : []),
     [profile],
   )
   const brokers = crm.brokers || []
+  const properties = crm.properties || []
   const canEdit = demo && Boolean(profile)
+  const compatible = profile ? compatibleProperties(properties, profile.qualification) : []
+  const leadVisits = (crm.visits || []).filter((item) => item.leadId === profile?.id)
 
   if (!profile) {
     return (
@@ -156,6 +178,130 @@ export default function LeadProfile() {
             </dl>
           ) : (
             <p className="mt-3 text-[13px] text-muted">Ainda sem respostas de qualificação.</p>
+          )}
+        </section>
+
+        <section className="surface-card p-4">
+          <h2 className="text-[16px] font-semibold">Imóveis compatíveis</h2>
+          {compatible.length === 0 ? (
+            <p className="mt-3 text-[13px] text-muted">Nenhum imóvel fecha com a qualificação agora.</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {compatible.map((item) => {
+                const linked = profile.propertyId === item.id
+                const suggested = profile.suggestedPropertyIds?.includes(item.id)
+                return (
+                  <li key={item.id} className={`flex gap-3 rounded-xl px-2 py-2 ${linked ? 'bg-emerald/10 ring-1 ring-emerald/40' : 'bg-canvas'}`}>
+                    <img src={item.photo} alt="" className="h-16 w-24 shrink-0 rounded-lg object-cover" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-mono text-[10px] font-semibold text-muted">{item.code}</p>
+                      <p className="truncate text-[13px] font-semibold">{item.title}</p>
+                      <p className="mt-0.5 text-[12px] font-semibold text-emerald tabular-nums">{formatPropertyPrice(item)}</p>
+                      <p className="text-[11px] text-muted">{propertyStatusLabel(item.status, item.dealType)}{linked ? ' · vinculado' : suggested ? ' · sugerido' : ''}</p>
+                      {demo && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          <button type="button" onClick={() => crm.suggestProperty(profile.id, item.id)} className="h-8 rounded-lg border border-line px-2 text-[11px] font-semibold text-ink">
+                            Sugerir
+                          </button>
+                          <button type="button" onClick={() => { crm.linkProperty(profile.id, item.id); setVisitForm((current) => ({ ...current, propertyId: item.id })) }} className="h-8 rounded-lg bg-emerald px-2 text-[11px] font-semibold text-navy-950">
+                            {linked ? 'Vinculado' : 'Vincular'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </section>
+
+        <section className="surface-card p-4">
+          <h2 className="text-[16px] font-semibold">Visitas</h2>
+          {leadVisits.length > 0 && (
+            <ul className="mt-3 space-y-2">
+              {leadVisits.map((item) => {
+                const listing = properties.find((entry) => entry.id === item.propertyId)
+                return (
+                  <li key={item.id} className="rounded-xl bg-canvas px-3 py-2.5">
+                    <p className="text-[13px] font-semibold">{formatVisitTime(item.startsAt)} · {visitStatusLabel(item.status)}</p>
+                    <p className="mt-0.5 text-[12px] text-muted">{listing?.title || profile.property}</p>
+                    <p className="mt-1 text-[11px] font-semibold text-muted">Lembrete pendente de envio</p>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+          {demo ? (
+            <form
+              className="mt-3 grid gap-3 sm:grid-cols-2"
+              onSubmit={(event) => {
+                event.preventDefault()
+                const result = crm.addVisit({
+                  leadId: profile.id,
+                  propertyId: visitForm.propertyId || null,
+                  brokerId: visitForm.brokerId || null,
+                  date: visitForm.date,
+                  time: visitForm.time,
+                })
+                if (result?.error === 'conflict') {
+                  setVisitAlert('Esse horário já está ocupado para o corretor.')
+                  return
+                }
+                if (result?.error) {
+                  setVisitAlert('Não foi possível marcar a visita.')
+                  return
+                }
+                setVisitAlert('')
+              }}
+            >
+              <label className="block text-[12px] font-semibold text-muted sm:col-span-2">
+                Imóvel
+                <select
+                  value={visitForm.propertyId}
+                  onChange={(event) => setVisitForm((current) => ({ ...current, propertyId: event.target.value }))}
+                  className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-[13px] font-medium text-ink"
+                >
+                  <option value="">A definir</option>
+                  {properties.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.code} · {item.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-[12px] font-semibold text-muted">
+                Corretor
+                <select
+                  value={visitForm.brokerId}
+                  onChange={(event) => setVisitForm((current) => ({ ...current, brokerId: event.target.value }))}
+                  className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-[13px] font-medium text-ink"
+                >
+                  <option value="">A definir</option>
+                  {brokers.map((broker) => (
+                    <option key={broker.id} value={broker.id}>{broker.name}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-[12px] font-semibold text-muted">
+                Data da visita
+                <input type="date" required value={visitForm.date} onChange={(event) => setVisitForm((current) => ({ ...current, date: event.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-[13px] font-medium text-ink" />
+              </label>
+              <label className="block text-[12px] font-semibold text-muted">
+                Horário da visita
+                <input type="time" required value={visitForm.time} onChange={(event) => setVisitForm((current) => ({ ...current, time: event.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-[13px] font-medium text-ink" />
+              </label>
+              <div className="sm:col-span-2">
+                <button type="submit" className="h-9 rounded-lg bg-emerald px-3 text-[12.5px] font-semibold text-navy-950">
+                  Marcar visita
+                </button>
+                {visitAlert && (
+                  <p role="alert" className="mt-2 text-[13px] text-ink">{visitAlert}</p>
+                )}
+              </div>
+            </form>
+          ) : (
+            leadVisits.length === 0 && <p className="mt-3 text-[13px] text-muted">Nenhuma visita neste lead.</p>
           )}
         </section>
 

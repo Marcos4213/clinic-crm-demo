@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { CrmContext } from '../state/crm-context'
 import Home from './Home'
-import Portfolio from './Portfolio'
+import Imoveis from './Imoveis'
 import Reviews from './Reviews'
 import { MassPane } from './channel-panes'
 
@@ -41,9 +41,11 @@ describe('real account stays honest', () => {
     expect(screen.getByRole('heading', { name: 'A captação ainda não está ligada' })).toBeInTheDocument()
     expect(screen.queryByText('Fernanda Oliveira')).not.toBeInTheDocument()
 
-    renderWorkspace(<Portfolio />)
-    expect(screen.getByRole('heading', { name: 'A vitrine ainda não foi cadastrada' })).toBeInTheDocument()
+    renderWorkspace(<Imoveis />)
+    expect(screen.getByRole('heading', { name: 'Imóveis' })).toBeInTheDocument()
+    expect(screen.getByText('Nenhum imóvel cadastrado.')).toBeInTheDocument()
     expect(screen.queryByText('R$ 1.800')).not.toBeInTheDocument()
+    expect(screen.queryByText('IM-1042')).not.toBeInTheDocument()
 
     renderWorkspace(<MassPane />)
     expect(screen.getByRole('button', { name: 'Envio desativado — sem integração' })).toBeDisabled()

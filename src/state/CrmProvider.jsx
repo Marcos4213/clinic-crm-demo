@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { cloneBrokers, cloneLeadProfiles, demoNextBrokerId } from '../data/demo-leads'
+import { cloneProperties, seedDemoVisits, withPropertyLinks } from '../data/demo-properties'
 import { sampleLeads } from '../data/sampleLeads'
 import { columnLabel, countByColumn, filterLeads, moveLead, sendHumanMessage, setAiActive } from '../domain/crm'
 import { hasScheduledConflict, zonedLocalToUtc } from '../../supabase/functions/_shared/schedule.js'
 import { clinicDateKey } from '../domain/insights'
 import { assignHotLead, brokerName, currentTurn, moveBroker as moveBrokerOrder, resolveNextAfterPause } from '../domain/roulette'
+import { buildVisit, hasVisitConflict, visitStatusLabel } from '../domain/visits'
 import { CrmContext } from './crm-context'
 
 const cloneLeads = () => sampleLeads.map((lead) => ({ ...lead, messages: lead.messages.map((message) => ({ ...message })) }))
@@ -47,7 +49,9 @@ export function CrmProvider({ children }) {
   })
   const [brokers, setBrokers] = useState(cloneBrokers)
   const [nextBrokerId, setNextBrokerId] = useState(demoNextBrokerId)
-  const [leadProfiles, setLeadProfiles] = useState(cloneLeadProfiles)
+  const [leadProfiles, setLeadProfiles] = useState(() => withPropertyLinks(cloneLeadProfiles()))
+  const [properties, setProperties] = useState(cloneProperties)
+  const [visits, setVisits] = useState(seedDemoVisits)
 
   const visibleLeads = useMemo(() => filterLeads(leads, { query, temperature }), [leads, query, temperature])
   const counts = useMemo(() => countByColumn(visibleLeads), [visibleLeads])
@@ -190,6 +194,80 @@ export function CrmProvider({ children }) {
     setAnnouncement('Próximo passo gravado só nesta demonstração.')
   }
 
+  function saveProperty(input) {
+    const payload = { ...input, title: String(input.title ?? '').trim(), region: String(input.region ?? '').trim(), code: String(input.code ?? '').trim() }
+    if (!payload.title || !payload.region || !payload.code || !payload.dealType || !payload.propertyType) {
+      return { error: 'invalid' }
+    }
+    setProperties((current) => {
+      const existing = current.find((item) => item.id === payload.id)
+      if (existing) return current.map((item) => (item.id === payload.id ? { ...item, ...payload } : item))
+      return [...current, { photo: '/imoveis/im-generic.svg', details: '', area: payload.area || null, status: payload.status || 'disponivel', ...payload, id: payload.id || `im-local-${current.length + 1}` }]
+    })
+    setAnnouncement('Imóvel gravado só nesta demonstração.')
+    return { ok: true }
+  }
+
+  function suggestProperty(leadId, propertyId) {
+    const listing = properties.find((item) => item.id === propertyId)
+    if (!listing) return
+    setLeadProfiles((current) =>
+      current.map((lead) =>
+        lead.id === leadId && !lead.suggestedPropertyIds.includes(propertyId)
+          ? { ...lead, suggestedPropertyIds: [...lead.suggestedPropertyIds, propertyId] }
+          : lead,
+      ),
+    )
+    appendEvent(leadId, { type: 'assigned', actor: 'Você', detail: `Sugeriu ${listing.code} · ${listing.title}.` })
+    setAnnouncement(`Você sugeriu ${listing.code}. Nenhuma mensagem saiu.`)
+  }
+
+  function linkProperty(leadId, propertyId) {
+    const listing = properties.find((item) => item.id === propertyId)
+    if (!listing) return
+    setLeadProfiles((current) =>
+      current.map((lead) =>
+        lead.id === leadId
+          ? {
+              ...lead,
+              propertyId,
+              property: listing.title,
+              suggestedPropertyIds: lead.suggestedPropertyIds.includes(propertyId)
+                ? lead.suggestedPropertyIds
+                : [...lead.suggestedPropertyIds, propertyId],
+            }
+          : lead,
+      ),
+    )
+    appendEvent(leadId, { type: 'assigned', actor: 'Você', detail: `Vinculou ${listing.code} · ${listing.title}.` })
+    setAnnouncement(`${listing.code} ficou vinculado ao lead.`)
+  }
+
+  function addVisit({ leadId, propertyId, brokerId, date, time, slotMinutes = 30 }) {
+    const built = buildVisit({ leadId, propertyId, brokerId, date, time, slotMinutes, id: `v-local-${visits.length + 1}` })
+    if (built.error) return built
+    if (hasVisitConflict(visits, built.visit)) return { error: 'conflict' }
+    setVisits((current) => [...current, built.visit])
+    const listing = properties.find((item) => item.id === propertyId)
+    const broker = brokerName(brokers, brokerId)
+    const when = `${date} às ${time}`
+    appendEvent(leadId, {
+      type: 'visit',
+      actor: broker || 'Você',
+      detail: `Visita marcada para ${when}${listing ? ` em ${listing.title}` : ''}. Lembrete pendente de envio.`,
+    })
+    setAnnouncement('Visita marcada. Lembrete pendente de envio. Nada foi enviado.')
+    return { ok: true, visit: built.visit }
+  }
+
+  function setVisitStatus(id, status) {
+    const current = visits.find((item) => item.id === id)
+    setVisits((list) => list.map((item) => (item.id === id ? { ...item, status } : item)))
+    if (current?.leadId) {
+      appendEvent(current.leadId, { type: 'visit', actor: 'Você', detail: `Status da visita: ${visitStatusLabel(status)}.` })
+    }
+  }
+
   function setDraft(text) {
     setDrafts((current) => ({ ...current, [selectedId]: text }))
   }
@@ -268,7 +346,9 @@ export function CrmProvider({ children }) {
     setReviewAsks([])
     setBrokers(cloneBrokers())
     setNextBrokerId(demoNextBrokerId)
-    setLeadProfiles(cloneLeadProfiles())
+    setLeadProfiles(withPropertyLinks(cloneLeadProfiles()))
+    setProperties(cloneProperties())
+    setVisits(seedDemoVisits())
     setAnnouncement('Amostra local restaurada. Nada foi gravado em uma clínica.')
   }
 
@@ -314,6 +394,13 @@ export function CrmProvider({ children }) {
     assumeLead,
     addLeadNote,
     saveNextStep,
+    properties,
+    visits,
+    saveProperty,
+    suggestProperty,
+    linkProperty,
+    addVisit,
+    setVisitStatus,
   }
 
   return <CrmContext.Provider value={value}>{children}</CrmContext.Provider>

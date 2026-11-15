@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { demoDashboardLeads, demoVisits } from '../data/demo-catalog'
+import { demoDashboardLeads } from '../data/demo-catalog'
 import {
-  appointmentsOnDate,
   averageAssumptionMinutes,
+  clinicDateKey,
   brokerRanking,
   formatResponse,
   formatVisitTime,
@@ -45,19 +45,22 @@ export default function Home() {
   const hot = hotLeadsWaiting(leads)
   const ranking = brokerRanking(leads)
   const pending = pendingDeskLeads(leads)
-  const visits = demo
-    ? demoVisits
-    : appointmentsOnDate(crm.appointments ?? []).map((item) => {
-        const lead = crm.leads.find((entry) => entry.id === item.lead_id)
-        return {
-          id: item.id,
-          name: lead?.name ?? 'Lead',
-          property: interestOf(lead),
-          time: formatVisitTime(item.starts_at),
-          status: item.status,
-          broker: lead?.broker,
-        }
-      })
+  const visits = (crm.visits ?? []).filter((item) => {
+    const start = item.startsAt || item.starts_at
+    return start && clinicDateKey(new Date(start)) === clinicDateKey()
+  }).map((item) => {
+    const lead = (crm.leadProfiles || []).find((entry) => entry.id === item.leadId) || (crm.leads || []).find((entry) => entry.id === item.leadId || entry.id === item.lead_id)
+    const listing = (crm.properties || []).find((entry) => entry.id === item.propertyId)
+    return {
+      id: item.id,
+      leadId: item.leadId || item.lead_id,
+      name: lead?.name ?? item.name ?? 'Lead',
+      property: listing?.title || lead?.property || item.property || '',
+      time: formatVisitTime(item.startsAt || item.starts_at),
+      status: item.status,
+      broker: item.broker || lead?.broker,
+    }
+  })
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8">

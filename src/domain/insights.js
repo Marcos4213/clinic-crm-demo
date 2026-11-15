@@ -181,8 +181,10 @@ export function pendingStatus(lead = {}) {
 }
 
 export function visitStatusLabel(status) {
-  if (status === 'attended') return 'Visita feita'
+  if (status === 'feita' || status === 'attended') return 'Visita feita'
   if (status === 'no_show') return 'No-show'
+  if (status === 'confirmada') return 'Confirmada'
+  if (status === 'agendada' || status === 'scheduled') return 'Agendada'
   if (status === 'canceled') return 'Cancelada'
   return 'Visita'
 }

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" width="800" height="520" role="img" aria-hidden="true">
+<rect width="800" height="520" fill="#7DAA9A"/>
+<circle cx="680" cy="90" r="36" fill="#F7E7B4" opacity="0.85"/>
+<rect y="450" width="800" height="70" fill="#12345E"/>
+<rect y="450" width="800" height="8" fill="#0E7C66" opacity="0.35"/>
+<polygon points="242.0,374 400.0,284 558.0,374" fill="#12345E"/>
+<rect x="260.0" y="370" width="280" height="80" fill="#EDE3CC"/>
+<rect x="382.0" y="380" width="36" height="70" fill="#12345E"/>
+<rect x="286.0" y="392.0" width="37.6" height="-22.0" rx="2" fill="#F7FBFF" opacity="0.85"/>
+<rect x="333.6" y="392.0" width="37.6" height="-22.0" rx="2" fill="#F7FBFF" opacity="0.85"/>
+<rect x="381.2" y="392.0" width="37.6" height="-22.0" rx="2" fill="#F7FBFF" opacity="0.85"/>
+<rect x="428.8" y="392.0" width="37.6" height="-22.0" rx="2" fill="#F7FBFF" opacity="0.85"/>
+<rect x="476.4" y="392.0" width="37.6" height="-22.0" rx="2" fill="#F7FBFF" opacity="0.85"/>
+<rect x="286.0" y="380.0" width="37.6" height="-22.0" rx="2" fill="#F7FBFF" opacity="0.85"/>
+<rect x="333.6" y="380.0" width="37.6" height="-22.0" rx="2" fill="#F7FBFF" opacity="0.85"/>
+<rect x="381.2" y="380.0" width="37.6" height="-22.0" rx="2" fill="#F7FBFF" opacity="0.85"/>
+<rect x="428.8" y="380.0" width="37.6" height="-22.0" rx="2" fill="#F7FBFF" opacity="0.85"/>
+<rect x="476.4" y="380.0" width="37.6" height="-22.0" rx="2" fill="#F7FBFF" opacity="0.85"/>
+<rect x="230.0" y="450" width="340" height="14" fill="#0E7C66" opacity="0.55"/>
+</svg>

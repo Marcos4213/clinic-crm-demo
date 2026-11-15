@@ -32,6 +32,9 @@ describe('lead profile', () => {
     expect(screen.getByText('Caiu para Carlos Mendes, corretor da vez.')).toBeInTheDocument()
     expect(screen.getByText('Mudou para quente.')).toBeInTheDocument()
     expect(screen.getByText(/Posso te passar para o Carlos/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Imóveis compatíveis' })).toBeInTheDocument()
+    expect(screen.getByText('IM-1042')).toBeInTheDocument()
+    expect(screen.queryByText('IM-1048')).not.toBeInTheDocument()
   })
 
   it('records an internal note locally', async () => {

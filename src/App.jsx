@@ -10,7 +10,7 @@ import LeadProfile from './pages/LeadProfile'
 import Integrations from './pages/Integrations'
 import Metrics from './pages/Metrics'
 import Pipeline from './pages/Pipeline'
-import Portfolio from './pages/Portfolio'
+import Imoveis from './pages/Imoveis'
 import Reviews from './pages/Reviews'
 import { AutoReplyPane, CommentPane, DirectComposePane, FollowUpPane, MassPane, RemarketingPane, SchedulePane } from './pages/channel-panes'
 import { LoginScreen, SignupScreen } from './pages/AuthScreens'
@@ -146,7 +146,8 @@ function workspaceRoutes(prefix) {
       <Route path="equipe" element={<Equipe />} />
       <Route path="agenda" element={<Agenda />} />
       <Route path="avaliacoes" element={<Reviews />} />
-      <Route path="portfolio" element={<Portfolio />} />
+      <Route path="imoveis" element={<Imoveis />} />
+      <Route path="portfolio" element={<Navigate to={`/${prefix}/imoveis`} replace />} />
       <Route path="metricas" element={<Metrics />} />
       <Route path="integracoes" element={<Integrations />} />
       <Route path="ajustes" element={prefix === 'demo' ? <DemoSettings /> : <Settings />} />

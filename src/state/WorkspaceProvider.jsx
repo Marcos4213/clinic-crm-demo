@@ -353,6 +353,13 @@ export function WorkspaceProvider({ client, children }) {
     assumeLead() {},
     addLeadNote() {},
     saveNextStep() {},
+    properties: [],
+    visits: [],
+    saveProperty() { return { error: 'unavailable' } },
+    suggestProperty() {},
+    linkProperty() {},
+    addVisit() { return { error: 'unavailable' } },
+    setVisitStatus() {},
   }
 
   return <CrmContext.Provider value={value}>{children}</CrmContext.Provider>
