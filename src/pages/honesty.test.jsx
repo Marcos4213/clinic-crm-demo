@@ -29,9 +29,13 @@ function renderWorkspace(ui) {
 describe('real account stays honest', () => {
   it('does not invent pipeline revenue, reviews, or campaigns', () => {
     renderWorkspace(<Home />)
-    expect(screen.getByText('Ativado na implantação')).toBeInTheDocument()
-    expect(screen.getByText('WhatsApp não conectado')).toBeInTheDocument()
+    expect(screen.getByRole('article', { name: 'Volume de leads' })).toHaveTextContent('0')
+    expect(screen.getByRole('article', { name: 'Qualificados' })).toHaveTextContent('—')
+    expect(screen.getByRole('article', { name: 'Tempo de assunção' })).toHaveTextContent('—')
+    expect(screen.getByText('Nenhum lead quente aguardando.')).toBeInTheDocument()
+    expect(screen.queryByText('Ativado na implantação')).not.toBeInTheDocument()
     expect(screen.queryByText('Maria Silva')).not.toBeInTheDocument()
+    expect(screen.queryByText(/R\$/)).not.toBeInTheDocument()
 
     renderWorkspace(<Reviews />)
     expect(screen.getByRole('heading', { name: 'A captação ainda não está ligada' })).toBeInTheDocument()

@@ -92,3 +92,22 @@ export const CHANNEL_LABEL = {
   whatsapp: 'WhatsApp',
   instagram: 'Instagram',
 }
+
+export const demoDashboardLeads = [
+  { id: 'maria', name: 'Maria Silva', property: 'Apto 2 dorm. · Vila Madalena', temperature: 'quente', column: 'em-atendimento', broker: 'Carlos Mendes', waiting: true, helenaActive: true, waitingFor: '12 min' },
+  { id: 'joao', name: 'João Pedro', property: 'Casa em condomínio · Alphaville', temperature: 'morno', column: 'em-atendimento', broker: 'Ana Souza', waiting: true, helenaActive: true, waitingFor: '28 min' },
+  { id: 'rafael', name: 'Rafael Nunes', property: 'Sala comercial · Pinheiros', temperature: 'quente', column: 'em-atendimento', broker: 'Carlos Mendes', waiting: true, helenaActive: false, waitingFor: '9 min' },
+  { id: 'larissa', name: 'Larissa Pires', property: 'Kitnet · Vila Mariana', temperature: 'frio', column: 'em-atendimento', helenaActive: true, waiting: false },
+  { id: 'camila', name: 'Camila Rocha', property: 'Apto 3 dorm. · Jardins', temperature: 'morno', column: 'qualificados', broker: 'Ana Souza', assumptionMinutes: 7 },
+  { id: 'beatriz', name: 'Beatriz Lima', property: 'Cobertura · Moema', temperature: 'quente', column: 'agendados', broker: 'Carlos Mendes', assumptionMinutes: 4 },
+  { id: 'pedro', name: 'Pedro Henrique Souza', property: 'Casa · Granja Viana', temperature: 'quente', column: 'agendados', broker: 'Carlos Mendes', assumptionMinutes: 5 },
+  { id: 'thiago', name: 'Thiago Mendes', property: 'Apto 2 dorm. · Moema', temperature: 'morno', column: 'agendados', broker: 'Ana Souza', assumptionMinutes: 5 },
+  { id: 'fernanda', name: 'Fernanda Oliveira', property: 'Apto · Brooklin', temperature: 'morno', column: 'fechados', broker: 'Ana Souza', assumptionMinutes: 6 },
+  { id: 'gustavo', name: 'Gustavo Martins', property: 'Casa em condomínio · Alphaville', temperature: 'quente', column: 'fechados', broker: 'Carlos Mendes', assumptionMinutes: 3 },
+]
+
+export const demoVisits = [
+  { id: 'v-thiago', name: 'Thiago Mendes', property: 'Apto 2 dorm. · Moema', time: '11:00', status: 'no_show', broker: 'Ana Souza' },
+  { id: 'v-pedro', name: 'Pedro Henrique Souza', property: 'Casa · Granja Viana', time: '15:00', status: 'attended', broker: 'Carlos Mendes' },
+  { id: 'v-beatriz', name: 'Beatriz Lima', property: 'Cobertura · Moema', time: '16:00', status: 'scheduled', broker: 'Carlos Mendes' },
+]

@@ -38,7 +38,7 @@ export function CrmProvider({ children }) {
   const [stageEvents, setStageEvents] = useState([])
   const [reviewAsks, setReviewAsks] = useState([])
   const [profile, setProfile] = useState({
-    display_name: 'Clínica Aurora',
+    display_name: 'Aurora Imóveis',
     day_start: '09:00',
     day_end: '18:00',
     slot_minutes: 30,

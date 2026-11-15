@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { averageResponseMinutes, conversionByChannel, csvFromRows, followUpTasks, pipelineEstimate } from './insights'
+import { averageAssumptionMinutes, averageResponseMinutes, brokerRanking, conversionByChannel, csvFromRows, followUpTasks, hotLeadsWaiting, pipelineEstimate, qualifiedRate, visitStatusLabel } from './insights'
 
 describe('pipeline insights', () => {
   const leads = [
@@ -41,5 +41,35 @@ describe('pipeline insights', () => {
 
   it('escapes csv cells', () => {
     expect(csvFromRows([['nome', 'nota'], ['Ana, Bia', 'disse "oi"']])).toBe('nome,nota\n"Ana, Bia","disse ""oi"""')
+  })
+})
+
+describe('home panel insights', () => {
+  const leads = [
+    { id: 'a', column: 'em-atendimento', temperature: 'quente', waiting: true, broker: 'Carlos Mendes' },
+    { id: 'b', column: 'qualificados', temperature: 'morno', broker: 'Ana Souza', assumptionMinutes: 7 },
+    { id: 'c', column: 'fechados', temperature: 'quente', broker: 'Carlos Mendes', assumptionMinutes: 3 },
+    { id: 'd', column: 'em-atendimento', temperature: 'morno', waiting: true },
+  ]
+
+  it('computes the qualified share and the mean assumption time', () => {
+    expect(qualifiedRate(leads)).toBe(50)
+    expect(averageAssumptionMinutes(leads)).toBe(5)
+    expect(qualifiedRate([])).toBe(null)
+    expect(averageAssumptionMinutes([])).toBe(null)
+  })
+
+  it('ranks brokers by assumption time and lists only hot waiting leads', () => {
+    expect(brokerRanking(leads)).toEqual([
+      { broker: 'Carlos Mendes', leads: 1, minutes: 3 },
+      { broker: 'Ana Souza', leads: 1, minutes: 7 },
+    ])
+    expect(hotLeadsWaiting(leads).map((lead) => lead.id)).toEqual(['a'])
+  })
+
+  it('labels visit outcomes without clinical wording', () => {
+    expect(visitStatusLabel('attended')).toBe('Visita feita')
+    expect(visitStatusLabel('no_show')).toBe('No-show')
+    expect(visitStatusLabel('scheduled')).toBe('Visita')
   })
 })
