@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { HashRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import AlertCenter from './components/alerts/AlertCenter'
 import { PlantaoWordmark } from './components/brand/Marks'
-import Sidebar from './components/layout/Sidebar'
+import Sidebar, { MobileMenuButton } from './components/layout/Sidebar'
 import SiteLegalFooter from './components/layout/SiteLegalFooter'
 import Agenda from './pages/Agenda'
 import { InstagramDirect, InstagramLayout } from './pages/InstagramDesk'
@@ -25,6 +26,7 @@ import { WorkspaceProvider } from './state/WorkspaceProvider'
 
 function Frame({ base, demo = false }) {
   const auth = useAuth()
+  const [drawerOpen, setDrawerOpen] = useState(false)
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-canvas text-ink lg:flex-row">
       <a
@@ -33,8 +35,11 @@ function Frame({ base, demo = false }) {
       >
         Ir para o conteúdo
       </a>
-      <header className="no-print flex h-14 shrink-0 items-center justify-between border-b border-line px-4 lg:hidden">
-        <PlantaoWordmark className="text-[16px]" />
+      <header className="no-print flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line px-3 lg:hidden">
+        <div className="flex min-w-0 items-center gap-2">
+          <MobileMenuButton open={drawerOpen} onOpen={() => setDrawerOpen(true)} />
+          <PlantaoWordmark className="text-[16px]" />
+        </div>
         <div className="flex items-center gap-2">
           <AlertCenter compact />
           {demo ? (
@@ -46,7 +51,13 @@ function Frame({ base, demo = false }) {
           )}
         </div>
       </header>
-      <Sidebar base={base} demo={demo} />
+      <Sidebar
+        base={base}
+        demo={demo}
+        drawerOpen={drawerOpen}
+        onOpenDrawer={() => setDrawerOpen(true)}
+        onCloseDrawer={() => setDrawerOpen(false)}
+      />
       <main id="conteudo" className="flex min-h-0 min-w-0 flex-1 pb-16 lg:pb-0">
         <Outlet />
       </main>
