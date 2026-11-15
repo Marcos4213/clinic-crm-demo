@@ -14,6 +14,7 @@ import {
   qualifiedRate,
   visitStatusLabel,
 } from '../domain/insights'
+import { AlertActions } from '../components/alerts/AlertCenter'
 import { useCrm } from '../state/useCrm'
 
 function Stat({ label, shortLabel, value }) {
@@ -97,6 +98,29 @@ export default function Home() {
               <Stat label="Qualificados" value={qualified == null ? '—' : `${qualified}%`} />
               <Stat label="Tempo de assunção" shortLabel="Assunção" value={dash(assumption)} />
             </section>
+            {(crm.alerts ?? []).length > 0 && (
+              <section className="surface-card p-4 ring-1 ring-emerald/40">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-[16px] font-semibold">Leads parados</h2>
+                  <span className="rounded-full bg-emerald/15 px-2 py-0.5 text-[11px] font-semibold text-emerald">{crm.alerts.length}</span>
+                </div>
+                <ul className="mt-3 space-y-2">
+                  {crm.alerts.map((alert) => (
+                    <li key={alert.id} className="rounded-xl bg-canvas px-3 py-2.5">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <Link to={`${base}/leads/${alert.leadId}`} className="text-[13px] font-semibold hover:text-emerald">
+                            {alert.name}
+                          </Link>
+                          <p className="mt-0.5 text-[12px] text-muted">{alert.reason}</p>
+                        </div>
+                        <AlertActions leadId={alert.leadId} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
             <section className="grid gap-3 lg:grid-cols-2">
               <article className="surface-card p-4">
                 <div className="flex items-center justify-between gap-3">

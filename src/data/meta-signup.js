@@ -77,7 +77,7 @@ export function useWhatsappSignup(client, clinicId) {
     const failure = {
       webhook_subscribe_failed: 'A Meta recebeu o cadastro, mas o aviso de mensagens não foi assinado. A linha não está conectada.',
       number_not_returned: 'O Facebook entrou, mas a Meta não devolveu o WhatsApp do celular. Escolha o número que já está no aplicativo e escaneie o QR.',
-      multiple_numbers: 'A Meta mostrou mais de um número. Escolha só o WhatsApp da clínica e tente de novo.',
+      multiple_numbers: 'A Meta mostrou mais de um número. Escolha só o WhatsApp da imobiliária e tente de novo.',
       signup_incomplete: 'A Meta não concluiu o WhatsApp. Nada foi marcado como conectado.',
       token_expired: 'O código da Meta expirou. Toque em Conectar WhatsApp de novo.',
       upstream: 'A Meta não autorizou o número. Nada foi marcado como conectado.',

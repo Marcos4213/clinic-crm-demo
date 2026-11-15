@@ -39,7 +39,7 @@ export function InstagramDirect() {
   if (!demo) {
     return (
       <div className="px-4 py-6 sm:px-6">
-        <EmptyState badge="Não conectado" title="Direct ainda não entra no atendimento" detail="As conversas do Instagram aparecem aqui quando a conta da clínica for ligada. Nada foi importado." />
+        <EmptyState badge="Não conectado" title="Direct ainda não entra no atendimento" detail="As conversas do Instagram aparecem aqui quando a conta da imobiliária for ligada. Nada foi importado." />
       </div>
     )
   }

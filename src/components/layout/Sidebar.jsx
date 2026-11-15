@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../state/useAuth'
+import AlertCenter from '../alerts/AlertCenter'
 import { InstagramMark, PlantaoWordmark, WhatsAppMark } from '../brand/Marks'
 
 function primaryItems(base) {
@@ -29,7 +30,7 @@ function moreItems(base) {
     { to: `${base}/instagram`, label: 'Instagram', logo: InstagramMark },
     { to: `${base}/avaliacoes`, label: 'Avaliações', icon: Star },
     { to: `${base}/imoveis`, label: 'Imóveis', icon: Building2 },
-    { to: `${base}/metricas`, label: 'Métricas', icon: BarChart3 },
+    { to: `${base}/relatorios`, label: 'Relatório', icon: BarChart3 },
     { to: `${base}/integracoes`, label: 'Integrações', icon: Plug },
     { to: `${base}/equipe`, label: 'Equipe', icon: Users },
     { to: `${base}/ajustes`, label: 'Ajustes', icon: Settings },
@@ -89,11 +90,14 @@ export default function Sidebar({ base = '/demo', demo = true }) {
       <NavLink to={base} end className="mx-3 mt-4 hidden items-center gap-2 px-1 lg:flex" aria-label="Plantão">
         <PlantaoWordmark className="text-[17px]" />
       </NavLink>
-      {demo && (
-        <p className="mx-3 mt-2 hidden lg:block">
+      <div className="mx-3 mt-2 hidden items-center justify-between gap-2 lg:flex">
+        {demo ? (
           <span className="rounded-full bg-teal-100/30 px-2 py-0.5 text-[10px] font-semibold tracking-[0.14em] text-emerald uppercase">Demo</span>
-        </p>
-      )}
+        ) : (
+          <span />
+        )}
+        <AlertCenter side="end" />
+      </div>
       <ul className="grid h-full grid-cols-5 gap-0.5 px-1 py-1 lg:mt-4 lg:flex lg:h-auto lg:flex-1 lg:flex-col lg:gap-1 lg:overflow-y-auto lg:px-2">
         {primary.map((item) => (
           <li key={item.to} className="min-w-0">

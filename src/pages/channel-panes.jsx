@@ -105,7 +105,7 @@ export function FollowUpPane() {
   if (!demo) return <ActivationPane title="Follow-up" detail="A lista de retornos da atendente é ativada na implantação. Nenhuma tarefa foi criada." />
   return (
     <div className="mx-auto max-w-3xl space-y-3 px-4 py-6 sm:px-6">
-      <DemoNote>Retornos ilustrativos do WhatsApp. A fila do dia, no Início, continua vindo dos leads sem consulta marcada.</DemoNote>
+      <DemoNote>Retornos ilustrativos do WhatsApp. A fila do dia, no Início, continua vindo dos leads sem visita marcada.</DemoNote>
       <ul className="space-y-2">
         {demoFollowups.map((item) => (
           <li key={item.id} className="surface-card px-4 py-3">
@@ -161,7 +161,7 @@ export function AutoReplyPane() {
           </ul>
         </>
       ) : (
-        <EmptyState badge="Ativado na implantação" title="Respostas automáticas" detail="Quando a implantação ligar este módulo, os textos da clínica entram aqui. Hoje nada responde sozinho." />
+        <EmptyState badge="Ativado na implantação" title="Respostas automáticas" detail="Quando a implantação ligar este módulo, os textos da imobiliária entram aqui. Hoje nada responde sozinho." />
       )}
     </div>
   )
@@ -199,7 +199,7 @@ export function CommentPane() {
 export function DirectComposePane() {
   const demo = useCrm().mode !== 'workspace'
   const [sent, setSent] = useState([])
-  if (!demo) return <ActivationPane title="Envio de DM" detail="O envio pelo Instagram não está conectado. Nenhuma mensagem direta sai desta clínica." />
+  if (!demo) return <ActivationPane title="Envio de DM" detail="O envio pelo Instagram não está conectado. Nenhuma mensagem direta sai desta imobiliária." />
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-6 sm:px-6">
       <DemoNote>Escreva uma prévia. Ela não entra no Direct de ninguém.</DemoNote>

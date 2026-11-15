@@ -4,6 +4,7 @@ import { ArrowLeft, Search, Send } from 'lucide-react'
 import { initials, temperatureLabel } from '../../domain/crm'
 import { appBase, leadIdFromThread } from '../../domain/lead-sheet'
 import useCompactViewport from '../../hooks/useCompactViewport'
+import { AlertActions } from '../alerts/AlertCenter'
 import { useCrm } from '../../state/useCrm'
 
 const TEMPERATURE_TONE = {
@@ -43,6 +44,7 @@ export default function ThreadDesk({ threads, emptyTitle, emptyDetail, composeLa
   const crm = useCrm()
   const location = useLocation()
   const base = appBase(location.pathname)
+  const staleByLead = new Map((crm.alerts ?? []).map((alert) => [alert.leadId, alert]))
   const compact = useCompactViewport()
   const [query, setQuery] = useState('')
   const [pendingOnly, setPendingOnly] = useState(true)
@@ -177,6 +179,9 @@ export default function ThreadDesk({ threads, emptyTitle, emptyDetail, composeLa
                     <span className="mt-0.5 block truncate text-[12px] text-muted">{thread.property || thread.procedure}</span>
                     <span className="mt-1 flex items-center gap-1.5">
                       <TemperatureBadge temperature={thread.temperature} />
+                      {staleByLead.get(leadIdFromThread(thread)) && (
+                        <span className="rounded-full bg-emerald/15 px-2 py-0.5 text-[10px] font-semibold tracking-[0.12em] text-emerald uppercase">Parado</span>
+                      )}
                     </span>
                   </span>
                 </button>
@@ -222,6 +227,12 @@ export default function ThreadDesk({ threads, emptyTitle, emptyDetail, composeLa
           )}
         </div>
         <p className="mt-2 text-[12px] font-semibold text-ink">{helenaOn ? 'Helena no plantão' : 'Você assumiu'}</p>
+        {staleByLead.get(leadIdFromThread(active)) && (
+          <div className="mt-2">
+            <p className="text-[12px] text-muted">{staleByLead.get(leadIdFromThread(active)).reason}</p>
+            <AlertActions leadId={leadIdFromThread(active)} className="mt-2" />
+          </div>
+        )}
       </header>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto bg-chat px-4 py-4">
         {messages.map((message) => (

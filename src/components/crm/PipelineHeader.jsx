@@ -20,17 +20,17 @@ export default function PipelineHeader() {
     <header className="shrink-0 border-b border-line bg-surface px-3 py-3 sm:px-4">
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app · do primeiro contato ao paciente atendido</p>
+          <p className="text-[10px] font-semibold tracking-[0.16em] text-emerald uppercase">Plantão · do primeiro contato à visita</p>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <h1 className="text-[20px] leading-none font-semibold tracking-tight text-ink">Pipeline</h1>
             <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-semibold tracking-[0.14em] text-emerald uppercase">
-              {crm.mode === 'workspace' ? 'Clínica' : 'Demonstração local'}
+              {crm.mode === 'workspace' ? 'Imobiliária' : 'Demonstração local'}
             </span>
           </div>
           <p className="mt-1.5 text-[12px] text-muted">
             {crm.mode === 'workspace'
-              ? 'Registros desta clínica. Mensagens internas, sem envio externo.'
-              : 'Dados fictícios só neste navegador. Nada é gravado na clínica.'}
+              ? 'Registros desta imobiliária. Mensagens internas, sem envio externo.'
+              : 'Dados fictícios só neste navegador. Nada é gravado na imobiliária.'}
           </p>
         </div>
         <dl aria-label="Contagens da amostra" className="flex flex-wrap gap-1.5">
@@ -56,7 +56,7 @@ export default function PipelineHeader() {
             aria-label="Buscar leads"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Nome, telefone ou procedimento"
+            placeholder="Nome, telefone ou imóvel"
             className="h-9 w-full rounded-lg border border-line bg-canvas pr-3 pl-9 text-[13px] text-ink outline-none placeholder:text-[#7D90A3]"
           />
         </div>

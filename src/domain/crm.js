@@ -36,7 +36,7 @@ export function filterLeads(leads, { query = '', temperature = 'todos' } = {}) {
     const temperatureOk = !temperature || temperature === 'todos' || lead.temperature === temperature
     if (!temperatureOk) return false
     if (!needle) return true
-    return [lead.name, lead.phone, lead.procedure].some((field) => normalize(field).includes(needle))
+    return [lead.name, lead.phone, lead.procedure, lead.property, lead.source].some((field) => normalize(field).includes(needle))
   })
 }
 

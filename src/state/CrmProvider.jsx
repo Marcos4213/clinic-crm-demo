@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import { cloneBrokers, cloneLeadProfiles, demoNextBrokerId } from '../data/demo-leads'
-import { cloneProperties, seedDemoVisits, withPropertyLinks } from '../data/demo-properties'
+import { cloneProperties, seedDemoVisits, withLeadMeta, withPropertyLinks } from '../data/demo-properties'
 import { sampleLeads } from '../data/sampleLeads'
 import { columnLabel, countByColumn, filterLeads, moveLead, sendHumanMessage, setAiActive } from '../domain/crm'
 import { hasScheduledConflict, zonedLocalToUtc } from '../../supabase/functions/_shared/schedule.js'
 import { clinicDateKey } from '../domain/insights'
 import { assignHotLead, brokerName, currentTurn, moveBroker as moveBrokerOrder, resolveNextAfterPause } from '../domain/roulette'
 import { buildVisit, hasVisitConflict, visitStatusLabel } from '../domain/visits'
+import { DEFAULT_ALERT_RULES, findStaleAlerts } from '../domain/alerts'
 import { CrmContext } from './crm-context'
 
 const cloneLeads = () => sampleLeads.map((lead) => ({ ...lead, messages: lead.messages.map((message) => ({ ...message })) }))
@@ -46,10 +47,12 @@ export function CrmProvider({ children }) {
     day_start: '09:00',
     day_end: '18:00',
     slot_minutes: 30,
+    hotAssumeMinutes: DEFAULT_ALERT_RULES.hotAssumeMinutes,
+    warmReplyHours: DEFAULT_ALERT_RULES.warmReplyHours,
   })
   const [brokers, setBrokers] = useState(cloneBrokers)
   const [nextBrokerId, setNextBrokerId] = useState(demoNextBrokerId)
-  const [leadProfiles, setLeadProfiles] = useState(() => withPropertyLinks(cloneLeadProfiles()))
+  const [leadProfiles, setLeadProfiles] = useState(() => withLeadMeta(withPropertyLinks(cloneLeadProfiles())))
   const [properties, setProperties] = useState(cloneProperties)
   const [visits, setVisits] = useState(seedDemoVisits)
 
@@ -57,6 +60,11 @@ export function CrmProvider({ children }) {
   const counts = useMemo(() => countByColumn(visibleLeads), [visibleLeads])
   const sampleCounts = useMemo(() => countByColumn(leads), [leads])
   const selected = leads.find((lead) => lead.id === selectedId) ?? null
+  const alertRules = {
+    hotAssumeMinutes: profile.hotAssumeMinutes ?? DEFAULT_ALERT_RULES.hotAssumeMinutes,
+    warmReplyHours: profile.warmReplyHours ?? DEFAULT_ALERT_RULES.warmReplyHours,
+  }
+  const alerts = useMemo(() => findStaleAlerts(leadProfiles, alertRules), [leadProfiles, profile.hotAssumeMinutes, profile.warmReplyHours])
   const draft = drafts[selectedId] ?? ''
 
   function selectLead(id) {
@@ -308,7 +316,7 @@ export function CrmProvider({ children }) {
   function askReview(appointmentId) {
     const appointment = appointments.find((item) => item.id === appointmentId)
     const lead = leads.find((item) => item.id === appointment?.lead_id)
-    const name = lead?.name ?? 'Paciente'
+    const name = lead?.name ?? 'Lead'
     setReviewAsks((current) => {
       if (current.some((item) => item.appointmentId === appointmentId)) return current
       return [
@@ -317,8 +325,8 @@ export function CrmProvider({ children }) {
           id: `ask-${appointmentId}`,
           appointmentId,
           name,
-          procedure: lead?.procedure ?? 'Consulta',
-          preview: `Olá, ${name}. Como foi sua consulta? Se puder, conte no Google como foi o atendimento. Esta prévia fica só na demonstração e não foi enviada.`,
+          procedure: lead?.property || lead?.procedure || 'Visita',
+          preview: `Olá, ${name}. Como foi a visita? Se puder, conte no Google como foi o atendimento. Esta prévia fica só na demonstração e não foi enviada.`,
         },
       ]
     })
@@ -326,13 +334,23 @@ export function CrmProvider({ children }) {
   }
 
   function saveClinicProfile({ displayName, dayStart, dayEnd, slotMinutes }) {
-    setProfile({
+    setProfile((current) => ({
+      ...current,
       display_name: displayName,
       day_start: dayStart,
       day_end: dayEnd,
       slot_minutes: Number(slotMinutes),
-    })
+    }))
     setAnnouncement('Horário gravado só nesta demonstração.')
+  }
+
+  function saveAlertRules({ hotAssumeMinutes, warmReplyHours }) {
+    const hot = Number(hotAssumeMinutes)
+    const warm = Number(warmReplyHours)
+    if (!Number.isFinite(hot) || hot < 1 || !Number.isFinite(warm) || warm < 1) return { error: 'invalid' }
+    setProfile((current) => ({ ...current, hotAssumeMinutes: hot, warmReplyHours: warm }))
+    setAnnouncement('Regras de alerta gravadas só nesta demonstração. Nenhuma notificação externa foi enviada.')
+    return { ok: true }
   }
 
   function resetDemo() {
@@ -346,10 +364,10 @@ export function CrmProvider({ children }) {
     setReviewAsks([])
     setBrokers(cloneBrokers())
     setNextBrokerId(demoNextBrokerId)
-    setLeadProfiles(withPropertyLinks(cloneLeadProfiles()))
+    setLeadProfiles(withLeadMeta(withPropertyLinks(cloneLeadProfiles())))
     setProperties(cloneProperties())
     setVisits(seedDemoVisits())
-    setAnnouncement('Amostra local restaurada. Nada foi gravado em uma clínica.')
+    setAnnouncement('Amostra local restaurada. Nada foi gravado em uma imobiliária.')
   }
 
   const value = {
@@ -401,6 +419,9 @@ export function CrmProvider({ children }) {
     linkProperty,
     addVisit,
     setVisitStatus,
+    alerts,
+    alertRules,
+    saveAlertRules,
   }
 
   return <CrmContext.Provider value={value}>{children}</CrmContext.Provider>

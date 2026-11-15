@@ -1,4 +1,5 @@
 import { HashRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import AlertCenter from './components/alerts/AlertCenter'
 import { PlantaoWordmark } from './components/brand/Marks'
 import Sidebar from './components/layout/Sidebar'
 import SiteLegalFooter from './components/layout/SiteLegalFooter'
@@ -8,7 +9,7 @@ import Equipe from './pages/Equipe'
 import Home from './pages/Home'
 import LeadProfile from './pages/LeadProfile'
 import Integrations from './pages/Integrations'
-import Metrics from './pages/Metrics'
+import Relatorios from './pages/Relatorios'
 import Pipeline from './pages/Pipeline'
 import Imoveis from './pages/Imoveis'
 import Reviews from './pages/Reviews'
@@ -32,15 +33,18 @@ function Frame({ base, demo = false }) {
       >
         Ir para o conteúdo
       </a>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-line px-4 lg:hidden">
+      <header className="no-print flex h-14 shrink-0 items-center justify-between border-b border-line px-4 lg:hidden">
         <PlantaoWordmark className="text-[16px]" />
-        {demo ? (
-          <span className="rounded-full bg-teal-100/30 px-2 py-0.5 text-[10px] font-semibold tracking-[0.14em] text-emerald uppercase">Demo</span>
-        ) : (
-          <button type="button" onClick={() => auth.signOut()} className="text-[12px] font-semibold text-muted">
-            Sair
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <AlertCenter compact />
+          {demo ? (
+            <span className="rounded-full bg-teal-100/30 px-2 py-0.5 text-[10px] font-semibold tracking-[0.14em] text-emerald uppercase">Demo</span>
+          ) : (
+            <button type="button" onClick={() => auth.signOut()} className="text-[12px] font-semibold text-muted">
+              Sair
+            </button>
+          )}
+        </div>
       </header>
       <Sidebar base={base} demo={demo} />
       <main id="conteudo" className="flex min-h-0 min-w-0 flex-1 pb-16 lg:pb-0">
@@ -71,13 +75,13 @@ function WorkspaceGate() {
 
 function WorkspaceBody() {
   const crm = useCrm()
-  if (crm.phase === 'loading') return <p className="p-6 text-muted">Carregando clínica…</p>
+  if (crm.phase === 'loading') return <p className="p-6 text-muted">Carregando imobiliária…</p>
   if (crm.phase === 'schema') {
     return (
       <main className="mx-auto max-w-lg p-6">
         <h1 className="text-[24px] font-semibold">Esquema protegido ausente</h1>
         <p className="mt-2 text-[14px] leading-6 text-muted">
-          A sessão existe, mas as tabelas com RLS ainda não estão aplicadas. Nenhum dado de clínica foi gravado.
+          A sessão existe, mas as tabelas com RLS ainda não estão aplicadas. Nenhum dado da imobiliária foi gravado.
         </p>
         <a href="#/demo" className="mt-4 inline-flex text-[13px] font-semibold text-emerald">
           Abrir demonstração local
@@ -89,7 +93,7 @@ function WorkspaceBody() {
   if (crm.phase !== 'ready') {
     return (
       <main className="mx-auto max-w-lg p-6">
-        <h1 className="text-[24px] font-semibold">Clínica indisponível</h1>
+        <h1 className="text-[24px] font-semibold">Imobiliária indisponível</h1>
         <p className="mt-2 text-[14px] text-muted">{crm.notice || 'Não foi possível abrir o espaço.'}</p>
       </main>
     )
@@ -106,12 +110,12 @@ function Onboarding() {
   }
   return (
     <main className="mx-auto flex min-h-full max-w-md flex-col justify-center px-4">
-      <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app</p>
-      <h1 className="mt-2 text-[28px] font-semibold">Sua clínica</h1>
-      <p className="mt-2 text-[13px] leading-5 text-muted">Cria um espaço privado para esta conta. Não entra em outra clínica.</p>
+      <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald uppercase">Plantão</p>
+      <h1 className="mt-2 text-[28px] font-semibold">Sua imobiliária</h1>
+      <p className="mt-2 text-[13px] leading-5 text-muted">Cria um espaço privado para esta conta. Não entra em outra imobiliária.</p>
       <form onSubmit={onSubmit} className="mt-4 space-y-3">
         <label className="block text-[12px] font-semibold text-muted" htmlFor="clinic-name">
-          Nome da clínica
+          Nome da imobiliária
           <input id="clinic-name" name="clinic" required minLength={2} className="mt-1 h-10 w-full rounded-lg border border-line bg-surface px-3 text-ink" />
         </label>
         <button type="submit" className="h-10 w-full rounded-lg bg-emerald text-[13px] font-semibold text-[#080F1C]">
@@ -148,10 +152,10 @@ function workspaceRoutes(prefix) {
       <Route path="avaliacoes" element={<Reviews />} />
       <Route path="imoveis" element={<Imoveis />} />
       <Route path="portfolio" element={<Navigate to={`/${prefix}/imoveis`} replace />} />
-      <Route path="metricas" element={<Metrics />} />
+      <Route path="relatorios" element={<Relatorios />} />
+      <Route path="metricas" element={<Navigate to={`/${prefix}/relatorios`} replace />} />
       <Route path="integracoes" element={<Integrations />} />
       <Route path="ajustes" element={prefix === 'demo' ? <DemoSettings /> : <Settings />} />
-      <Route path="relatorios" element={<Navigate to={`/${prefix}/metricas`} replace />} />
       <Route path="disparos" element={<Navigate to={`/${prefix}/whatsapp/disparos`} replace />} />
       <Route path="ia" element={<Navigate to={`/${prefix}/ajustes`} replace />} />
     </>

@@ -48,4 +48,26 @@ describe('clinic settings', () => {
     expect(screen.queryByRole('button', { name: 'Mostrar QR do WhatsApp' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Conectar WhatsApp' })).not.toBeInTheDocument()
   })
+
+  it('edits stale-lead alert rules', async () => {
+    const user = userEvent.setup()
+    const onSaveAlerts = vi.fn()
+    render(
+      <MemoryRouter>
+        <SettingsPanel
+          clinicName="Imobiliária Aurora"
+          settings={{ display_name: 'Imobiliária Aurora', hotAssumeMinutes: 10, warmReplyHours: 2 }}
+          integrations={integrations}
+          onSaveAlerts={onSaveAlerts}
+          signup={{ configured: false, connected: false }}
+        />
+      </MemoryRouter>,
+    )
+    expect(screen.getByLabelText('Lead quente sem assumir (min)')).toHaveValue(10)
+    expect(screen.getByLabelText('Morno sem resposta (horas)')).toHaveValue(2)
+    await user.clear(screen.getByLabelText('Lead quente sem assumir (min)'))
+    await user.type(screen.getByLabelText('Lead quente sem assumir (min)'), '15')
+    await user.click(screen.getByRole('button', { name: 'Gravar alertas' }))
+    expect(onSaveAlerts).toHaveBeenCalledWith({ hotAssumeMinutes: '15', warmReplyHours: '2' })
+  })
 })

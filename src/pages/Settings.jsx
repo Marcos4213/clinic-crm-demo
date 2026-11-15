@@ -54,7 +54,7 @@ function AttendanceForm({ clinicName, settings, onSaveProfile }) {
           <input id="day-end" type="time" value={dayEnd} onChange={(event) => setDayEnd(event.target.value)} required className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-ink" />
         </label>
         <label className="block text-[12px] font-semibold text-muted" htmlFor="slot">
-          Duração da consulta
+          Duração da visita
           <select id="slot" value={slotMinutes} onChange={(event) => setSlotMinutes(event.target.value)} className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-ink">
             <option value="30">30 minutos</option>
             <option value="60">60 minutos</option>
@@ -68,7 +68,39 @@ function AttendanceForm({ clinicName, settings, onSaveProfile }) {
   )
 }
 
-export function SettingsPanel({ clinicName, settings, integrations = [], notice, onSaveProfile, signup, signupNotice, signupPending, onConnect, whatsappTo = '/app/whatsapp', equipeTo = '/app/equipe' }) {
+
+function AlertRulesForm({ settings, onSave }) {
+  const [hotAssumeMinutes, setHotAssumeMinutes] = useState(String(settings?.hotAssumeMinutes ?? 10))
+  const [warmReplyHours, setWarmReplyHours] = useState(String(settings?.warmReplyHours ?? 2))
+
+  return (
+    <form
+      className="space-y-3 rounded-2xl border border-line bg-surface p-4"
+      onSubmit={(event) => {
+        event.preventDefault()
+        onSave?.({ hotAssumeMinutes, warmReplyHours })
+      }}
+    >
+      <h2 className="text-[16px] font-semibold">Alertas de lead parado</h2>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block text-[12px] font-semibold text-muted" htmlFor="hot-assume">
+          Lead quente sem assumir (min)
+          <input id="hot-assume" type="number" min="1" max="1440" required value={hotAssumeMinutes} onChange={(event) => setHotAssumeMinutes(event.target.value)} className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-ink" />
+        </label>
+        <label className="block text-[12px] font-semibold text-muted" htmlFor="warm-reply">
+          Morno sem resposta (horas)
+          <input id="warm-reply" type="number" min="1" max="168" required value={warmReplyHours} onChange={(event) => setWarmReplyHours(event.target.value)} className="mt-1 h-10 w-full rounded-lg border border-line bg-canvas px-3 text-ink" />
+        </label>
+      </div>
+      <p className="text-[12px] text-muted">O cálculo roda neste aparelho. A notificação externa está preparada e desligada: nada é enviado.</p>
+      <button type="submit" className="h-10 rounded-lg bg-emerald px-4 text-[13px] font-semibold text-navy-950">
+        Gravar alertas
+      </button>
+    </form>
+  )
+}
+
+export function SettingsPanel({ clinicName, settings, integrations = [], notice, onSaveProfile, onSaveAlerts, signup, signupNotice, signupPending, onConnect, whatsappTo = '/app/whatsapp', equipeTo = '/app/equipe' }) {
   const whatsapp = integrations.find((item) => item.provider === 'whatsapp')
   const others = integrations.filter((item) => item.provider === 'instagram' || item.provider === 'google_calendar')
   const attendanceKey = [clinicName, settings?.display_name, settings?.day_start, settings?.day_end, settings?.slot_minutes].join('|')
@@ -77,10 +109,9 @@ export function SettingsPanel({ clinicName, settings, integrations = [], notice,
     <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8">
       <div className="mx-auto max-w-3xl space-y-6">
         <header>
-          <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald uppercase">Automatize.app</p>
-          <h1 className="mt-2 text-[28px] font-semibold tracking-tight">Ajustes da clínica</h1>
+          <h1 className="text-[24px] font-extrabold tracking-tight sm:text-[28px]">Ajustes</h1>
           <p className="mt-2 max-w-xl text-[14px] leading-6 text-muted">
-            Nome, horário e o WhatsApp da clínica. A resposta automática continua desligada.
+            Nome, horário, alertas e o WhatsApp da imobiliária. A resposta automática continua desligada.
           </p>
         </header>
 
@@ -93,6 +124,13 @@ export function SettingsPanel({ clinicName, settings, integrations = [], notice,
         </Link>
 
         <AttendanceForm key={attendanceKey} clinicName={clinicName} settings={settings} onSaveProfile={onSaveProfile} />
+
+        <AlertRulesForm
+          key={[settings?.hotAssumeMinutes, settings?.warmReplyHours].join('|')}
+          settings={settings}
+          onSave={onSaveAlerts}
+        />
+
 
         <section className="rounded-2xl border border-line bg-surface p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -137,6 +175,7 @@ export function DemoSettings() {
       ]}
       notice={crm.announcement}
       onSaveProfile={crm.saveClinicProfile}
+      onSaveAlerts={crm.saveAlertRules}
       signup={{ configured: false, connected: false, ready: true }}
       whatsappTo="/demo/whatsapp"
       equipeTo="/demo/equipe"
@@ -156,6 +195,7 @@ export default function Settings() {
       integrations={crm.integrations}
       notice={crm.notice}
       onSaveProfile={crm.saveClinicProfile}
+      onSaveAlerts={crm.saveAlertRules}
       signup={signup.config}
       signupNotice={signup.signupNotice}
       signupPending={signup.pending}

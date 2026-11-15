@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { CrmContext } from '../state/crm-context'
 import Home from './Home'
 import Imoveis from './Imoveis'
+import Relatorios from './Relatorios'
 import Reviews from './Reviews'
 import { MassPane } from './channel-panes'
 
@@ -13,6 +14,10 @@ const workspace = {
   clinic: { name: 'Clínica Aurora' },
   leads: [],
   appointments: [],
+  visits: [],
+  alerts: [],
+  brokers: [],
+  leadProfiles: [],
   stageEvents: [],
   integrations: [],
   reviewAsks: [],
@@ -50,5 +55,18 @@ describe('real account stays honest', () => {
     renderWorkspace(<MassPane />)
     expect(screen.getByRole('button', { name: 'Envio desativado — sem integração' })).toBeDisabled()
     expect(screen.queryByText('Lembrete de avaliação')).not.toBeInTheDocument()
+  })
+
+  it('does not invent weekly report numbers', () => {
+    renderWorkspace(<Relatorios />)
+    expect(screen.getByRole('heading', { name: 'Relatório semanal' })).toBeInTheDocument()
+    expect(screen.getByRole('article', { name: 'Volume de leads' })).toHaveTextContent('0')
+    expect(screen.getByRole('article', { name: 'Qualificados' })).toHaveTextContent('—')
+    expect(screen.getByRole('article', { name: 'Tempo de assunção' })).toHaveTextContent('—')
+    expect(screen.getByRole('article', { name: 'Visitas agendadas' })).toHaveTextContent('0')
+    expect(screen.getByRole('article', { name: 'Visitas feitas' })).toHaveTextContent('0')
+    expect(screen.getByRole('article', { name: 'No-show' })).toHaveTextContent('0')
+    expect(screen.queryByText('Maria Silva')).not.toBeInTheDocument()
+    expect(screen.queryByText(/R\$/)).not.toBeInTheDocument()
   })
 })

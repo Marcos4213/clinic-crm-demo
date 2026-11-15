@@ -12,14 +12,14 @@ export default function Reviews() {
     return (
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6">
         <div className="mx-auto max-w-3xl">
-          <p className="text-[10px] font-semibold tracking-[0.16em] text-emerald uppercase">Depois da consulta</p>
+          <p className="text-[10px] font-semibold tracking-[0.16em] text-emerald uppercase">Depois da visita</p>
           <h1 className="mt-2 text-[32px] font-semibold tracking-tight">Avaliações</h1>
           <div className="mt-5">
             <EmptyState
               icon={Star}
               badge="Ativado na implantação"
               title="A captação ainda não está ligada"
-              detail="Quando o médico avisar a atendente, o botão Pedir avaliação prepara a mensagem de WhatsApp. Hoje nada é enviado."
+              detail="Quando a visita é feita, o botão Pedir avaliação prepara a mensagem de WhatsApp. Hoje nada é enviado."
             />
           </div>
         </div>
@@ -34,7 +34,7 @@ export default function Reviews() {
           <p className="text-[10px] font-semibold tracking-[0.16em] text-emerald uppercase">Demonstração · Google</p>
           <h1 className="mt-2 text-[32px] font-semibold tracking-tight">Avaliações</h1>
           <p className="mt-3 text-[14px] leading-6 text-muted">
-            Depoimentos fictícios e a prévia da mensagem que a atendente dispararia depois da consulta. Nada vai para o WhatsApp.
+            Depoimentos fictícios e a prévia da mensagem que a atendente dispararia depois da visita. Nada vai para o WhatsApp.
           </p>
         </header>
         <ul className="space-y-2">
@@ -52,10 +52,10 @@ export default function Reviews() {
         <section className="surface-card p-4">
           <h2 className="text-[16px] font-semibold">Pedir avaliação</h2>
           <p className="mt-2 text-[13px] leading-5 text-muted">
-            Na agenda, depois que a consulta fica como compareceu, a atendente pede a avaliação. A mensagem abaixo é só a prévia.
+            Depois que a visita fica como feita, a atendente pede a avaliação. A mensagem abaixo é só a prévia.
           </p>
           {asks.length === 0 ? (
-            <p className="mt-3 text-[13px] text-muted">Nenhuma prévia ainda. Abra a agenda e use Pedir avaliação em quem já foi atendido.</p>
+            <p className="mt-3 text-[13px] text-muted">Nenhuma prévia ainda. Quando uma visita é feita, a prévia aparece aqui.</p>
           ) : (
             <ul className="mt-3 space-y-2">
               {asks.map((ask) => (

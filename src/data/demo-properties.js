@@ -48,6 +48,8 @@ export function seedDemoVisits(today = clinicDateKey()) {
     visitAt(today, '11:00', { id: 'v-thiago', leadId: 'thiago', propertyId: 'im-2077', brokerId: 'ana', status: 'no_show' }),
     visitAt(today, '15:00', { id: 'v-pedro', leadId: 'pedro', propertyId: 'im-1304', brokerId: 'carlos', status: 'feita' }),
     visitAt(today, '16:00', { id: 'v-beatriz', leadId: 'beatriz', propertyId: 'im-2030', brokerId: 'carlos', status: 'confirmada' }),
+    visitAt(shiftDateKey(monday, -3), '15:00', { id: 'v-fernanda', leadId: 'fernanda', propertyId: 'im-1415', brokerId: 'ana', status: 'feita' }),
+    visitAt(shiftDateKey(monday, -4), '11:00', { id: 'v-gustavo', leadId: 'gustavo', propertyId: 'im-1160', brokerId: 'carlos', status: 'no_show' }),
   ].filter(Boolean)
 }
 
@@ -61,4 +63,23 @@ export function withPropertyLinks(profiles) {
     propertyId: lead.propertyId || defaultLinkedProperties[lead.id] || null,
     suggestedPropertyIds: lead.suggestedPropertyIds ? [...lead.suggestedPropertyIds] : [],
   }))
+}
+
+export const demoLeadMeta = {
+  maria: { source: 'whatsapp', createdAt: '2026-11-09T09:14:00.000-03:00', waitingSinceMinutes: 12 },
+  joao: { source: 'zap', createdAt: '2026-11-09T08:41:00.000-03:00', unansweredHours: 3 },
+  rafael: { source: 'olx', createdAt: '2026-11-14T10:05:00.000-03:00' },
+  larissa: { source: 'site', createdAt: '2026-11-08T17:12:00.000-03:00' },
+  camila: { source: 'instagram', createdAt: '2026-11-07T15:10:00.000-03:00' },
+  beatriz: { source: 'whatsapp', createdAt: '2026-11-12T16:04:00.000-03:00' },
+  pedro: { source: 'zap', createdAt: '2026-11-14T09:20:00.000-03:00' },
+  thiago: { source: 'instagram', createdAt: '2026-11-13T14:02:00.000-03:00' },
+  fernanda: { source: 'site', createdAt: '2026-11-04T11:10:00.000-03:00' },
+  gustavo: { source: 'olx', createdAt: '2026-11-05T16:12:00.000-03:00' },
+  helena: { source: 'whatsapp', createdAt: '2026-11-10T13:22:00.000-03:00' },
+  ana: { source: 'site', createdAt: '2026-11-11T18:40:00.000-03:00' },
+}
+
+export function withLeadMeta(profiles) {
+  return profiles.map((lead) => ({ ...lead, ...(demoLeadMeta[lead.id] || {}) }))
 }

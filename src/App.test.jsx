@@ -46,7 +46,7 @@ describe('pipeline selection', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Maria Silva' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Selecionar Maria Silva' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('log', { name: 'Mensagens com Maria Silva' })).toHaveTextContent(
-      'Vi seu interesse na avaliação de Botox.',
+      'Vi seu interesse no apartamento de 2 dormitórios na Vila Madalena.',
     )
 
     await user.click(screen.getByRole('button', { name: 'Selecionar João Pedro' }))
@@ -55,9 +55,9 @@ describe('pipeline selection', () => {
     expect(screen.getByRole('button', { name: 'Selecionar João Pedro' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'Selecionar Maria Silva' })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByRole('log', { name: 'Mensagens com João Pedro' })).toHaveTextContent(
-      'Obrigado pelo interesse em implante capilar.',
+      'Obrigado pelo interesse na casa em Alphaville.',
     )
-    expect(screen.queryByText('Vi seu interesse na avaliação de Botox.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Vi seu interesse no apartamento de 2 dormitórios na Vila Madalena.')).not.toBeInTheDocument()
   })
 })
 
@@ -105,19 +105,19 @@ describe('per-lead takeover and composer', () => {
     expect(restored).toHaveValue('   ')
 
     await user.clear(restored)
-    await user.type(restored, 'Posso te explicar a avaliação.')
+    await user.type(restored, 'Posso te explicar a visita.')
     await user.keyboard('{Enter}')
 
     const log = screen.getByRole('log', { name: 'Mensagens com Maria Silva' })
-    expect(within(log).getByText('Posso te explicar a avaliação.')).toBeInTheDocument()
+    expect(within(log).getByText('Posso te explicar a visita.')).toBeInTheDocument()
     expect(within(log).getByText('Humano')).toBeInTheDocument()
     expect(within(log).getByText('local')).toBeInTheDocument()
     expect(restored).toHaveValue('')
 
     await user.click(screen.getByRole('button', { name: 'Selecionar João Pedro' }))
-    expect(screen.queryByText('Posso te explicar a avaliação.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Posso te explicar a visita.')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Selecionar Maria Silva' }))
-    expect(screen.getByText('Posso te explicar a avaliação.')).toBeInTheDocument()
+    expect(screen.getByText('Posso te explicar a visita.')).toBeInTheDocument()
   })
 })
 
@@ -145,9 +145,9 @@ describe('move, counts, and filter', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.type(screen.getByRole('searchbox', { name: 'Buscar leads' }), 'botox')
+    await user.type(screen.getByRole('searchbox', { name: 'Buscar leads' }), 'madalena')
     expect(screen.getByRole('button', { name: 'Selecionar Maria Silva' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Selecionar Fernanda Oliveira' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Selecionar Fernanda Oliveira' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Selecionar João Pedro' })).not.toBeInTheDocument()
     expect(within(screen.getByRole('region', { name: 'Qualificados' })).getByText('0 leads nesta etapa')).toBeInTheDocument()
 

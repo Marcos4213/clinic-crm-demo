@@ -46,7 +46,7 @@ export function WorkspaceProvider({ client, children }) {
     ])
     const failure = [leadResult, messageResult, appointmentResult, eventResult, integrationResult, settingsResult].find((item) => item.error)
     if (failure?.error) {
-      setNotice(failure.error.message || 'Não foi possível ler a clínica.')
+      setNotice(failure.error.message || 'Não foi possível ler a imobiliária.')
       return
     }
     const messages = messageResult.data ?? []
@@ -92,7 +92,7 @@ export function WorkspaceProvider({ client, children }) {
   async function bootstrap(name) {
     const { data, error } = await client.rpc('bootstrap_workspace', { clinic_name: name })
     if (error) {
-      setNotice(error.message || 'Não foi possível criar a clínica.')
+      setNotice(error.message || 'Não foi possível criar a imobiliária.')
       return
     }
     setPhase('loading')
@@ -103,7 +103,7 @@ export function WorkspaceProvider({ client, children }) {
       setPhase('ready')
       await refresh(loaded.clinic.id)
     } else if (data) {
-      setNotice('A clínica foi criada, mas a leitura ainda falhou.')
+      setNotice('A imobiliária foi criada, mas a leitura ainda falhou.')
       setPhase('error')
     }
   }
@@ -111,7 +111,7 @@ export function WorkspaceProvider({ client, children }) {
   async function createDemoWorkspace() {
     const { error } = await client.rpc('create_demo_workspace')
     if (error) setNotice(error.message || 'Não foi possível criar a demonstração persistida.')
-    else setNotice('Espaço de demonstração fictício criado nesta conta. Ele não substitui a clínica real.')
+    else setNotice('Espaço de demonstração fictício criado nesta conta. Ele não substitui a imobiliária real.')
   }
 
   async function createLead({ name, phone, procedure }) {
@@ -245,7 +245,7 @@ export function WorkspaceProvider({ client, children }) {
         slot_minutes: Number(slotMinutes),
       })
       .eq('clinic_id', clinic.id)
-    if (error) setNotice('Os ajustes da clínica não foram gravados.')
+    if (error) setNotice('Os ajustes da imobiliária não foram gravados.')
     else {
       setSettings((current) => ({
         ...current,
@@ -254,7 +254,7 @@ export function WorkspaceProvider({ client, children }) {
         day_end: dayEnd,
         slot_minutes: Number(slotMinutes),
       }))
-      setNotice('Ajustes gravados nesta clínica.')
+      setNotice('Ajustes gravados nesta imobiliária.')
     }
   }
 
@@ -270,7 +270,7 @@ export function WorkspaceProvider({ client, children }) {
       return
     }
     setSettings((current) => ({ ...(current ?? {}), public_whatsapp: parsed.href }))
-    setNotice('QR do WhatsApp gravado nesta clínica.')
+    setNotice('QR do WhatsApp gravado nesta imobiliária.')
   }
 
   async function askAi() {
@@ -360,6 +360,9 @@ export function WorkspaceProvider({ client, children }) {
     linkProperty() {},
     addVisit() { return { error: 'unavailable' } },
     setVisitStatus() {},
+    alerts: [],
+    alertRules: { hotAssumeMinutes: 10, warmReplyHours: 2 },
+    saveAlertRules() { return { error: 'unavailable' } },
   }
 
   return <CrmContext.Provider value={value}>{children}</CrmContext.Provider>
