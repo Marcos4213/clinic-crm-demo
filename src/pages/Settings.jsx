@@ -68,7 +68,7 @@ function AttendanceForm({ clinicName, settings, onSaveProfile }) {
   )
 }
 
-export function SettingsPanel({ clinicName, settings, integrations = [], notice, onSaveProfile, signup, signupNotice, signupPending, onConnect, whatsappTo = '/app/whatsapp' }) {
+export function SettingsPanel({ clinicName, settings, integrations = [], notice, onSaveProfile, signup, signupNotice, signupPending, onConnect, whatsappTo = '/app/whatsapp', equipeTo = '/app/equipe' }) {
   const whatsapp = integrations.find((item) => item.provider === 'whatsapp')
   const others = integrations.filter((item) => item.provider === 'instagram' || item.provider === 'google_calendar')
   const attendanceKey = [clinicName, settings?.display_name, settings?.day_start, settings?.day_end, settings?.slot_minutes].join('|')
@@ -83,6 +83,14 @@ export function SettingsPanel({ clinicName, settings, integrations = [], notice,
             Nome, horário e o WhatsApp da clínica. A resposta automática continua desligada.
           </p>
         </header>
+
+        <Link to={equipeTo} className="flex items-center justify-between rounded-2xl border border-line bg-surface px-4 py-3">
+          <div>
+            <h2 className="text-[16px] font-semibold">Equipe</h2>
+            <p className="mt-0.5 text-[13px] text-muted">Corretores e corretor da vez</p>
+          </div>
+          <span className="text-[12px] font-semibold text-emerald">Abrir</span>
+        </Link>
 
         <AttendanceForm key={attendanceKey} clinicName={clinicName} settings={settings} onSaveProfile={onSaveProfile} />
 
@@ -131,6 +139,7 @@ export function DemoSettings() {
       onSaveProfile={crm.saveClinicProfile}
       signup={{ configured: false, connected: false, ready: true }}
       whatsappTo="/demo/whatsapp"
+      equipeTo="/demo/equipe"
     />
   )
 }

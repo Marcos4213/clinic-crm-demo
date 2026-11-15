@@ -9,6 +9,7 @@ import {
   Settings,
   Sparkles,
   Star,
+  Users,
 } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../state/useAuth'
@@ -30,6 +31,7 @@ function moreItems(base) {
     { to: `${base}/portfolio`, label: 'Portfólio', icon: Sparkles },
     { to: `${base}/metricas`, label: 'Métricas', icon: BarChart3 },
     { to: `${base}/integracoes`, label: 'Integrações', icon: Plug },
+    { to: `${base}/equipe`, label: 'Equipe', icon: Users },
     { to: `${base}/ajustes`, label: 'Ajustes', icon: Settings },
   ]
 }

@@ -1,9 +1,13 @@
+import { Link, useLocation } from 'react-router-dom'
 import { ArrowLeft, Send } from 'lucide-react'
 import { initials } from '../../domain/crm'
 import MessageBubble from './MessageBubble'
 import TemperatureMark from '../crm/TemperatureMark'
+import { appBase } from '../../domain/lead-sheet'
 
 export default function ChatPanel({ lead, hiddenByFilter, draft, onDraft, onToggleTakeover, onSend, onAskAi, aiNotice, compact, onBack, className = '' }) {
+  const location = useLocation()
+  const base = appBase(location.pathname)
   return (
     <section aria-label="Conversa" className={`min-h-0 bg-surface ${className}`}>
       {hiddenByFilter ? (
@@ -29,7 +33,12 @@ export default function ChatPanel({ lead, hiddenByFilter, draft, onDraft, onTogg
                 {initials(lead.name)}
               </div>
               <div className="min-w-0 flex-1">
-                <h2 className="truncate text-[15px] leading-5 font-semibold tracking-tight text-ink">{lead.name}</h2>
+                <div className="flex items-start justify-between gap-2">
+                  <h2 className="truncate text-[15px] leading-5 font-semibold tracking-tight text-ink">{lead.name}</h2>
+                  <Link to={`${base}/leads/${lead.id}`} className="shrink-0 text-[12px] font-semibold text-emerald">
+                    Ficha
+                  </Link>
+                </div>
                 <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[12px] text-muted">
                   <span>{lead.procedure}</span>
                   <TemperatureMark temperature={lead.temperature} />

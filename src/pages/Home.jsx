@@ -108,7 +108,7 @@ export default function Home() {
                   <ul className="mt-3 space-y-2">
                     {hot.map((lead) => (
                       <li key={lead.id}>
-                        <Link to={`${base}/whatsapp`} className="block rounded-xl bg-canvas px-3 py-2.5 hover:bg-white/5">
+                        <Link to={`${base}/leads/${lead.id}`} className="block rounded-xl bg-canvas px-3 py-2.5 hover:bg-white/5">
                           <p className="flex items-center justify-between gap-2 text-[13px] font-semibold">
                             <span className="truncate">{lead.name}</span>
                             {lead.waitingFor && <span className="shrink-0 text-emerald tabular-nums">{lead.waitingFor}</span>}
@@ -122,7 +122,12 @@ export default function Home() {
                 )}
               </article>
               <article className="surface-card p-4">
-                <h2 className="text-[16px] font-semibold">Corretores</h2>
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-[16px] font-semibold">Corretores</h2>
+                  <Link to={`${base}/equipe`} className="text-[12px] font-semibold text-emerald">
+                    Equipe
+                  </Link>
+                </div>
                 {ranking.length === 0 ? (
                   <p className="mt-3 text-[13px] leading-5 text-muted">Sem tempo de assunção para comparar.</p>
                 ) : (
@@ -143,6 +148,12 @@ export default function Home() {
                     ))}
                   </ol>
                 )}
+                {crm.nextBroker && (
+                  <p className="mt-3 text-[12px] text-muted">
+                    Próximo da vez:{' '}
+                    <span className="font-semibold text-emerald">{crm.nextBroker.name}</span>
+                  </p>
+                )}
               </article>
             </section>
           </>
@@ -161,7 +172,7 @@ export default function Home() {
                 <ul className="mt-3 space-y-2">
                   {pending.map((lead) => (
                     <li key={lead.id}>
-                      <Link to={`${base}/whatsapp`} className="block rounded-xl bg-canvas px-3 py-2.5 hover:bg-white/5">
+                      <Link to={`${base}/leads/${lead.id}`} className="block rounded-xl bg-canvas px-3 py-2.5 hover:bg-white/5">
                         <p className="flex items-center justify-between gap-2 text-[13px] font-semibold">
                           <span className="truncate">{lead.name}</span>
                           {lead.waitingFor && <span className="shrink-0 text-emerald tabular-nums">{lead.waitingFor}</span>}
@@ -186,13 +197,26 @@ export default function Home() {
               ) : (
                 <ul className="mt-3 space-y-2">
                   {visits.map((item) => (
-                    <li key={item.id} className="rounded-xl bg-canvas px-3 py-2.5">
-                      <p className="flex items-center justify-between gap-2 text-[13px] font-semibold">
-                        <span className="truncate">{item.name}</span>
-                        <span className="shrink-0 tabular-nums">{item.time}</span>
-                      </p>
-                      <p className="mt-0.5 truncate text-[12px] text-muted">{item.property}</p>
-                      <p className="mt-1 text-[11px] font-semibold text-emerald">{visitStatusLabel(item.status)}</p>
+                    <li key={item.id}>
+                      {item.leadId ? (
+                        <Link to={`${base}/leads/${item.leadId}`} className="block rounded-xl bg-canvas px-3 py-2.5 hover:bg-white/5">
+                          <p className="flex items-center justify-between gap-2 text-[13px] font-semibold">
+                            <span className="truncate">{item.name}</span>
+                            <span className="shrink-0 tabular-nums">{item.time}</span>
+                          </p>
+                          <p className="mt-0.5 truncate text-[12px] text-muted">{item.property}</p>
+                          <p className="mt-1 text-[11px] font-semibold text-emerald">{visitStatusLabel(item.status)}</p>
+                        </Link>
+                      ) : (
+                        <div className="rounded-xl bg-canvas px-3 py-2.5">
+                          <p className="flex items-center justify-between gap-2 text-[13px] font-semibold">
+                            <span className="truncate">{item.name}</span>
+                            <span className="shrink-0 tabular-nums">{item.time}</span>
+                          </p>
+                          <p className="mt-0.5 truncate text-[12px] text-muted">{item.property}</p>
+                          <p className="mt-1 text-[11px] font-semibold text-emerald">{visitStatusLabel(item.status)}</p>
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>

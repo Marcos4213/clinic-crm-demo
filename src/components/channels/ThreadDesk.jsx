@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { ArrowLeft, Search, Send } from 'lucide-react'
 import { initials, temperatureLabel } from '../../domain/crm'
+import { appBase, leadIdFromThread } from '../../domain/lead-sheet'
 import useCompactViewport from '../../hooks/useCompactViewport'
+import { useCrm } from '../../state/useCrm'
 
 const TEMPERATURE_TONE = {
   quente: 'bg-emerald/15 text-emerald',
@@ -37,6 +40,9 @@ function roleLabel(message, thread) {
 }
 
 export default function ThreadDesk({ threads, emptyTitle, emptyDetail, composeLabel = 'Mensagem' }) {
+  const crm = useCrm()
+  const location = useLocation()
+  const base = appBase(location.pathname)
   const compact = useCompactViewport()
   const [query, setQuery] = useState('')
   const [pendingOnly, setPendingOnly] = useState(true)
@@ -81,6 +87,8 @@ export default function ThreadDesk({ threads, emptyTitle, emptyDetail, composeLa
   function assume() {
     if (!active) return
     setPaused((current) => ({ ...current, [active.id]: true }))
+    const profileId = leadIdFromThread(active)
+    if (profileId && crm.assumeLead) crm.assumeLead(profileId)
   }
 
   function returnToHelena() {
@@ -91,6 +99,14 @@ export default function ThreadDesk({ threads, emptyTitle, emptyDetail, composeLa
   const list = (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col border-b border-line lg:border-r lg:border-b-0">
       <div className="shrink-0 space-y-2 border-b border-line px-3 py-3">
+        {crm.nextBroker && (
+          <p className="text-[12px] text-muted">
+            Próximo da vez:{' '}
+            <Link to={`${base}/equipe`} className="font-semibold text-emerald">
+              {crm.nextBroker.name}
+            </Link>
+          </p>
+        )}
         <div className="relative">
           <Search size={15} strokeWidth={1.75} aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted" />
           <input
@@ -188,6 +204,11 @@ export default function ThreadDesk({ threads, emptyTitle, emptyDetail, composeLa
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
               <TemperatureBadge temperature={active.temperature} />
               {active.waiting && active.waitingFor && <span className="text-[11px] font-semibold text-emerald">À espera há {active.waitingFor}</span>}
+              {leadIdFromThread(active) && (
+                <Link to={`${base}/leads/${leadIdFromThread(active)}`} className="text-[11px] font-semibold text-emerald">
+                  Ficha
+                </Link>
+              )}
             </div>
           </div>
           {helenaOn ? (
@@ -281,7 +302,7 @@ export default function ThreadDesk({ threads, emptyTitle, emptyDetail, composeLa
             <p className="mt-0.5 font-semibold tabular-nums">{active.waiting ? active.waitingFor || 'Aguardando' : 'Em dia'}</p>
           </div>
         </div>
-        <div className="mt-5">
+        <div className="mt-5 space-y-2">
           {helenaOn ? (
             <button type="button" onClick={assume} className="h-9 w-full rounded-lg bg-emerald px-3 text-[12.5px] font-semibold text-navy-950">
               Assumir
@@ -290,6 +311,11 @@ export default function ThreadDesk({ threads, emptyTitle, emptyDetail, composeLa
             <button type="button" onClick={returnToHelena} className="h-9 w-full rounded-lg border border-emerald px-3 text-[12.5px] font-semibold text-emerald">
               Devolver à Helena
             </button>
+          )}
+          {leadIdFromThread(active) && (
+            <Link to={`${base}/leads/${leadIdFromThread(active)}`} className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-line text-[12.5px] font-semibold text-ink">
+              Abrir ficha
+            </Link>
           )}
         </div>
       </div>

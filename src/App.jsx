@@ -4,7 +4,9 @@ import Sidebar from './components/layout/Sidebar'
 import SiteLegalFooter from './components/layout/SiteLegalFooter'
 import Agenda from './pages/Agenda'
 import { InstagramDirect, InstagramLayout } from './pages/InstagramDesk'
+import Equipe from './pages/Equipe'
 import Home from './pages/Home'
+import LeadProfile from './pages/LeadProfile'
 import Integrations from './pages/Integrations'
 import Metrics from './pages/Metrics'
 import Pipeline from './pages/Pipeline'
@@ -139,7 +141,9 @@ function workspaceRoutes(prefix) {
         <Route path="direct" element={<DirectComposePane />} />
         <Route path="agendamento" element={<SchedulePane channel="instagram" />} />
       </Route>
+      <Route path="leads/:leadId" element={<LeadProfile />} />
       <Route path="pipeline" element={<Pipeline />} />
+      <Route path="equipe" element={<Equipe />} />
       <Route path="agenda" element={<Agenda />} />
       <Route path="avaliacoes" element={<Reviews />} />
       <Route path="portfolio" element={<Portfolio />} />

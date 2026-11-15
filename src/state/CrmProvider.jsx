@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+import { cloneBrokers, cloneLeadProfiles, demoNextBrokerId } from '../data/demo-leads'
 import { sampleLeads } from '../data/sampleLeads'
 import { columnLabel, countByColumn, filterLeads, moveLead, sendHumanMessage, setAiActive } from '../domain/crm'
 import { hasScheduledConflict, zonedLocalToUtc } from '../../supabase/functions/_shared/schedule.js'
 import { clinicDateKey } from '../domain/insights'
+import { assignHotLead, brokerName, currentTurn, moveBroker as moveBrokerOrder, resolveNextAfterPause } from '../domain/roulette'
 import { CrmContext } from './crm-context'
 
 const cloneLeads = () => sampleLeads.map((lead) => ({ ...lead, messages: lead.messages.map((message) => ({ ...message })) }))
@@ -43,6 +45,9 @@ export function CrmProvider({ children }) {
     day_end: '18:00',
     slot_minutes: 30,
   })
+  const [brokers, setBrokers] = useState(cloneBrokers)
+  const [nextBrokerId, setNextBrokerId] = useState(demoNextBrokerId)
+  const [leadProfiles, setLeadProfiles] = useState(cloneLeadProfiles)
 
   const visibleLeads = useMemo(() => filterLeads(leads, { query, temperature }), [leads, query, temperature])
   const counts = useMemo(() => countByColumn(visibleLeads), [visibleLeads])
@@ -71,6 +76,118 @@ export function CrmProvider({ children }) {
     const lead = leads.find((item) => item.id === leadId)
     if (!lead) return
     setLeads(setAiActive(leads, leadId, !lead.aiActive))
+  }
+
+  function appendEvent(leadId, event) {
+    setLeadProfiles((current) =>
+      current.map((lead) =>
+        lead.id === leadId
+          ? {
+              ...lead,
+              events: [
+                ...lead.events,
+                { id: `local-${leadId}-${lead.events.length + 1}`, at: new Date().toISOString(), ...event },
+              ],
+            }
+          : lead,
+      ),
+    )
+  }
+
+  function setBrokerActive(brokerId, active) {
+    setBrokers((current) => {
+      const next = current.map((broker) => (broker.id === brokerId ? { ...broker, active } : broker))
+      setNextBrokerId((pointer) => resolveNextAfterPause(next, pointer))
+      return next
+    })
+  }
+
+  function moveBroker(brokerId, direction) {
+    setBrokers((current) => moveBrokerOrder(current, brokerId, direction))
+  }
+
+  function assignLeadTo(leadId, brokerId, { source = 'manual' } = {}) {
+    const broker = brokers.find((item) => item.id === brokerId)
+    if (!broker) return
+    setLeadProfiles((current) =>
+      current.map((lead) =>
+        lead.id === leadId
+          ? {
+              ...lead,
+              brokerId,
+              events: [
+                ...lead.events,
+                {
+                  id: `local-${leadId}-${lead.events.length + 1}`,
+                  type: 'assigned',
+                  actor: source === 'roulette' ? 'Roleta' : 'Você',
+                  detail: source === 'roulette' ? `Caiu para ${broker.name}, corretor da vez.` : `Reatribuído para ${broker.name}.`,
+                  at: new Date().toISOString(),
+                },
+              ],
+            }
+          : lead,
+      ),
+    )
+    if (source === 'roulette') {
+      setNextBrokerId(assignHotLead({ id: leadId }, brokers, nextBrokerId).nextBrokerId)
+    }
+    setAnnouncement(`${broker.name} ficou com o lead.`)
+  }
+
+  function assignByRoulette(leadId) {
+    const result = assignHotLead(leadProfiles.find((item) => item.id === leadId) || { id: leadId }, brokers, nextBrokerId)
+    if (!result.lead.brokerId) {
+      setAnnouncement('Nenhum corretor ativo na roleta.')
+      return
+    }
+    assignLeadTo(leadId, result.lead.brokerId, { source: 'roulette' })
+  }
+
+  function assumeLead(leadId) {
+    const lead = leadProfiles.find((item) => item.id === leadId)
+    if (!lead) return
+    let brokerId = lead.brokerId
+    if (!brokerId) {
+      const result = assignHotLead(lead, brokers, nextBrokerId)
+      brokerId = result.lead.brokerId
+      if (brokerId) {
+        assignLeadTo(leadId, brokerId, { source: 'roulette' })
+      }
+    }
+    setLeadProfiles((current) =>
+      current.map((item) => (item.id === leadId ? { ...item, helenaActive: false, waiting: false } : item)),
+    )
+    setLeads((current) => setAiActive(current, leadId, false))
+    appendEvent(leadId, { type: 'assumed', actor: 'Você', detail: 'Você assumiu o atendimento.' })
+    const name = brokerName(brokers, brokerId)
+    setAnnouncement(name ? `Você assumiu. Corretor: ${name}.` : 'Você assumiu o atendimento.')
+  }
+
+  function addLeadNote(leadId, body) {
+    const text = String(body ?? '').trim()
+    if (!text) return
+    setLeadProfiles((current) =>
+      current.map((lead) =>
+        lead.id === leadId
+          ? {
+              ...lead,
+              notes: [
+                ...lead.notes,
+                { id: `note-local-${lead.notes.length + 1}`, author: 'Você', body: text, at: new Date().toISOString() },
+              ],
+            }
+          : lead,
+      ),
+    )
+    setAnnouncement('Nota gravada só nesta demonstração.')
+  }
+
+  function saveNextStep(leadId, nextStep) {
+    setLeadProfiles((current) =>
+      current.map((lead) => (lead.id === leadId ? { ...lead, nextStep } : lead)),
+    )
+    setAnnouncement('Próximo passo gravado só nesta demonstração.')
   }
 
   function setDraft(text) {
@@ -149,6 +266,9 @@ export function CrmProvider({ children }) {
     setAppointments(seedAppointments())
     setStageEvents([])
     setReviewAsks([])
+    setBrokers(cloneBrokers())
+    setNextBrokerId(demoNextBrokerId)
+    setLeadProfiles(cloneLeadProfiles())
     setAnnouncement('Amostra local restaurada. Nada foi gravado em uma clínica.')
   }
 
@@ -183,6 +303,17 @@ export function CrmProvider({ children }) {
     integrations: [],
     saveClinicProfile,
     resetDemo,
+    brokers,
+    nextBrokerId,
+    nextBroker: currentTurn(brokers, nextBrokerId),
+    leadProfiles,
+    setBrokerActive,
+    moveBroker,
+    assignLeadTo,
+    assignByRoulette,
+    assumeLead,
+    addLeadNote,
+    saveNextStep,
   }
 
   return <CrmContext.Provider value={value}>{children}</CrmContext.Provider>

@@ -342,6 +342,17 @@ export function WorkspaceProvider({ client, children }) {
     createLead: clinic ? createLead : undefined,
     askAi: clinic ? askAi : undefined,
     aiNotice,
+    brokers: [],
+    nextBrokerId: null,
+    nextBroker: null,
+    leadProfiles: [],
+    setBrokerActive() {},
+    moveBroker() {},
+    assignLeadTo() {},
+    assignByRoulette() {},
+    assumeLead() {},
+    addLeadNote() {},
+    saveNextStep() {},
   }
 
   return <CrmContext.Provider value={value}>{children}</CrmContext.Provider>
