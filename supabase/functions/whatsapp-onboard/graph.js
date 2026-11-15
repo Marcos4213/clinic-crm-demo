@@ -90,8 +90,10 @@ export function tokenExchangeUrl({ graphVersion, appId, appSecret, code, redirec
 
 // Meta error 100/36008 means the code was issued for a different redirect_uri.
 // The JS SDK popup may bind the code to the page URL, the origin, or nothing.
-export function redirectUriCandidates(origin) {
-  const list = [undefined]
+export function redirectUriCandidates(origin, callbackUri = '') {
+  const list = []
+  if (isAllowedCallback(callbackUri, origin)) list.push(callbackUri)
+  list.push(undefined)
   if (origin && /^https?:\/\/[^/]+$/.test(origin)) list.push(`${origin}/`, origin)
   list.push('')
   return list
@@ -113,4 +115,14 @@ export async function readResponsePayload(response) {
 
 export function assertNoRedirectUri(url) {
   return !url.searchParams.has('redirect_uri')
+}
+
+export function isAllowedCallback(uri, origin) {
+  if (!uri || !origin) return false
+  try {
+    const url = new URL(uri)
+    return url.origin === origin && url.pathname.endsWith('/meta-callback.html') && !url.search && !url.hash
+  } catch {
+    return false
+  }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { embeddedSignupOptions, readSignupSession } from '../domain/embedded-signup'
+import { readSignupSession } from '../domain/embedded-signup'
+import { openMetaSignup } from './meta-oauth-popup'
 
 export function signupFailureMessage(payload, catalog, fallback) {
   const base = catalog[payload?.error] || fallback
@@ -13,24 +14,6 @@ export function signupFailureMessage(payload, catalog, fallback) {
   return detail ? `${base} (${detail})` : base
 }
 
-function loadFacebookSdk(appId) {
-  if (window.FB) {
-    window.FB.init({ appId, cookie: false, xfbml: false, version: 'v27.0' })
-    return Promise.resolve(window.FB)
-  }
-  return new Promise((resolve, reject) => {
-    window.fbAsyncInit = () => {
-      window.FB.init({ appId, cookie: false, xfbml: false, version: 'v27.0' })
-      resolve(window.FB)
-    }
-    const script = document.createElement('script')
-    script.src = 'https://connect.facebook.net/pt_BR/sdk.js'
-    script.async = true
-    script.onerror = () => reject(new Error('sdk'))
-    document.body.appendChild(script)
-  })
-}
-
 export function useWhatsappSignup(client, clinicId) {
   const [config, setConfig] = useState({ configured: false, connected: false, ready: false })
   const [pending, setPending] = useState(false)
@@ -38,6 +21,7 @@ export function useWhatsappSignup(client, clinicId) {
   const [revision, setRevision] = useState(0)
   const sessionRef = useRef(null)
   const codeRef = useRef('')
+  const redirectRef = useRef('')
   const finishingRef = useRef(false)
   const pinRef = useRef('')
   const clientRef = useRef(client)
@@ -98,6 +82,7 @@ export function useWhatsappSignup(client, clinicId) {
       body: {
         clinicId: clinic,
         code,
+        redirectUri: redirectRef.current,
         phoneNumberId: session?.phoneNumberId || '',
         wabaId: session?.wabaId || '',
         event: session?.event || 'CODE_ONLY',
@@ -157,14 +142,8 @@ export function useWhatsappSignup(client, clinicId) {
     pinRef.current = /^[0-9]{6}$/.test(String(pin ?? '')) ? String(pin) : ''
     setSignupNotice('')
     try {
-      const fb = await loadFacebookSdk(config.appId)
-      const code = await new Promise((resolve, reject) => {
-        if (!fb?.login) {
-          reject(new Error('sdk'))
-          return
-        }
-        fb.login((response) => resolve(response?.authResponse?.code ?? ''), embeddedSignupOptions(config))
-      })
+      const { code, redirectUri } = await openMetaSignup(config)
+      redirectRef.current = redirectUri
       if (!code) {
         setSignupNotice('A janela da Meta foi fechada antes de ligar o WhatsApp do celular.')
         return

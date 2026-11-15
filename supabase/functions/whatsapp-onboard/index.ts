@@ -104,13 +104,13 @@ function upstreamResponse(request: Request, error: unknown, fallbackStep: string
   return withCors(request, json({ error: 'upstream', step: fallbackStep, connected: false }, 502))
 }
 
-async function exchangeCode(code: string, origin = '') {
+async function exchangeCode(code: string, origin = '', callbackUri = '') {
   // Official Embedded Signup exchange is GET /oauth/access_token with client_id,
   // client_secret and code. If Meta answers 100/36008 (redirect_uri mismatch),
   // retry with the redirect_uri candidates the JS SDK may have bound the code to.
   let response: Response | null = null
   let payload: any = {}
-  for (const redirectUri of redirectUriCandidates(ALLOWED_ORIGINS.has(origin) ? origin : '')) {
+  for (const redirectUri of redirectUriCandidates(ALLOWED_ORIGINS.has(origin) ? origin : '', callbackUri)) {
     const url = tokenExchangeUrl({
       graphVersion: graphVersion(),
       appId: Deno.env.get('WHATSAPP_APP_ID') ?? '',
@@ -300,7 +300,7 @@ export default {
     if (request.method !== 'POST') return withCors(request, json({ error: 'method_not_allowed', connected: false }, 405))
     if (!config.configured) return withCors(request, json({ error: 'signup_unconfigured', connected: false }, 503))
 
-    let body: { clinicId?: string; code?: string; phoneNumberId?: string; wabaId?: string; event?: string; pin?: string } = {}
+    let body: { clinicId?: string; code?: string; redirectUri?: string; phoneNumberId?: string; wabaId?: string; event?: string; pin?: string } = {}
     try {
       body = await request.json()
     } catch {
@@ -331,7 +331,7 @@ export default {
 
     let token
     try {
-      token = await exchangeCode(String(body.code), request.headers.get('Origin') ?? '')
+      token = await exchangeCode(String(body.code), request.headers.get('Origin') ?? '', String(body.redirectUri ?? ''))
     } catch (error) {
       return upstreamResponse(request, error, GRAPH_STEPS.exchange_code)
     }
