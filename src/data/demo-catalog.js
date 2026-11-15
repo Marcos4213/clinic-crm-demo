@@ -4,20 +4,25 @@ function thread(id, name, procedure, waiting, messages) {
   return { id, name, procedure, waiting, channelLabel: 'Demonstração', messages }
 }
 
+function waThread(id, name, property, waiting, messages, extra) {
+  return { ...thread(id, name, property, waiting, messages), property, ...extra }
+}
+
 export const demoWhatsappThreads = [
-  thread('wa-maria', 'Maria Silva', 'Botox', true, [
-    { id: 'wa-maria-1', role: 'ia', text: 'Oi, Maria. Vi seu interesse na avaliação de Botox. Posso te explicar como a consulta funciona?', at: t('09', '14') },
-    { id: 'wa-maria-2', role: 'cliente', text: 'Quero entender como funciona a avaliação. Ainda estou pesquisando.', at: t('09', '16') },
-  ]),
-  thread('wa-joao', 'João Pedro', 'Implante capilar', true, [
-    { id: 'wa-joao-1', role: 'cliente', text: 'Bom dia. Queria saber se a avaliação de implante pode ser nesta semana.', at: t('08', '41') },
-    { id: 'wa-joao-2', role: 'humano', text: 'João, deixo dois horários ilustrativos: quinta às 10h ou sexta às 16h.', at: t('08', '48') },
-    { id: 'wa-joao-3', role: 'cliente', text: 'Pode ser sexta. Ainda é só uma conversa de demonstração, certo?', at: t('08', '52') },
-  ]),
-  thread('wa-beatriz', 'Beatriz Lima', 'Lifting de sobrancelha', false, [
-    { id: 'wa-beatriz-1', role: 'cliente', text: 'Confirmo a consulta de hoje.', at: t('07', '50') },
-    { id: 'wa-beatriz-2', role: 'humano', text: 'Confirmado na amostra. Nenhum lembrete saiu do WhatsApp real.', at: t('07', '55') },
-  ]),
+  waThread('wa-maria', 'Maria Silva', 'Apto 2 dorm. · Vila Madalena', true, [
+    { id: 'wa-maria-1', role: 'ia', text: 'Oi, Maria. Vi seu interesse no apartamento de 2 dormitórios na Vila Madalena. É para compra ou aluguel?', at: t('09', '14') },
+    { id: 'wa-maria-2', role: 'cliente', text: 'Compra. Quero nessa região, até 850 mil, com entrada e financiamento. Preciso ver ainda este mês.', at: t('09', '16') },
+    { id: 'wa-maria-3', role: 'ia', text: 'Combinado. Faixa e prazo fecham com o que temos. Posso te passar para o Carlos, corretor da vez, e agendar a visita?', at: t('09', '18') },
+  ], { temperature: 'quente', broker: 'Carlos Mendes', waitingFor: '12 min', helenaActive: true, interest: 'Compra · até R$ 850 mil · este mês', region: 'Vila Madalena' }),
+  waThread('wa-joao', 'João Pedro', 'Casa em condomínio · Alphaville', true, [
+    { id: 'wa-joao-1', role: 'cliente', text: 'Bom dia. Queria um aluguel de casa em Alphaville, até 8 mil.', at: t('08', '41') },
+    { id: 'wa-joao-2', role: 'ia', text: 'Oi, João. Aluguel em Alphaville, até R$ 8 mil. Qual o prazo para mudar?', at: t('08', '48') },
+    { id: 'wa-joao-3', role: 'cliente', text: 'Se achar uma boa, em 30 dias está bom.', at: t('08', '52') },
+  ], { temperature: 'morno', broker: 'Ana Souza', waitingFor: '28 min', helenaActive: true, interest: 'Aluguel · até R$ 8 mil · 30 dias', region: 'Alphaville' }),
+  waThread('wa-beatriz', 'Beatriz Lima', 'Cobertura · Moema', false, [
+    { id: 'wa-beatriz-1', role: 'cliente', text: 'Confirmo a visita de hoje às 16h.', at: t('07', '50') },
+    { id: 'wa-beatriz-2', role: 'humano', text: 'Confirmado, Beatriz. O Carlos te espera às 16h no imóvel.', at: t('07', '55') },
+  ], { temperature: 'quente', broker: 'Carlos Mendes', helenaActive: false, interest: 'Compra · visita hoje às 16h', region: 'Moema' }),
 ]
 
 export const demoInstagramThreads = [

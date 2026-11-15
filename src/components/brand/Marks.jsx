@@ -41,3 +41,21 @@ export function ProductMark({ className = 'h-5 w-5' }) {
     </svg>
   )
 }
+
+export function PlantaoDot({ className = 'h-2.5 w-2.5' }) {
+  return (
+    <span
+      className={`inline-block shrink-0 rounded-full bg-emerald shadow-[0_0_0_4px_rgba(46,229,157,0.25)] ${className}`}
+      aria-hidden="true"
+    />
+  )
+}
+
+export function PlantaoWordmark({ className = '', label = 'Plantão' }) {
+  return (
+    <span className={`inline-flex items-center gap-2 font-extrabold tracking-tight text-ink ${className}`}>
+      <PlantaoDot />
+      {label}
+    </span>
+  )
+}

@@ -9,13 +9,10 @@ function legalHref(file) {
 export default function SiteLegalFooter() {
   const location = useLocation()
   const inAppShell = location.pathname.startsWith('/demo') || location.pathname.startsWith('/app')
+  if (inAppShell) return null
 
   return (
-    <footer
-      className={`site-legal shrink-0 border-t border-line bg-canvas px-4 py-3 text-center text-[11px] leading-5 text-muted ${
-        inAppShell ? 'max-lg:pb-[140px]' : ''
-      }`}
-    >
+    <footer className="site-legal shrink-0 border-t border-line bg-canvas px-4 py-3 text-center text-[11px] leading-5 text-muted">
       <p>
         Automatize.app é um produto da DevBrasil · {LEGAL_RAZAO_SOCIAL} · CNPJ {LEGAL_CNPJ} · Barueri/SP ·{' '}
         <a className="text-muted underline decoration-line underline-offset-2 hover:text-ink" href={`mailto:${LEGAL_EMAIL}`}>

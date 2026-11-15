@@ -1,5 +1,5 @@
 import { HashRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
-import { ProductMark } from './components/brand/Marks'
+import { PlantaoWordmark } from './components/brand/Marks'
 import Sidebar from './components/layout/Sidebar'
 import SiteLegalFooter from './components/layout/SiteLegalFooter'
 import Agenda from './pages/Agenda'
@@ -23,7 +23,7 @@ import { WorkspaceProvider } from './state/WorkspaceProvider'
 function Frame({ base, demo = false }) {
   const auth = useAuth()
   return (
-    <div className="flex h-full min-h-0 flex-col bg-canvas text-ink lg:flex-row">
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-canvas text-ink lg:flex-row">
       <a
         href="#conteudo"
         className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:bg-surface focus:px-3 focus:py-2 focus:text-ink"
@@ -31,14 +31,9 @@ function Frame({ base, demo = false }) {
         Ir para o conteúdo
       </a>
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-line px-4 lg:hidden">
-        <span className="flex items-center gap-2 text-[13px] font-semibold tracking-tight">
-          <span className="grid h-8 w-8 place-items-center rounded-xl bg-navy-800">
-            <ProductMark className="h-4 w-4" />
-          </span>
-          Automatize.app
-        </span>
+        <PlantaoWordmark className="text-[16px]" />
         {demo ? (
-          <span className="text-[10px] font-semibold tracking-[0.14em] text-emerald uppercase">Demonstração</span>
+          <span className="rounded-full bg-teal-100/30 px-2 py-0.5 text-[10px] font-semibold tracking-[0.14em] text-emerald uppercase">Demo</span>
         ) : (
           <button type="button" onClick={() => auth.signOut()} className="text-[12px] font-semibold text-muted">
             Sair
@@ -46,7 +41,7 @@ function Frame({ base, demo = false }) {
         )}
       </header>
       <Sidebar base={base} demo={demo} />
-      <main id="conteudo" className="flex min-h-0 min-w-0 flex-1 pb-[132px] lg:pb-0">
+      <main id="conteudo" className="flex min-h-0 min-w-0 flex-1 pb-16 lg:pb-0">
         <Outlet />
       </main>
     </div>
@@ -163,7 +158,7 @@ export default function App() {
     <AuthProvider>
       <HashRouter>
         <div className="flex min-h-dvh flex-col">
-          <div className="min-h-0 flex-1">
+          <div className="flex min-h-0 flex-1 flex-col">
             <Routes>
               <Route path="/demo" element={<DemoLayout />}>
                 {workspaceRoutes('demo')}

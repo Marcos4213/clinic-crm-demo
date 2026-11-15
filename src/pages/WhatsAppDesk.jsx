@@ -7,7 +7,7 @@ import { useCrm } from '../state/useCrm'
 import WhatsAppTest from './WhatsApp'
 
 const TABS = [
-  { slug: '', end: true, label: 'Conversas', title: 'WhatsApp' },
+  { slug: '', end: true, label: 'Conversas', title: 'Conversas' },
   { slug: 'disparos', label: 'Disparos em Massa', title: 'Disparos em Massa' },
   { slug: 'agendamento', label: 'Agendamento de mensagens', title: 'Agendamento de mensagens' },
   { slug: 'follow-up', label: 'Follow-up', title: 'Follow-up' },
@@ -23,13 +23,19 @@ export function WhatsAppLayout() {
   const { pathname } = useLocation()
   const tab = activeTab(pathname)
   const base = pathname.replace(/\/whatsapp.*/, '/whatsapp')
+  const conversations = !tab.slug
+  const tools = TABS.filter((item) => item.slug).map((item) => ({
+    to: `${base}/${item.slug}`,
+    label: item.label,
+  }))
   return (
     <ChannelShell
-      logo={<WhatsAppMark className="h-10 w-10" />}
-      kicker="Canal oficial"
+      logo={<WhatsAppMark className="h-9 w-9" />}
       title={tab.title}
       label="WhatsApp"
-      tabs={TABS.map((item) => ({ to: item.slug ? `${base}/${item.slug}` : base, end: item.end, label: item.label }))}
+      tools={tools}
+      tabs={conversations ? [] : [{ to: base, end: true, label: 'Conversas' }]}
+      flush={conversations}
     >
       <Outlet />
     </ChannelShell>
@@ -39,14 +45,7 @@ export function WhatsAppLayout() {
 export function WhatsAppConversations() {
   const demo = useCrm().mode !== 'workspace'
   if (demo) {
-    return (
-      <ThreadDesk
-        threads={demoWhatsappThreads}
-        composeLabel="Resposta só nesta demonstração"
-        emptyTitle="Nenhuma conversa de WhatsApp"
-        emptyDetail="A amostra não tem mensagens deste canal."
-      />
-    )
+    return <ThreadDesk threads={demoWhatsappThreads} composeLabel="Mensagem" emptyTitle="Nenhuma conversa pendente" emptyDetail="Quando um lead chamar no WhatsApp, ele aparece aqui." />
   }
   return <WhatsAppTest />
 }

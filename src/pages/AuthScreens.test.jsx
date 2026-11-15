@@ -21,7 +21,7 @@ describe('auth entry', () => {
 })
 
 describe('legal identification', () => {
-  it('shows razão social and CNPJ on login and in the demo shell', async () => {
+  it('shows razão social and CNPJ on login, not inside the app shell', async () => {
     const user = userEvent.setup()
     render(<App />)
     const razao = /60\.095\.721 MARCOS PAULO DA SILVA/
@@ -29,8 +29,9 @@ describe('legal identification', () => {
     expect(screen.getByText(razao)).toBeInTheDocument()
     expect(screen.getByText(cnpj)).toBeInTheDocument()
     await user.click(screen.getByRole('link', { name: 'Abrir demonstração local' }))
-    expect(screen.getByText(razao)).toBeInTheDocument()
-    expect(screen.getByText(cnpj)).toBeInTheDocument()
+    expect(screen.queryByText(razao)).not.toBeInTheDocument()
+    expect(screen.queryByText(cnpj)).not.toBeInTheDocument()
+    expect(screen.getAllByText('Demo').length).toBeGreaterThan(0)
   })
 })
 

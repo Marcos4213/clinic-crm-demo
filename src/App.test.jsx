@@ -165,7 +165,8 @@ describe('other sections and compact layout', () => {
     render(<App />)
 
     await user.click(screen.getByRole('link', { name: 'WhatsApp' }))
-    await user.click(screen.getByRole('link', { name: 'Disparos em Massa' }))
+    await user.click(screen.getByRole('button', { name: 'Automação' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Disparos em Massa' }))
     expect(screen.getByRole('heading', { level: 1, name: 'Disparos em Massa' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Envio desativado — sem integração' })).toBeDisabled()
     expect(screen.getByText(/nenhuma campanha é criada/i)).toBeInTheDocument()

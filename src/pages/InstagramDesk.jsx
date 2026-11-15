@@ -23,11 +23,11 @@ export function InstagramLayout() {
   const base = pathname.replace(/\/instagram.*/, '/instagram')
   return (
     <ChannelShell
-      logo={<InstagramMark className="h-10 w-10" />}
-      kicker="Direct e comentários"
+      logo={<InstagramMark className="h-9 w-9" />}
       title={tab.title}
       label="Instagram"
       tabs={TABS.map((item) => ({ to: item.slug ? `${base}/${item.slug}` : base, end: item.end, label: item.label }))}
+      flush={!tab.slug}
     >
       <Outlet />
     </ChannelShell>
@@ -46,7 +46,7 @@ export function InstagramDirect() {
   return (
     <ThreadDesk
       threads={demoInstagramThreads}
-      composeLabel="Resposta só nesta demonstração"
+      composeLabel="Mensagem"
       emptyTitle="Nenhum direct"
       emptyDetail="A amostra não tem conversas do Instagram."
     />
