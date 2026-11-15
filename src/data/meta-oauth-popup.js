@@ -3,9 +3,11 @@
 // dialog ourselves and exchange the code with this exact, whitelisted callback URL.
 export const META_CALLBACK_FILE = 'meta-callback.html'
 
-export function metaRedirectUri(origin, base = '/') {
-  const path = base.endsWith('/') ? base : `${base}/`
-  return `${origin}${path}${META_CALLBACK_FILE}`
+export function metaRedirectUri(pageUrl) {
+  const url = new URL(META_CALLBACK_FILE, String(pageUrl).split('#')[0])
+  url.search = ''
+  url.hash = ''
+  return url.toString()
 }
 
 export function buildMetaDialogUrl(config, redirectUri, state, version = 'v27.0') {
@@ -33,7 +35,7 @@ export function readCallbackMessage(event, expectedOrigin, state) {
 
 export function openMetaSignup(config) {
   const origin = window.location.origin
-  const redirectUri = metaRedirectUri(origin, import.meta.env?.BASE_URL || '/')
+  const redirectUri = metaRedirectUri(window.location.href)
   const state = Math.random().toString(36).slice(2) + Date.now().toString(36)
   const popup = window.open(buildMetaDialogUrl(config, redirectUri, state), 'meta_signup', 'width=640,height=820')
   if (!popup) return Promise.reject(new Error('popup'))
