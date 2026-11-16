@@ -1246,3 +1246,9 @@ h2 {
   .role-split.is-phone { grid-template-columns: 300px minmax(0, 1fr); }
   .modules { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+
+/* Desktop: etapas do método em coluna, cada nome numa linha só (16/11/2026). */
+@media (min-width: 720px) {
+  .track { flex-direction: column; flex-wrap: nowrap; gap: 4px; }
+  .track button { flex-direction: row; justify-content: flex-start; gap: 10px; min-width: 0; text-align: left; white-space: nowrap; font-size: 13px; }
+}
