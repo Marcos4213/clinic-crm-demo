@@ -41,6 +41,11 @@ jobs:
           cp apresentacao/index.html apresentacao/apresentacao.css apresentacao/apresentacao.js apresentacao/config.js apresentacao/og.png apresentacao/favicon.svg apresentacao/favicon.ico dist/apresentacao/
           cp -R apresentacao/audio dist/apresentacao/audio
           cp -R apresentacao/painel dist/apresentacao/painel
+      - name: Include Plantão presentation page
+        # Página de apresentação do Plantão para imobiliárias, servida em /plantao/.
+        run: |
+          mkdir -p dist/plantao
+          cp plantao/index.html plantao/plantao.css plantao/plantao.js plantao/config.js plantao/favicon.svg dist/plantao/
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
