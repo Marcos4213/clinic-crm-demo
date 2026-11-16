@@ -52,18 +52,12 @@ export const PUBLIC_ORIGIN = 'https://apresentacao.devbrasil.online/'
 
 export const DEMO_ORIGIN = 'https://automatize.devbrasil.online'
 
-export const CTA_LABEL = 'Agendar 15 minutos com o Marcos'
+export const CTA_LABEL = 'Ver o painel em 15 minutos'
 
-export const CTA_HELP =
-  'Uma apresentação rápida do aplicativo por dentro, e de onde a clínica perde paciente hoje.'
+export const CTA_HELP = 'Uma conversa rápida pelo WhatsApp, no horário que for melhor pra você.'
 
 export const BOOKING_TEXT =
   'Olá, Marcos! Vi a apresentação da Automatize e quero agendar 15 minutos para ver o aplicativo por dentro.'
-
-export const DOCTORALIA_STAT =
-  'Pesquisa da Doctoralia: 80% dos pacientes escolhem o especialista pelas avaliações online.'
-
-export const DOCTORALIA_SOURCE = 'Fonte: pesquisa Paciente Digital, Doctoralia, 2023. Não é um resultado da Automatize.'
 
 function demoPath(route) {
   return `${DEMO_ORIGIN}/#${route}`
@@ -86,59 +80,86 @@ export const MODULES = [
     id: 'inicio',
     label: 'Início',
     demo: MODULE_DEMOS.inicio,
-    copy: 'O doutor vê o dia. A recepção vê a fila, a agenda e o retorno.',
+    copy: 'O dia da clínica numa tela: fila, agenda e retornos.',
   },
   {
     id: 'whatsapp',
     label: 'WhatsApp',
     demo: MODULE_DEMOS.whatsapp,
-    copy: 'Resposta, agenda, follow-up e remarketing neste canal.',
+    copy: 'Atendimento, agendamento, retorno e lembretes no número da clínica.',
   },
   {
     id: 'instagram',
     label: 'Instagram',
     demo: MODULE_DEMOS.instagram,
     mark: true,
-    copy: 'Direct, comentário e agendamento. A conta entra na implantação.',
+    copy: 'Direct e comentários respondidos e levados até a agenda.',
   },
   {
-    id: 'pipeline',
-    label: 'Pipeline',
+    id: 'crm',
+    label: 'CRM',
     demo: MODULE_DEMOS.pipeline,
-    copy: 'Do primeiro contato ao paciente atendido, cada um no seu lugar.',
+    copy: 'Cada paciente na sua etapa, do primeiro contato à consulta.',
   },
   {
     id: 'agenda',
     label: 'Agenda',
     demo: MODULE_DEMOS.agenda,
-    copy: 'A agenda interna, ou a agenda que a clínica já usa.',
+    copy: 'A agenda do sistema ou a que a clínica já usa.',
   },
   {
     id: 'avaliacoes',
     label: 'Google',
     demo: MODULE_DEMOS.avaliacoes,
     mark: true,
-    copy: 'O pedido de avaliação sai depois da consulta. Entra na implantação.',
+    copy: 'O pedido de avaliação depois de cada consulta.',
   },
   {
-    id: 'portfolio',
-    label: 'Portfólio',
+    id: 'servicos',
+    label: 'Serviços da clínica',
     demo: MODULE_DEMOS.portfolio,
-    copy: 'A IA aprende os serviços da clínica na implantação.',
+    copy: 'O atendimento aprende os procedimentos e as regras da clínica na implantação.',
   },
   {
-    id: 'metricas',
-    label: 'Métricas',
+    id: 'relatorios',
+    label: 'Relatórios',
     demo: MODULE_DEMOS.metricas,
-    copy: 'Funil, canal e tempo de resposta, com exportação. Os números da tela são fictícios.',
-  },
-  {
-    id: 'integracoes',
-    label: 'Integrações',
-    demo: MODULE_DEMOS.integracoes,
-    copy: 'WhatsApp, Instagram, Google e agendas. Nada fica ligado sem a implantação.',
+    copy: 'Canal, etapa e tempo de resposta, com exportação.',
   },
 ]
+
+/**
+ * Linha do hero (abaixo do título) e dor do nicho (1º item da lista de dores).
+ * Só aparece quando o link traz ?nicho=. `replaces` esconde a dor genérica
+ * que diz a mesma coisa, para a lista não repetir.
+ */
+export const NICHE_COPY = {
+  implantes: {
+    hero: 'Quem pesquisa implante pede valor em várias clínicas. A primeira que responde bem sai na frente.',
+    pain: 'A pessoa pergunta do implante, pede o valor e some. Ninguém teve tempo de chamar de novo.',
+    replaces: 'sumiu',
+  },
+  lentes: {
+    hero: 'Quem quer lentes chega pelo Instagram, vendo foto de sorriso. A conversa precisa seguir no mesmo ritmo.',
+    pain: 'Chega o direct “fica natural?” e a resposta só sai no dia seguinte.',
+    replaces: 'noite',
+  },
+  harmonizacao: {
+    hero: 'Harmonização é decisão de quem já te segue. Cada direct merece resposta na hora.',
+    pain: 'A paciente pergunta pelo direct à noite e marca com quem respondeu primeiro.',
+    replaces: 'noite',
+  },
+  plastica: {
+    hero: 'Cirurgia é uma decisão longa. O paciente precisa sentir a clínica perto em cada etapa.',
+    pain: 'O paciente fez a consulta, ficou de pensar, e ninguém voltou a conversar com ele.',
+    replaces: 'sumiu',
+  },
+  dermatologia: {
+    hero: 'Pele é cuidado contínuo. O retorno precisa acontecer sem a recepção ter que lembrar.',
+    pain: 'A paciente faz o primeiro tratamento e o retorno fica pra depois. Depois vira nunca.',
+    replaces: '',
+  },
+}
 
 export const PATIENT_LINES = {
   implantes: 'Oi, boa noite! Vi o perfil de vocês e queria saber como funciona o implante. Dá pra fazer uma avaliação essa semana?',
@@ -251,7 +272,7 @@ export const NICHES = [
     steps: conversation({
       voice: PATIENT_LINES.plastica,
       file: PATIENT_FILES.plastica,
-      firstReply: 'Boa noite. Ouvi seu áudio. Aqui é {team}. A consulta com o doutor é para entender a cirurgia. Vou ver se há horário.',
+      firstReply: 'Boa noite. Ouvi seu áudio. Aqui é {team}. A consulta é para entender a cirurgia. Vou ver se há horário.',
       qualify: 'Qual região você quer avaliar, em linhas gerais?',
       answer: 'O abdômen.',
       offer: 'Tenho quinta às 8h ou sexta às 14h. Qual prefere?',
@@ -281,15 +302,24 @@ export const NICHES = [
   },
 ]
 
-export function resolveNiche(value) {
-  if (!value) return 'implantes'
-  const key = String(value)
+function nicheKey(value) {
+  return String(value)
     .normalize('NFD')
     .replace(/\p{M}/gu, '')
     .toLowerCase()
     .trim()
     .replace(/\s+/g, '-')
-  return ALIAS[key] || 'implantes'
+}
+
+export function resolveNiche(value) {
+  if (!value) return 'implantes'
+  return ALIAS[nicheKey(value)] || 'implantes'
+}
+
+/** Nicho só quando o link traz um valor conhecido. Sem nicho, a página fica genérica. */
+export function explicitNiche(value) {
+  if (!value) return ''
+  return ALIAS[nicheKey(value)] || ''
 }
 
 export function cleanClinic(value) {
@@ -350,6 +380,8 @@ export function pageModel(search, configuredPhone = WHATSAPP_E164) {
   const niche = resolveNiche(nicheQuery)
   const clinic = cleanClinic(params.get('clinica'))
   const nicheLabel = nicheQuery ? (NICHES.find((item) => item.id === niche)?.label ?? '') : ''
+  const chosen = explicitNiche(nicheQuery)
+  const nicheCopy = chosen ? NICHE_COPY[chosen] : null
   const whatsappParam = cleanPhone(params.get('whatsapp'))
   const phone = resolvePhone(whatsappParam, configuredPhone)
   const place = clinic ? `da ${clinic}` : 'da clínica'
@@ -361,8 +393,11 @@ export function pageModel(search, configuredPhone = WHATSAPP_E164) {
     phone,
     href: whatsappHref(phone, { clinic, nicheLabel }),
     kicker: clinic
-      ? `Para a recepção da ${clinic} encaminhar e para o doutor ver em poucos minutos.`
-      : 'Para a recepção encaminhar e para o doutor ver em poucos minutos.',
+      ? `Para a recepção da ${clinic} mostrar pra quem comanda a clínica.`
+      : 'Pra recepção mostrar pra quem comanda a clínica.',
+    nicheHero: nicheCopy?.hero ?? '',
+    nichePain: nicheCopy?.pain ?? '',
+    nicheReplaces: nicheCopy?.replaces ?? '',
     place,
     heroPlace: clinic ? `para a ${clinic}` : 'para a sua clínica',
     header: clinic || 'Sua clínica',
@@ -373,12 +408,6 @@ export function pageModel(search, configuredPhone = WHATSAPP_E164) {
     thread: buildThread(niche, clinic),
   }
 }
-
-export const DEFAULT_UNANSWERED_PERCENT = 30
-
-export const DEFAULT_BOOKING_PERCENT = 25
-
-export const WORK_DAYS = 22
 
 export const FUNNEL = [
   {
@@ -394,11 +423,11 @@ export const FUNNEL = [
     ],
     instagram: 'Vi o vídeo no Reels 😍 vocês atendem sábado?',
     method: 'Resposta imediata, 24 horas',
-    why: 'Quem pergunta à noite costuma escrever para mais de uma clínica. A primeira que responde bem sai na frente.',
+    why: 'Ela escreve à noite. A resposta chega em segundos, com a cara da clínica.',
   },
   {
     id: 'agenda',
-    label: 'Marca sozinho',
+    label: 'Marca na agenda',
     title: 'Ela escolhe o horário e a consulta já entra na agenda.',
     time: '22:05',
     chat: [
@@ -407,7 +436,7 @@ export const FUNNEL = [
       { from: 'clinic', text: 'Te mando um lembrete na véspera. Qualquer dúvida, é só chamar aqui.' },
     ],
     method: 'Duas opções de horário',
-    why: 'Em vez de “qual horário você quer?”, a paciente escolhe entre duas opções. Menos vai e vem, mais consulta marcada.',
+    why: 'Duas opções de horário. Ela escolhe, e a consulta já entra na agenda.',
   },
   {
     id: 'lembrete',
@@ -421,11 +450,11 @@ export const FUNNEL = [
       { from: 'clinic', text: 'Confirmado! Até amanhã, Maria.' },
     ],
     method: 'Lembrete com confirmação',
-    why: 'Revisão Cochrane (2013): lembretes por mensagem aumentam o comparecimento em consultas, comparados a nenhum lembrete.',
+    why: 'Um lembrete com confirmação. Ela responde e o horário fica garantido ou é remarcado.',
   },
   {
     id: 'retorno',
-    label: 'Recupera quem sumiu',
+    label: 'Chama de volta quem sumiu',
     title: 'João perguntou e não marcou. Ele recebe um retorno.',
     time: '2 dias depois',
     patient: 'João',
@@ -437,11 +466,11 @@ export const FUNNEL = [
       { from: 'patient', text: 'Quero sim!' },
     ],
     method: 'Follow-up de quem não marcou',
-    why: 'A maioria não disse não, só se distraiu. Um retorno educado no momento certo traz de volta quem a recepção não teve tempo de chamar.',
+    why: 'Quem perguntou e não marcou recebe um retorno educado, no momento certo.',
   },
   {
     id: 'google',
-    label: 'Pede avaliação no Google',
+    label: 'Pede a avaliação',
     title: 'Depois da consulta, Maria recebe o pedido de avaliação.',
     time: 'Sáb · 11:30',
     chat: [
@@ -450,12 +479,12 @@ export const FUNNEL = [
       { from: 'patient', text: 'Claro! Amei o atendimento ⭐⭐⭐⭐⭐' },
     ],
     method: 'Pedido no momento certo',
-    why: 'Pedir logo depois da consulta, com a experiência fresca. A avaliação é o que o próximo paciente lê antes de escolher a clínica.',
+    why: 'Depois da consulta, com a experiência fresca, vai o pedido de avaliação no Google.',
   },
   {
     id: 'crm',
-    label: 'O doutor acompanha',
-    title: 'O doutor vê tudo no celular, sem perguntar pra recepção.',
+    label: 'Tudo no painel',
+    title: 'Você vê tudo no celular, sem perguntar pra recepção.',
     time: 'Hoje',
     card: true,
     stats: [
@@ -470,67 +499,6 @@ export const FUNNEL = [
       ['Carla', 'Aguardando confirmação'],
     ],
     method: 'Tudo num painel',
-    why: 'Cada paciente com a etapa em que está: chegou, marcou, confirmou, veio, avaliou. O doutor acompanha o resultado sem depender de planilha.',
+    why: 'Cada paciente na etapa em que está: chegou, marcou, confirmou, veio, avaliou.',
   },
 ]
-
-function readCount(value, { min, max }) {
-  if (typeof value === 'string' && value.trim() === '') return null
-  if (value == null) return null
-  const number = Number(value)
-  if (!Number.isFinite(number) || number < min || number > max) return null
-  return number
-}
-
-export function clinicEstimate({
-  messagesPerDay,
-  daysPerMonth = WORK_DAYS,
-  unansweredPercent = DEFAULT_UNANSWERED_PERCENT,
-  bookingPercent = DEFAULT_BOOKING_PERCENT,
-  averageValue,
-} = {}) {
-  const messages = readCount(messagesPerDay, { min: 0, max: 10000 })
-  const days = readCount(daysPerMonth, { min: 1, max: 31 })
-  const unanswered = readCount(unansweredPercent, { min: 0, max: 100 })
-  const booking = readCount(bookingPercent, { min: 0, max: 100 })
-  if (messages == null || days == null || unanswered == null || booking == null) return null
-  const money = readCount(averageValue, { min: 0, max: 1000000 })
-  const conversationsExact = messages * days * (unanswered / 100)
-  const patientsExact = conversationsExact * (booking / 100)
-  const revenueExact = money == null || money === 0 ? null : Math.round(patientsExact) * money
-  return {
-    messages,
-    days,
-    unanswered,
-    booking,
-    averageValue: revenueExact == null ? null : money,
-    conversationsExact,
-    patientsExact,
-    revenueExact,
-    conversations: Math.round(conversationsExact),
-    patients: Math.round(patientsExact),
-    revenue: revenueExact == null ? null : Math.round(revenueExact),
-  }
-}
-
-const ptNumber = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 })
-const ptWhole = new Intl.NumberFormat('pt-BR')
-const ptMoney = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
-
-export function estimateCopy(result) {
-  if (!result) return null
-  const conversations = `${ptNumber.format(result.messages)} mensagens × ${ptNumber.format(result.days)} dias × ${ptNumber.format(result.unanswered)}% = ${ptNumber.format(result.conversationsExact)}`
-  const patients = `${ptNumber.format(result.conversationsExact)} conversas × ${ptNumber.format(result.booking)}% = ${ptNumber.format(result.patientsExact)}`
-  const revenue =
-    result.revenue == null
-      ? ''
-      : `${ptNumber.format(result.patientsExact)} × ${ptMoney.format(result.averageValue)} = ${ptMoney.format(result.revenueExact)}`
-  return {
-    conversations,
-    patients,
-    revenue,
-    conversationsValue: ptWhole.format(result.conversations),
-    patientsValue: ptWhole.format(result.patients),
-    revenueValue: result.revenue == null ? '' : ptMoney.format(result.revenue),
-  }
-}

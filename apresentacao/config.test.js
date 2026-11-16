@@ -10,11 +10,10 @@ import {
   buildThread,
   cleanClinic,
   cleanPhone,
-  DEFAULT_BOOKING_PERCENT,
   FUNNEL,
-  DEFAULT_UNANSWERED_PERCENT,
-  clinicEstimate,
-  estimateCopy,
+  MODULES,
+  NICHE_COPY,
+  explicitNiche,
   pageModel,
   resolveNiche,
   whatsappHref,
@@ -91,14 +90,23 @@ describe('apresentação', () => {
     expect(source).toMatch(/paciente/)
     expect(source).toMatch(/nossa equipe/i)
     expect(source).toMatch(/demonstração ilustrativa/i)
-    expect(source).toMatch(/Agendar 15 minutos com o Marcos/)
-    expect(source).toMatch(/Uma apresentação rápida do aplicativo por dentro, e de onde a clínica perde paciente hoje/)
-    expect(source).toMatch(/Sua clínica responde, agenda e lembra cada paciente sozinha/)
-    expect(source).toMatch(/Para a recepção encaminhar e para o doutor ver em poucos minutos/)
+    expect(source).toMatch(/Ver o painel em 15 minutos/)
+    expect(source).toMatch(/Falar com o Marcos no WhatsApp/)
+    expect(source).toMatch(/Uma conversa rápida pelo WhatsApp, no horário que for melhor pra você/)
+    expect(source).toMatch(/Cada paciente que chama a clínica, bem atendido do primeiro oi até a volta/)
+    expect(source).toMatch(/Pra recepção mostrar pra quem comanda a clínica/)
+    expect(source).toMatch(/O paciente quase nunca diz não. Ele só fica pelo caminho/)
+    expect(source).toMatch(/A recepção continua no comando/)
+    expect(source).toMatch(/Você vê a clínica inteira pelo celular/)
+    expect(source).toMatch(/A nossa equipe coloca tudo pra rodar em 7 dias/)
+    expect(source).toMatch(/Perguntas frequentes/)
+    expect(source).toMatch(/manter o número que os pacientes já conhecem/)
+    expect(source).not.toMatch(/R\$|valores? de referência|faturamento|calc-title|clinicEstimate/i)
+    expect(source).not.toMatch(/Doctoralia|Cochrane|80%/)
+    expect(source).not.toMatch(/automação/i)
     expect(source).toMatch(/A próxima começa em seguida/)
-    expect(source).toMatch(/Portfólio/)
-    expect(source).toMatch(/Métricas/)
-    expect(source).toMatch(/Pixel em breve/)
+    expect(source).toMatch(/Serviços da clínica/)
+    expect(source).toMatch(/Relatórios/)
     expect(source).toMatch(/loading="lazy"/)
     expect(source).toMatch(/mark-float/)
     expect(source).toMatch(/prefers-reduced-motion/)
@@ -118,13 +126,8 @@ describe('apresentação', () => {
     expect(source).not.toMatch(/Resposta 24h/)
     expect(source).not.toMatch(/while \(id === runId\)/)
     expect(source).not.toMatch(/Harvard|HBR|Dr\(a\)|o\(a\)/i)
-    expect(source).toMatch(/Pesquisa da Doctoralia: 80% dos pacientes escolhem o especialista pelas avaliações online/)
-    expect(source).toMatch(/Não é um resultado da Automatize/)
-    expect(source).toMatch(/não é um resultado prometido/i)
-    expect(source).toMatch(/Estimativa conservadora/)
-    expect(source).toMatch(/O método Automatize/)
     expect(source).not.toMatch(/type="number"/)
-    for (const route of ['/#/demo"', '/#/demo/whatsapp', '/#/demo/instagram', '/#/demo/pipeline', '/#/demo/agenda', '/#/demo/avaliacoes', '/#/demo/portfolio', '/#/demo/metricas', '/#/demo/integracoes']) {
+    for (const route of ['/#/demo"', '/#/demo/whatsapp', '/#/demo/instagram', '/#/demo/pipeline', '/#/demo/agenda', '/#/demo/avaliacoes', '/#/demo/portfolio', '/#/demo/metricas']) {
       expect(source).toContain(`https://automatize.devbrasil.online${route.replace(/"$/, '')}`)
     }
     for (const label of ['Resposta na hora', 'Qualificação', 'Agendamento', 'Lembrete', 'Follow-up']) {
@@ -160,7 +163,9 @@ describe('apresentação', () => {
     const model = pageModel('?nicho=dermatologia&clinica=Pele%20Viva&whatsapp=5511900000000')
     expect(model.niche).toBe('dermatologia')
     expect(model.header).toBe('Pele Viva')
-    expect(model.kicker).toBe('Para a recepção da Pele Viva encaminhar e para o doutor ver em poucos minutos.')
+    expect(model.kicker).toBe('Para a recepção da Pele Viva mostrar pra quem comanda a clínica.')
+    expect(model.nicheHero).toBe(NICHE_COPY.dermatologia.hero)
+    expect(model.nichePain).toBe(NICHE_COPY.dermatologia.pain)
     expect(model.place).toBe('da Pele Viva')
     expect(model.initial).toBe('P')
     expect(model.href).toMatch(/^https:\/\/wa\.me\/5511900000000\?text=/)
@@ -183,6 +188,17 @@ describe('apresentação', () => {
       'Olá, Marcos! Vi a apresentação da Automatize e quero agendar 15 minutos para ver o aplicativo por dentro. Clínica: Aurora. Nicho: Implantes.',
     )
     expect(plain.header).toBe('Sua clínica')
+    expect(plain.kicker).toBe('Pra recepção mostrar pra quem comanda a clínica.')
+    expect(plain.nicheHero).toBe('')
+    expect(plain.nichePain).toBe('')
+    expect(pageModel('?nicho=botox').nicheHero).toBe('')
+    expect(explicitNiche('Harmonização')).toBe('harmonizacao')
+    for (const id of ['implantes', 'lentes', 'harmonizacao', 'plastica', 'dermatologia']) {
+      const niche = pageModel(`?nicho=${id}`)
+      expect(niche.nicheHero).toBe(NICHE_COPY[id].hero)
+      expect(niche.nichePain).toBe(NICHE_COPY[id].pain)
+      expect(niche.nicheHero.length).toBeGreaterThan(20)
+    }
     expect(plain.thread.some((step) => step.text?.includes('a nossa equipe'))).toBe(true)
     expect(whatsappHref('abc', { clinic: 'Aurora' })).toBe('')
     expect(pageModel('', '5511988887777').href).toMatch(/^https:\/\/wa\.me\/5511988887777\?text=/)
@@ -235,28 +251,19 @@ describe('apresentação', () => {
     }
   })
 
-  it('estimates only from the numbers the clinic types', () => {
-    expect(DEFAULT_UNANSWERED_PERCENT).toBe(30)
-    expect(DEFAULT_BOOKING_PERCENT).toBe(25)
+  it('keeps the six funnel steps and the eight modules without price', () => {
     expect(FUNNEL.map((step) => step.id)).toEqual(['resposta', 'agenda', 'lembrete', 'retorno', 'google', 'crm'])
-    const base = {
-      messagesPerDay: 40,
-      daysPerMonth: 20,
-      unansweredPercent: 25,
-      bookingPercent: 100,
-      averageValue: '',
-    }
-    expect(clinicEstimate(base)).toMatchObject({ conversations: 200, patients: 200, revenue: null })
-    expect(clinicEstimate({ ...base, bookingPercent: 50 })).toMatchObject({ conversations: 200, patients: 100, revenue: null })
-    expect(clinicEstimate({ ...base, bookingPercent: 50, averageValue: 400 })).toMatchObject({ revenue: 40000 })
-    expect(clinicEstimate({ ...base, daysPerMonth: '' })).toBe(null)
-    expect(clinicEstimate({ messagesPerDay: 30 })).toMatchObject({ conversations: 198, patients: 50 })
-    expect(clinicEstimate({ messagesPerDay: 30, averageValue: 300 })).toMatchObject({ revenue: 15000 })
-    expect(clinicEstimate({ ...base, messagesPerDay: -1 })).toBe(null)
-    expect(clinicEstimate({ ...base, unansweredPercent: 101 })).toBe(null)
-    const copy = estimateCopy(clinicEstimate(base))
-    expect(copy.conversations).toBe('40 mensagens × 20 dias × 25% = 200')
-    expect(copy.patients).toBe('200 conversas × 100% = 200')
-    expect(copy.revenue).toBe('')
+    expect(FUNNEL.map((step) => step.label)).toEqual([
+      'Responde na hora',
+      'Marca na agenda',
+      'Lembra na véspera',
+      'Chama de volta quem sumiu',
+      'Pede a avaliação',
+      'Tudo no painel',
+    ])
+    expect(MODULES.map((item) => item.label)).toEqual([
+      'Início', 'WhatsApp', 'Instagram', 'CRM', 'Agenda', 'Google', 'Serviços da clínica', 'Relatórios',
+    ])
+    expect(MODULES.some((item) => /valor|preço|R\$/i.test(item.copy))).toBe(false)
   })
 })

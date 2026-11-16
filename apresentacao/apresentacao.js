@@ -1,4 +1,4 @@
-import { FUNNEL, MARCOS_AUDIO_VERSION, MARCOS_PARTS, MARCOS_PHOTO_FILES, clinicEstimate, pageModel } from './config.js'
+import { FUNNEL, MARCOS_AUDIO_VERSION, MARCOS_PARTS, MARCOS_PHOTO_FILES, pageModel } from './config.js'
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -511,10 +511,19 @@ function apply(search) {
   const model = pageModel(search)
   const kicker = document.querySelector('#kicker')
   if (kicker) kicker.textContent = model.kicker
-  document.querySelector('#doutor-copy').textContent =
-    `Acompanha o caminho do paciente ${model.place}, no consultório ou fora. A tela é a visão do dono, com dados fictícios.`
-  document.querySelector('#atendente-copy').textContent =
-    `Conduz a fila, as conversas e a agenda no mesmo painel ${model.place}. A recepção vê o que está esperando.`
+  const nicheHero = document.querySelector('#nicho-hero')
+  if (nicheHero) {
+    nicheHero.textContent = model.nicheHero
+    nicheHero.hidden = !model.nicheHero
+  }
+  const nichePain = document.querySelector('#nicho-pain')
+  if (nichePain) {
+    nichePain.textContent = model.nichePain
+    nichePain.hidden = !model.nichePain
+  }
+  document.querySelectorAll('#pain-list [data-pain]').forEach((item) => {
+    item.hidden = Boolean(model.nicheReplaces) && item.dataset.pain === model.nicheReplaces
+  })
   document.querySelectorAll('.cta-help:not([data-keep])').forEach((node) => {
     node.textContent = model.ctaHelp
   })
@@ -571,7 +580,7 @@ function paintFunnel(index, channel) {
       steps.scrollTo({ left: Math.max(0, left), behavior: reduceMotion ? 'auto' : 'smooth' })
     }
   })
-  const name = step.card ? 'Painel do doutor' : 'Clínica Dra. Paula'
+  const name = step.card ? 'Painel da clínica' : 'Clínica Dra. Paula'
   const avatar = document.querySelector('#chat-avatar')
   if (avatar) avatar.textContent = step.card ? '★' : 'P'
   const who = document.querySelector('#chat-name')
@@ -746,114 +755,10 @@ function wireFunnel() {
   observer.observe(block)
 }
 
-function animateFigure(node, text, target) {
-  if (!node) return
-  if (reduceMotion || !Number.isFinite(target)) {
-    node.textContent = text
-    return
-  }
-  const from = Number(node.dataset.n || 0)
-  const money = text.includes('R$')
-  const start = performance.now()
-  const tick = (now) => {
-    const progress = Math.min(1, (now - start) / 420)
-    const current = Math.round(from + (target - from) * progress)
-    node.dataset.n = String(current)
-    node.textContent = money
-      ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(current)
-      : new Intl.NumberFormat('pt-BR').format(current)
-    if (progress < 1) requestAnimationFrame(tick)
-    else node.textContent = text
-  }
-  requestAnimationFrame(tick)
-}
-
-const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
-
-function buildRuler(node, onChange) {
-  const min = Number(node.dataset.min)
-  const max = Number(node.dataset.max)
-  const step = Number(node.dataset.step)
-  const major = Number(node.dataset.major)
-  const gap = 12
-  const strip = document.createElement('div')
-  strip.className = 'ruler-strip'
-  const count = Math.round((max - min) / step)
-  for (let i = 0; i <= count; i += 1) {
-    const value = min + i * step
-    const tick = document.createElement('span')
-    const isMajor = value % major === 0
-    const isMid = !isMajor && value % (major / 2) === 0
-    tick.className = `tick${isMajor ? ' major' : isMid ? ' mid' : ''}`
-    if (isMajor) {
-      tick.dataset.label = node.dataset.money ? (value >= 1000 ? `${value / 1000} mil` : String(value)) : String(value)
-    }
-    strip.append(tick)
-  }
-  const needle = document.createElement('i')
-  needle.className = 'needle'
-  const wrap = document.createElement('div')
-  wrap.className = 'ruler-wrap'
-  node.before(wrap)
-  wrap.append(node, needle)
-  node.append(strip)
-  const toValue = () => Math.min(max, Math.max(min, min + Math.round(node.scrollLeft / gap) * step))
-  let last = null
-  const set = (value, smooth) => {
-    node.scrollTo({ left: ((value - min) / step) * gap, behavior: smooth && !reduceMotion ? 'smooth' : 'auto' })
-  }
-  node.addEventListener('scroll', () => {
-    const value = toValue()
-    if (value === last) return
-    last = value
-    node.setAttribute('aria-valuenow', String(value))
-    if (navigator.vibrate && node.dataset.touched) navigator.vibrate(4)
-    onChange(value)
-  }, { passive: true })
-  node.addEventListener('pointerdown', () => { node.dataset.touched = '1' })
-  node.addEventListener('keydown', (event) => {
-    const delta = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[event.key]
-    if (!delta) return
-    event.preventDefault()
-    set(Math.min(max, Math.max(min, toValue() + delta * step)), true)
-  })
-  requestAnimationFrame(() => set(Number(node.dataset.value), false))
-  onChange(Number(node.dataset.value))
-}
-
-function wireCalculator() {
-  const form = document.querySelector('#risco')
-  if (!form) return
-  const state = { messages: 30, value: 0 }
-  const revenueCard = form.querySelector('#out-revenue-card')
-  const paint = () => {
-    const result = clinicEstimate({ messagesPerDay: state.messages, averageValue: state.value })
-    if (!result) return
-    animateFigure(form.querySelector('#out-conversations'), new Intl.NumberFormat('pt-BR').format(result.conversations), result.conversations)
-    animateFigure(form.querySelector('#out-patients'), new Intl.NumberFormat('pt-BR').format(result.patients), result.patients)
-    if (revenueCard) revenueCard.hidden = result.revenue == null
-    if (result.revenue != null) animateFigure(form.querySelector('#out-revenue'), brl.format(result.revenue), result.revenue)
-  }
-  const msgs = form.querySelector('#msgs-ruler')
-  const valor = form.querySelector('#valor-ruler')
-  if (msgs) buildRuler(msgs, (value) => {
-    state.messages = value
-    form.querySelector('#msgs-out').textContent = String(value)
-    paint()
-  })
-  if (valor) buildRuler(valor, (value) => {
-    state.value = value
-    form.querySelector('#valor-out').textContent = value ? brl.format(value) : 'Arraste para incluir'
-    form.querySelector('#valor-out').classList.toggle('is-empty', !value)
-    paint()
-  })
-}
-
 export function boot() {
   wireAudio()
   wireModuleCards()
   wireFunnel()
-  wireCalculator()
   apply(currentSearch())
   document.querySelectorAll('input[name="nicho"]').forEach((input) => {
     input.addEventListener('change', () => {

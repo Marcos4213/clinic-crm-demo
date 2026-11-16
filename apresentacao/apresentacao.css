@@ -1082,3 +1082,167 @@ h2 {
 .calc-frame p.assumption, .calc-frame p.section-lead, .calc-frame p.cta-help, .calc-frame .out-card p { color: #b7c4d6; }
 .calc-frame p.eyebrow { color: #8ef0c2; }
 .funnel-stage, .stage-col { min-width: 0; }
+
+/* Copy v2 (16/11/2026): linha do nicho, dores, recepção/comando, implantação e FAQ. */
+.nicho-line {
+  max-width: 38rem;
+  margin: 12px 0 0;
+  padding-left: 12px;
+  border-left: 3px solid var(--green);
+  color: var(--ink);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.checklist {
+  display: grid;
+  gap: 10px;
+  max-width: 44rem;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checklist li {
+  position: relative;
+  padding: 12px 14px 12px 40px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--body);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.checklist li::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 17px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.checklist li[hidden] { display: none; }
+
+.pain-list li::before { background: #f59e0b; }
+
+.pain-list .pain-nicho {
+  border-color: rgba(52, 211, 153, 0.7);
+  background: linear-gradient(180deg, rgba(52, 211, 153, 0.12), var(--surface) 60%);
+  font-weight: 600;
+}
+
+.closing {
+  max-width: 40rem;
+  margin: 16px 0 0;
+  color: var(--ink);
+  font-size: 1.05rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.role-split {
+  display: grid;
+  gap: 22px;
+  margin-top: 18px;
+  align-items: center;
+}
+
+.role-split .checklist { margin-top: 0; }
+
+.steps-list {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: passo;
+}
+
+.steps-list li {
+  counter-increment: passo;
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  column-gap: 12px;
+  row-gap: 2px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.steps-list li::before {
+  content: counter(passo);
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--green);
+  color: var(--green-ink);
+  font-weight: 750;
+}
+
+.steps-list strong { color: var(--ink); font-size: 16px; }
+.steps-list span { color: var(--muted); font-size: 15px; line-height: 1.45; }
+
+.faq {
+  display: grid;
+  gap: 8px;
+  max-width: 48rem;
+  margin-top: 16px;
+}
+
+.faq-item {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.faq-item summary {
+  min-height: 44px;
+  padding: 14px 44px 14px 16px;
+  position: relative;
+  color: var(--ink);
+  font-weight: 650;
+  line-height: 1.4;
+  cursor: pointer;
+  list-style: none;
+}
+
+.faq-item summary::-webkit-details-marker { display: none; }
+
+.faq-item summary::after {
+  content: "+";
+  position: absolute;
+  right: 16px;
+  top: 12px;
+  color: var(--green-text);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.faq-item[open] summary::after { content: "–"; }
+
+.faq-item p {
+  margin: 0;
+  padding: 0 16px 14px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+@media (min-width: 720px) {
+  .steps-list { grid-template-columns: 1fr 1fr; }
+}
+
+@media (min-width: 900px) {
+  .role-split { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .role-split.is-phone { grid-template-columns: 300px minmax(0, 1fr); }
+  .modules { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
