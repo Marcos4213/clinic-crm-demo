@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.whatsapp-onboard]
 verify_jwt = true
+
+[functions.demo-chat]
+verify_jwt = false

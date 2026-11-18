@@ -1,0 +1,596 @@
+[
+  {
+    "slug": "ackermann-cirurgia-plastica",
+    "name": "Ackermann Cirurgia Plástica",
+    "city": "São Paulo",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "allegra-odontologia",
+    "name": "Allegra Odontologia",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "atelie-moema-odontologia",
+    "name": "Ateliê Moema Odontologia",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "benatti-odontologia",
+    "name": "Benatti Odontologia",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "bg-odonto-domiciliar",
+    "name": "Bg Odonto Domiciliar",
+    "city": "São Paulo",
+    "procedure": "atendimento odontológico domiciliar"
+  },
+  {
+    "slug": "cde-odontologia",
+    "name": "Cde Odontologia",
+    "city": "Goiânia",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "centro-das-sobrancelhas-paulista",
+    "name": "Centro das Sobrancelhas - Paulista",
+    "city": "São Paulo",
+    "procedure": "design de sobrancelhas"
+  },
+  {
+    "slug": "centro-integrado-de-especialidades-bueno",
+    "name": "Centro Integrado de Especialidades Bueno",
+    "city": "Goiânia",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "centro-odontologico-focos",
+    "name": "Centro Odontológico Focos",
+    "city": "Florianópolis",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "cesar-mello-odontologia",
+    "name": "César Mello Odontologia",
+    "city": "Recife",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "cirurgia-plastica-dr-walter-zamarian-jr",
+    "name": "Cirurgia Plástica Dr. Walter Zamarian Jr.",
+    "city": "Londrina",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "clara-odontologia-medicina",
+    "name": "Clara Odontologia Medicina",
+    "city": "Cuiabá",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "clinica-atman",
+    "name": "Clínica Atman",
+    "city": "Rio de Janeiro",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "clinica-bremen",
+    "name": "Clinica Bremen",
+    "city": "Uberlândia",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "clinica-carrijo",
+    "name": "Clínica Carrijo",
+    "city": "São Paulo",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "clinica-central",
+    "name": "Clínica Central",
+    "city": "Rio de Janeiro",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "clinica-claudio-cordeiro",
+    "name": "Clínica Cláudio Cordeiro",
+    "city": "Recife",
+    "procedure": "consulta dermatológica"
+  },
+  {
+    "slug": "clinica-de-estetica-abcorps",
+    "name": "Clínica de Estética Abcorps",
+    "city": "Curitiba",
+    "procedure": "consulta dermatológica"
+  },
+  {
+    "slug": "clinica-de-estetica-bartira-martins",
+    "name": "Clínica de Estética Bartira Martins",
+    "city": "Recife",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "clinica-de-medicina-preventiva-do-parana",
+    "name": "Clínica de Medicina Preventiva Do Paraná",
+    "city": "Curitiba",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "clinica-dental-design",
+    "name": "Clínica Dental Design",
+    "city": "João Pessoa",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "clinica-eliza-minami",
+    "name": "Clínica Eliza Minami",
+    "city": "São Paulo",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "clinica-essencia-plena",
+    "name": "Clínica Essência Plena",
+    "city": "São Paulo",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "clinica-implart",
+    "name": "Clínica ImplArt",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "clinica-ja",
+    "name": "Clinica Ja",
+    "city": "Belo Horizonte",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "clinica-lacs",
+    "name": "Clínica LACS",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "clinica-laif",
+    "name": "Clínica Lai'f",
+    "city": "São Paulo",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "clinica-maison-regato",
+    "name": "Clínica Maison Regato",
+    "city": "Rio de Janeiro",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "clinica-meire-parada",
+    "name": "Clínica Meire Parada",
+    "city": "São Paulo",
+    "procedure": "consulta dermatológica"
+  },
+  {
+    "slug": "clinica-mv-dermatologia",
+    "name": "Clínica MV Dermatologia",
+    "city": "São Paulo",
+    "procedure": "consulta dermatológica"
+  },
+  {
+    "slug": "clinica-nacle-saude-e-estetica-oral",
+    "name": "Clínica Nacle Saúde e Estética Oral",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "clinica-odontologica-bucal-care",
+    "name": "Clínica Odontológica Bucal Care",
+    "city": "Florianópolis",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "clinica-odontologica-dr-william-frossard",
+    "name": "Clínica Odontológica Dr William Frossard",
+    "city": "Rio de Janeiro",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "clinica-odontologica-dra-walmira",
+    "name": "Clínica Odontológica Dra Walmira",
+    "city": "Rio de Janeiro",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "clinica-orel",
+    "name": "Clínica Orel",
+    "city": "São Paulo",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "clinica-premium-dermatologia-e-estetica",
+    "name": "Clínica Premium -Dermatologia E Estética",
+    "city": "Goiânia",
+    "procedure": "consulta dermatológica"
+  },
+  {
+    "slug": "clinica-renata-sitonio-dermatologia",
+    "name": "Clínica Renata Sitonio Dermatologia",
+    "city": "São Paulo",
+    "procedure": "consulta dermatológica"
+  },
+  {
+    "slug": "clinica-stedile",
+    "name": "Clínica Stédile",
+    "city": "Porto Alegre",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "clinica-sugita",
+    "name": "Clínica Sugita",
+    "city": "Goiânia",
+    "procedure": "consulta dermatológica"
+  },
+  {
+    "slug": "clinica-tathya-taranto",
+    "name": "Clínica Tathya Taranto",
+    "city": "Belo Horizonte",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "clinica-ts",
+    "name": "Clínica TS",
+    "city": "São Paulo",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "coems-odontologia",
+    "name": "COEMS ODONTOLOGIA",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "colpe-odontologia",
+    "name": "Colpe Odontologia",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "cura-dentale-odontologia",
+    "name": "Cura Dentale Odontologia",
+    "city": "Rio de Janeiro",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "dent-sao-odontologia-especializada",
+    "name": "Dent-São Odontologia Especializada",
+    "city": "Rio de Janeiro",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "dermoplastique",
+    "name": "Dermoplastique",
+    "city": "São Paulo",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "dr-pablo-martins-dentista",
+    "name": "Dr Pablo Martins dentista",
+    "city": "Fortaleza",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "dr-alberto-okada-cirurgia-plastica",
+    "name": "Dr. Alberto Okada Cirurgia Plástica",
+    "city": "São Paulo",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "dr-fernando-pinheiro",
+    "name": "Dr. Fernando Pinheiro",
+    "city": "São Paulo",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "dr-flavio-quinalha",
+    "name": "Dr. Flávio Quinalha",
+    "city": "São Paulo",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "dr-nilo-amaral-cirurgia-plastica",
+    "name": "Dr. Nilo Amaral - Cirurgia Plástica",
+    "city": "Curitiba",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "dr-roberto-doglia-azambuja-dermatologista",
+    "name": "Dr. Roberto Doglia Azambuja, Dermatologista",
+    "city": "Brasília",
+    "procedure": "consulta dermatológica"
+  },
+  {
+    "slug": "dra-bruna-clauman-dermatologista",
+    "name": "Dra Bruna Clauman Dermatologista",
+    "city": "Florianópolis",
+    "procedure": "consulta dermatológica"
+  },
+  {
+    "slug": "dra-marcelle-chedid",
+    "name": "Dra Marcelle Chedid",
+    "city": "Rio de Janeiro",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "dra-brunna-borges-dermatologia",
+    "name": "Dra. Brunna Borges Dermatologia",
+    "city": "São Paulo",
+    "procedure": "consulta dermatológica"
+  },
+  {
+    "slug": "dra-cristiane-m-fernandes",
+    "name": "Dra. Cristiane M. Fernandes",
+    "city": "São Paulo",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "dra-juliana-laia-dentista-barreiro",
+    "name": "Dra. Juliana Laia - Dentista Barreiro",
+    "city": "Belo Horizonte",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "dra-luciana-garbelini",
+    "name": "Dra. Luciana Garbelini",
+    "city": "São Paulo",
+    "procedure": "consulta dermatológica"
+  },
+  {
+    "slug": "dra-marcia-mendonca-odontologia",
+    "name": "Dra. Márcia Mendonça Odontologia",
+    "city": "São Paulo",
+    "procedure": "lentes de contato dental"
+  },
+  {
+    "slug": "dra-maria-natalia-dermatologia",
+    "name": "Dra. Maria Natalia Dermatologia",
+    "city": "São Paulo",
+    "procedure": "consulta dermatológica"
+  },
+  {
+    "slug": "dra-samara-berbert",
+    "name": "Dra. Samara Berbert",
+    "city": "São Paulo",
+    "procedure": "consulta dermatológica"
+  },
+  {
+    "slug": "em-odontologia",
+    "name": "EM Odontologia",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "espaco-odontologico-perdizes",
+    "name": "Espaço Odontológico Perdizes",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "espaco-saude-valqueire",
+    "name": "Espaço Saúde Valqueire",
+    "city": "Rio de Janeiro",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "estetica-up-campo-belo",
+    "name": "Estética Up - Campo Belo",
+    "city": "São Paulo",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "estetica-up-vila-mariana",
+    "name": "Estética Up - Vila Mariana",
+    "city": "São Paulo",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "facial-care-servicos-medicos-e-odontologicos",
+    "name": "Facial Care Serviços Médicos e Odontológicos",
+    "city": "Niterói",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "felitti-odontologia",
+    "name": "Felitti Odontologia",
+    "city": "Niterói",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "fem-clinica-itaim-bibi",
+    "name": "Fem Clínica - Itaim Bibi",
+    "city": "São Paulo",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "fidelizze",
+    "name": "Fidelizze",
+    "city": "São Paulo",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "gv-odontologia",
+    "name": "GV Odontologia",
+    "city": "São Paulo",
+    "procedure": "lentes de contato dental"
+  },
+  {
+    "slug": "implante-maceio-dra-wanessa-t-passos",
+    "name": "Implante Maceió - Dra. Wanessa T. Passos",
+    "city": "Maceió",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "instituto-belvedere-dra-helena-lima",
+    "name": "Instituto Belvedere: Dra. Helena Lima",
+    "city": "Belo Horizonte",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "instituto-de-rinoplastia-dr-flavio-cunha",
+    "name": "Instituto de Rinoplastia Dr Flávio Cunha",
+    "city": "Brasília",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "joana-ozi",
+    "name": "Joana Ozi",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "jolie-studio-odontologico",
+    "name": "Jolie Studio Odontológico",
+    "city": "Brasília",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "josinaldo-martins-cirurgia-plastica",
+    "name": "Josinaldo Martins - Cirurgia Plástica",
+    "city": "Balneário Camboriú",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "levy-odontologia",
+    "name": "Levy Odontologia",
+    "city": "Rio de Janeiro",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "nahser-odontologia",
+    "name": "Nahser Odontologia",
+    "city": "Niterói",
+    "procedure": "lentes de contato dental"
+  },
+  {
+    "slug": "natclin",
+    "name": "Natclin",
+    "city": "Cuiabá",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "odonto-pinheiros",
+    "name": "Odonto Pinheiros",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "odonto-pro-saude",
+    "name": "Odonto Pró Saúde",
+    "city": "Salvador",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "odontoinn",
+    "name": "Odontoinn",
+    "city": "Fortaleza",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "odontologia-berrini",
+    "name": "Odontologia Berrini",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "odontologia-veras",
+    "name": "Odontologia Veras",
+    "city": "Londrina",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "odontopediatra-odontologia-inclusiva-start-clinica-odontologica",
+    "name": "Odontopediatra | Odontologia Inclusiva | Start Clínica Odontológica",
+    "city": "Recife",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "ohmed",
+    "name": "OHMed",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "patricia-pizzo-clinica-odontologica-implantes-e-ortodontia",
+    "name": "Patrícia Pizzo Clínica Odontológica - Implantes e Ortodontia",
+    "city": "Brasília",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "portal-do-sorriso",
+    "name": "Portal do Sorriso",
+    "city": "São Paulo",
+    "procedure": "lentes de contato dental"
+  },
+  {
+    "slug": "professor-dr-rowan-vilar-invisalign-lentes-de-contato-gengivoplastia-e-implantes",
+    "name": "Professor Dr Rowan Vilar - Invisalign, Lentes de contato, Gengivoplastia e implantes - Leblon",
+    "city": "Rio de Janeiro",
+    "procedure": "lentes de contato dental"
+  },
+  {
+    "slug": "qualicenter-odontologia-paulista",
+    "name": "Qualicenter Odontologia - Paulista",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "rio-arte-dermatologia-e-estetica-barra-experience",
+    "name": "Rio Arte Dermatologia e Estética - Barra - Experience",
+    "city": "Rio de Janeiro",
+    "procedure": "consulta dermatológica"
+  },
+  {
+    "slug": "rio-essencial-estetica",
+    "name": "Rio Essencial Estética",
+    "city": "Rio de Janeiro",
+    "procedure": "harmonização facial"
+  },
+  {
+    "slug": "rm-cirurgia-plastica",
+    "name": "RM Cirurgia Plástica",
+    "city": "São Paulo",
+    "procedure": "avaliação para cirurgia plástica"
+  },
+  {
+    "slug": "scansorriso",
+    "name": "ScanSorriso",
+    "city": "Cuiabá",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "unik-odonto-clinica-odontologica",
+    "name": "Unik Odonto Clínica Odontológica",
+    "city": "Porto Alegre",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "veiga-jardim-odontologia",
+    "name": "Veiga Jardim Odontologia",
+    "city": "Goiânia",
+    "procedure": "implante dentário"
+  },
+  {
+    "slug": "vitapelle-clinica-de-dermatologia",
+    "name": "Vitapelle Clínica de Dermatologia",
+    "city": "Rio de Janeiro",
+    "procedure": "consulta dermatológica"
+  },
+  {
+    "slug": "wise-odontologia",
+    "name": "Wise Odontologia",
+    "city": "São Paulo",
+    "procedure": "implante dentário"
+  }
+]
