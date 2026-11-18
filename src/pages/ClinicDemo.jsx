@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { Send } from 'lucide-react'
 import { InstagramMark, WhatsAppMark } from '../components/brand/Marks'
 import { LEGAL_CITY, LEGAL_CNPJ, LEGAL_EMAIL, LEGAL_RAZAO_SOCIAL } from '../brand/legal'
 import { askClinic, sessionId } from '../c4/ask'
-import { C4_MAX_CHARS, C4_MAX_TURNS, C4_SLOGAN } from '../c4/config'
+import { C4_AGENT_LINE, C4_AGENT_NAME, C4_HEADLINE, C4_MAX_CHARS, C4_MAX_TURNS, C4_SUBHEAD, C4_SLOGAN } from '../c4/config'
 import { findClinic } from '../c4/clinics'
 import { bookingHref, clinicPageUrl, forwardHref, methodSteps, openingMessage } from '../c4/script'
-import { cleanLabel } from '../c4/slug'
 
 function legalHref(file) {
   const base = import.meta.env.BASE_URL || './'
@@ -22,9 +21,12 @@ function clock(date = new Date()) {
   }).format(date)
 }
 
-function initialOf(name) {
-  const letter = [...(name || 'C')].find((char) => /\p{L}/u.test(char))
-  return (letter || 'C').toUpperCase()
+function avatarSrc() {
+  return `${import.meta.env.BASE_URL}c4-helena.jpg`
+}
+
+function AgentPortrait({ className }) {
+  return <img src={avatarSrc()} alt={C4_AGENT_LINE} className={`rounded-full object-cover ${className}`} />
 }
 
 function Bubble({ from, text, at, audio = false }) {
@@ -66,14 +68,8 @@ function MiniChat({ bubbles }) {
 
 export default function ClinicDemo({ fetchImpl }) {
   const { slug } = useParams()
-  const [params, setParams] = useSearchParams()
   const known = findClinic(slug)
-  const nameFromLink = cleanLabel(params.get('nome') || '', 80)
-  const [typedName, setTypedName] = useState(nameFromLink)
-  const clinic = useMemo(() => {
-    if (known) return known
-    return { slug: '', name: cleanLabel(typedName, 80), city: '', procedure: '' }
-  }, [known, typedName])
+  const clinic = known ?? { slug: '', name: '', city: '', procedure: '' }
 
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
@@ -84,7 +80,7 @@ export default function ClinicDemo({ fetchImpl }) {
   const thread = [{ role: 'assistant', content: openingMessage(clinic), at: openedAt }, ...messages]
 
   useEffect(() => {
-    const title = clinic.name ? `C4 Clinic · ${clinic.name}` : 'C4 Clinic · demonstração'
+    const title = clinic.name ? `C4 Clinic · ${clinic.name}` : `C4 Clinic · ${C4_AGENT_NAME}`
     const previous = document.title
     document.title = title
     return () => {
@@ -99,7 +95,7 @@ export default function ClinicDemo({ fetchImpl }) {
 
   const turns = thread.filter((item) => item.role === 'user').length
   const closed = turns >= C4_MAX_TURNS
-  const pageUrl = clinicPageUrl(known?.slug || '', clinic.name)
+  const pageUrl = clinicPageUrl(known?.slug || '')
   const shareHref = forwardHref(clinic.name, pageUrl)
   const bookHref = bookingHref(clinic.name)
   const steps = methodSteps(clinic)
@@ -124,13 +120,6 @@ export default function ClinicDemo({ fetchImpl }) {
     setPending(false)
   }
 
-  function onNameChange(event) {
-    const next = event.target.value
-    setTypedName(next)
-    const clean = cleanLabel(next, 80)
-    setParams(clean ? { nome: clean } : {}, { replace: true })
-  }
-
   return (
     <div className="min-h-0 flex-1 overflow-y-auto bg-[#f6f3ec] text-[#1c1917]" style={{ colorScheme: 'light' }}>
       <header className="bg-[#075e54] text-white">
@@ -144,49 +133,31 @@ export default function ClinicDemo({ fetchImpl }) {
       </header>
 
       <main className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-5 pb-12">
-        <div>
-          <h1 className="text-[26px] leading-tight font-extrabold tracking-tight">
-            {clinic.name || 'Sua clínica no WhatsApp'}
-          </h1>
-          <p className="mt-1 text-[14px] text-[#3d4a45]">
-            {clinic.city && clinic.procedure
-              ? `${clinic.city} · ${clinic.procedure}`
-              : 'Teste o atendimento com o nome da clínica.'}
-          </p>
-          <p className="mt-3 text-[14px] leading-5 text-[#3d4a45]">
-            Escreva como se fosse um paciente. A resposta sai na hora, com o jeito da clínica.
-          </p>
+        <div className="flex items-start gap-3">
+          <AgentPortrait className="h-16 w-16 shrink-0 ring-2 ring-white" />
+          <div>
+            <p className="text-[12px] font-semibold tracking-wide text-[#075e54]">{C4_AGENT_LINE}</p>
+            <h1 className="mt-1 text-[26px] leading-tight font-extrabold tracking-tight">{C4_HEADLINE}</h1>
+          </div>
         </div>
-
-        {!known && (
-          <form className="rounded-2xl border border-[#e4ddd2] bg-white p-3" onSubmit={(event) => event.preventDefault()}>
-            <p className="text-[13px] leading-5 text-[#3d4a45]">
-              {slug
-                ? 'Não achei essa clínica na fila. Escreva o nome dela para testar mesmo assim.'
-                : 'Demonstração geral. Escreva o nome da clínica para personalizar.'}
-            </p>
-            <label className="mt-2 block text-[12px] font-semibold text-[#54656f]" htmlFor="c4-clinic-name">
-              Nome da clínica
-              <input
-                id="c4-clinic-name"
-                value={typedName}
-                onChange={onNameChange}
-                maxLength={80}
-                autoComplete="organization"
-                className="mt-1 h-11 w-full rounded-xl border border-[#d9d0c5] bg-[#fbfaf7] px-3 text-[16px] text-[#1c1917]"
-              />
-            </label>
-          </form>
-        )}
+        <p className="-mt-3 text-[15px] leading-6 text-[#3d4a45]">{C4_SUBHEAD}</p>
+        {known ? (
+          <p className="text-[13px] leading-5 text-[#54656f]">
+            Simulando {known.name}
+            {known.city ? ` · ${known.city}` : ''}
+            {known.procedure ? ` · ${known.procedure}` : ''}
+          </p>
+        ) : null}
+        <p className="text-[14px] leading-5 text-[#3d4a45]">
+          Escreva como se fosse um paciente. A {C4_AGENT_NAME} responde na hora.
+        </p>
 
         <section aria-label="Conversa de demonstração" className="overflow-hidden rounded-[22px] border border-black/10 shadow-[0_16px_40px_rgba(7,94,84,0.14)]">
           <div className="flex items-center gap-3 bg-[#075e54] px-3 py-2.5 text-white">
-            <div className="grid h-10 w-10 place-items-center rounded-full bg-white/20 text-[15px] font-bold">
-              {initialOf(clinic.name)}
-            </div>
+            <AgentPortrait className="h-10 w-10 shrink-0" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] font-semibold">{clinic.name || 'C4 Clinic'}</p>
-              <p className="text-[12px] text-white/75">online · demonstração</p>
+              <p className="truncate text-[15px] font-semibold">{C4_AGENT_NAME}</p>
+              <p className="text-[12px] text-white/75">da C4 Clinic · demonstração</p>
             </div>
             <WhatsAppMark className="h-6 w-6" />
           </div>

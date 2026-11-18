@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { C4_AGENT_NAME as configuredName } from '../../../src/c4/config.js'
 import {
+  C4_AGENT_NAME,
   MAX_TURNS,
   MAX_USER_CHARS,
   assistantText,
@@ -29,6 +31,8 @@ describe('demo chat request', () => {
     expect(parsed.messages).toHaveLength(1)
 
     const prompt = demoSystemPrompt(parsed)
+    expect(C4_AGENT_NAME).toBe(configuredName)
+    expect(prompt).toMatch(new RegExp(C4_AGENT_NAME))
     expect(prompt).toMatch(/Clínica Atman/)
     expect(prompt).toMatch(/Rio de Janeiro/)
     expect(prompt).toMatch(/avaliação para cirurgia plástica/)
@@ -42,6 +46,10 @@ describe('demo chat request', () => {
     expect(request.store).toBe(false)
     expect(request.tools).toBeUndefined()
     expect(request.input[0].content).toBe('Oi, queria saber da avaliação')
+
+    const generic = demoSystemPrompt({ clinicName: '', city: '', procedure: '' })
+    expect(generic).toMatch(/pergunte qual procedimento/)
+    expect(generic).toMatch(/não informado/)
   })
 
   it('rejects long messages, extra turns and prices in the model reply', () => {

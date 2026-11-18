@@ -17,6 +17,7 @@ import {
 
 const ALLOWED_ORIGINS = new Set([
   'https://marcos4213.github.io',
+  'https://c4.devbrasil.online',
   'https://automatize.devbrasil.online',
   'http://localhost:5173',
   'http://127.0.0.1:5173',

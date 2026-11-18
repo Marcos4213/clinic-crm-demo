@@ -17,6 +17,7 @@ import Reviews from './pages/Reviews'
 import { AutoReplyPane, CommentPane, DirectComposePane, FollowUpPane, MassPane, RemarketingPane, SchedulePane } from './pages/channel-panes'
 import { LoginScreen, SignupScreen } from './pages/AuthScreens'
 import ClinicDemo from './pages/ClinicDemo'
+import { showsClinicDemoAtRoot } from './c4/config'
 import { DemoSettings, default as Settings } from './pages/Settings'
 import { WhatsAppConversations, WhatsAppLayout } from './pages/WhatsAppDesk'
 import { AuthProvider } from './state/AuthProvider'
@@ -188,9 +189,10 @@ export default function App() {
               <Route path="/app" element={<WorkspaceGate />}>
                 {workspaceRoutes('app')}
               </Route>
+              <Route path="/c4" element={<ClinicDemo />} />
               <Route path="/c/:slug" element={<ClinicDemo />} />
               <Route path="/c" element={<ClinicDemo />} />
-              <Route path="/" element={<LoginScreen />} />
+              <Route path="/" element={showsClinicDemoAtRoot(window.location.hostname) ? <ClinicDemo /> : <LoginScreen />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>

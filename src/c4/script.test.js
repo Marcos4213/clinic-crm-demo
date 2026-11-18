@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import clinics from '../data/clinics.json'
-import { C4_WHATSAPP_E164 } from './config.js'
+import { C4_AGENT_NAME, C4_WHATSAPP_E164, showsClinicDemoAtRoot } from './config.js'
 import { findClinic } from './clinics.js'
-import { bookingHref, clinicPageUrl, forwardHref, forwardText, methodSteps, scriptedReply } from './script.js'
+import { bookingHref, clinicPageUrl, forwardHref, forwardText, methodSteps, openingMessage, scriptedReply } from './script.js'
 import { clinicSlug, isExcludedClinic } from './slug.js'
 
 const atman = {
@@ -46,9 +46,10 @@ describe('scripted receptionist replies', () => {
     const price = scriptedReply({ clinic: atman, text: 'Quanto custa?', turn: 1 })
 
     for (const reply of [first, second, third, later, price]) {
-      expect(reply.toLowerCase()).not.toMatch(/cliente|o\(a\)|r\$|\d/)
+      expect(reply.toLowerCase().replaceAll('c4', '')).not.toMatch(/cliente|o\(a\)|r\$|\d/)
       expect(reply).toMatch(/paciente|equipe|atendimento/)
     }
+    expect(first).toMatch(new RegExp(C4_AGENT_NAME))
     expect(first).toMatch(/Clínica Atman/)
     expect(first).toMatch(/Rio de Janeiro/)
     expect(first).toMatch(/avaliação para cirurgia plástica/)
@@ -62,15 +63,26 @@ describe('scripted receptionist replies', () => {
     expect(price).toMatch(/equipe/)
     expect(JSON.stringify(methodSteps(atman))).not.toMatch(/avaliação de avaliação/)
     expect(JSON.stringify(methodSteps(atman))).toMatch(/avaliação do atendimento/)
+    expect(JSON.stringify(methodSteps(atman))).toMatch(new RegExp(C4_AGENT_NAME))
+  })
+
+  it('asks what to simulate when no clinic name is needed', () => {
+    const opening = openingMessage({})
+    const reply = scriptedReply({ clinic: {}, text: 'Oi', turn: 1 })
+    expect(opening).toMatch(new RegExp(C4_AGENT_NAME))
+    expect(opening).toMatch(/estética, odontologia ou cirurgia plástica/)
+    expect(reply).toMatch(/procedimento/)
+    expect(opening.toLowerCase()).not.toMatch(/cliente|o\(a\)/)
   })
 })
 
 describe('call to action links', () => {
   it('forwards the clinic page and books fifteen minutes with Marcos', () => {
+    expect(clinicPageUrl('')).toBe('https://c4.devbrasil.online/')
     const url = clinicPageUrl('clinica-atman')
-    expect(url).toBe('https://marcos4213.github.io/clinic-crm-demo/#/c/clinica-atman')
+    expect(url).toBe('https://c4.devbrasil.online/#/c/clinica-atman')
     expect(forwardText('Clínica Atman', url)).toBe(
-      'Dra., olha como ficaria o atendimento da Clínica Atman no WhatsApp: https://marcos4213.github.io/clinic-crm-demo/#/c/clinica-atman',
+      'Dra., olha como ficaria o atendimento da Clínica Atman no WhatsApp: https://c4.devbrasil.online/#/c/clinica-atman',
     )
     const share = forwardHref('Clínica Atman', url)
     expect(share.startsWith('https://wa.me/?text=')).toBe(true)
@@ -81,5 +93,7 @@ describe('call to action links', () => {
     expect(decodeURIComponent(book)).toContain('30 minutos')
     expect(decodeURIComponent(book)).toContain('Clínica Atman')
     expect(bookingHref('Clínica Atman', '')).toBe('')
+    expect(showsClinicDemoAtRoot('c4.devbrasil.online')).toBe(true)
+    expect(showsClinicDemoAtRoot('marcos4213.github.io')).toBe(false)
   })
 })

@@ -8,7 +8,7 @@ function legalHref(file) {
 
 export default function SiteLegalFooter() {
   const location = useLocation()
-  const inAppShell = location.pathname.startsWith('/demo') || location.pathname.startsWith('/app') || location.pathname === '/c' || location.pathname.startsWith('/c/')
+  const inAppShell = location.pathname.startsWith('/demo') || location.pathname.startsWith('/app') || location.pathname === '/c' || location.pathname.startsWith('/c/') || location.pathname === '/c4'
   if (inAppShell) return null
 
   return (
