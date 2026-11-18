@@ -288,7 +288,7 @@ export default function ClinicDemo({ fetchImpl }) {
               rel="noopener noreferrer"
               className="flex min-h-12 items-center justify-center rounded-2xl border border-[#075e54] bg-white px-4 text-center text-[15px] font-bold text-[#075e54]"
             >
-              Marcar 15 minutos com o Marcos
+              Marcar 30 minutos com o Marcos
             </a>
           ) : (
             <p className="rounded-2xl border border-dashed border-[#075e54] px-4 py-3 text-[13px] leading-5 text-[#3d4a45]">

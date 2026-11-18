@@ -78,7 +78,7 @@ describe('call to action links', () => {
 
     const book = bookingHref('Clínica Atman')
     expect(book.startsWith(`https://wa.me/${C4_WHATSAPP_E164}?text=`)).toBe(true)
-    expect(decodeURIComponent(book)).toContain('15 minutos')
+    expect(decodeURIComponent(book)).toContain('30 minutos')
     expect(decodeURIComponent(book)).toContain('Clínica Atman')
     expect(bookingHref('Clínica Atman', '')).toBe('')
   })

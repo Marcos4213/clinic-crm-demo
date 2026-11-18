@@ -25,7 +25,7 @@ export function forwardHref(name, url) {
 export function bookingText(name) {
   const clinic = String(name || '').trim()
   const who = clinic ? ` Sou da recepção da ${clinic}.` : ''
-  return `Oi, Marcos!${who} Quero marcar 15 minutos para ver o C4 Clinic.`
+  return `Oi, Marcos!${who} Quero marcar 30 minutos para ver o C4 Clinic.`
 }
 
 export function bookingHref(name, phone = C4_WHATSAPP_E164) {

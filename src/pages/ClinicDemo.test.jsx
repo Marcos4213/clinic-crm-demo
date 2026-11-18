@@ -34,7 +34,7 @@ describe('clinic demo page', () => {
     expect(decodeURIComponent(share.getAttribute('href'))).toContain(
       'Dra., olha como ficaria o atendimento da Clínica Atman no WhatsApp: https://marcos4213.github.io/clinic-crm-demo/#/c/clinica-atman',
     )
-    const book = screen.getByRole('link', { name: 'Marcar 15 minutos com o Marcos' })
+    const book = screen.getByRole('link', { name: 'Marcar 30 minutos com o Marcos' })
     expect(book.getAttribute('href')).toMatch(/^https:\/\/wa\.me\/5511913221587\?text=/)
 
     window.location.hash = '#/'
