@@ -32,9 +32,14 @@ verify_jwt = false
 
 [functions.whatsapp-send]
 verify_jwt = true
+
+[functions.demo-chat]
+verify_jwt = false
 ```
 
 `verify_jwt = true` checks the user access token in `Authorization: Bearer <jwt>`. The publishable key is not a JWT. Send it only as `apikey`. `supabase-js` `functions.invoke` does this when a session exists.
+
+`demo-chat` is the public C4 page at `#/c/<slug>`. It uses `verify_jwt = false` because the receptionist has no account. The handler locks the system prompt, caps message length and turns, and counts hits per hashed IP and session in `demo_chat_hit`. It does not store the conversation. Without `XAI_API_KEY` it returns `503` `unconfigured` and the page uses the scripted reply.
 
 `channel-webhook` uses `auth: 'none'` because Meta does not send a Supabase JWT. Without `WHATSAPP_APP_SECRET` and `WHATSAPP_VERIFY_TOKEN` it returns 503 `webhook_unconfigured`. A valid `X-Hub-Signature-256` stores the event only when `phone_number_id` is already bound. If that write fails, the response is 503 `persist_failed` and the body is not logged. `whatsapp-send` requires the clinic id of a route the signed-in member can already see (`clinicId` or `x-clinic-id`). More than one visible route without that id returns 409. Any other clinic id returns 403. It never reports `connected: true`.
 
@@ -46,6 +51,7 @@ From the repository root, after the SQL migration is on project `xjijlccnbrdpwct
 supabase functions deploy grok-reply --project-ref xjijlccnbrdpwctiacqa
 supabase functions deploy channel-webhook --project-ref xjijlccnbrdpwctiacqa
 supabase functions deploy whatsapp-send --project-ref xjijlccnbrdpwctiacqa
+supabase functions deploy demo-chat --project-ref xjijlccnbrdpwctiacqa
 ```
 
 The WhatsApp callback, after the GET challenge answers, is `https://xjijlccnbrdpwctiacqa.supabase.co/functions/v1/channel-webhook`. `whatsapp-send` is the authenticated manual sender and is not the Meta callback. Server secrets stay in the Supabase function secret store: `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_BUSINESS_ACCESS_TOKEN`, and optional `WHATSAPP_GRAPH_VERSION` (default `v27.0`). The owner binds the phone number, WABA, and app id in `#/app/whatsapp`; the form does not take a clinic id.
